@@ -1,0 +1,14 @@
+/target
+*.html
+.DS_Store
+.idea/
+.vscode/
+
+# Real combat logs and reports name other players: keep them out of the repo.
+/test logs/
+/logs/
+WoWCombatLog*.txt
+!samples/mplus.txt
+wowcoach.toml
+!samples/wowcoach.toml
+samples/raid.txt

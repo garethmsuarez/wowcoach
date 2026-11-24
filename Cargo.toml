@@ -1,0 +1,27 @@
+[package]
+name = "wowcoach"
+version = "0.1.0"
+edition = "2024"
+description = "WoW combat log analyzer that suggests improvements for Mythic+ and raid, at group and individual level"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/garethmsuarez/wowcoach"
+readme = "README.md"
+keywords = ["warcraft", "combat-log", "mythic-plus", "raid", "analysis"]
+categories = ["command-line-utilities", "games"]
+
+[dependencies]
+anyhow = "1.0.105"
+clap = { version = "4.6.9", features = ["derive", "env"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+toml = "1.2.2"
+ureq = { version = "2", features = ["json"], optional = true }
+
+[features]
+default = ["wcl"]
+# Warcraft Logs v2 API adapter (network). Build with --no-default-features for an offline-only binary.
+wcl = ["dep:ureq"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

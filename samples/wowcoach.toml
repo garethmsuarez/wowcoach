@@ -1,0 +1,15 @@
+[general]
+
+[[avoidable]]
+spell_id = 1231001
+name = "Dark Swirl"
+note = "Step out of the swirl before it lands"
+
+[[avoidable]]
+spell_id = 88888
+name = "Void Pool"
+note = "Don't stand in the purple pools"
+
+[[priority_interrupt]]
+spell_id = 77777
+name = "Shadow Volley"

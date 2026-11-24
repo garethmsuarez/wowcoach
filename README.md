@@ -1,0 +1,122 @@
+# wowcoach
+
+[![CI](https://github.com/garethmsuarez/wowcoach/actions/workflows/ci.yml/badge.svg)](https://github.com/garethmsuarez/wowcoach/actions/workflows/ci.yml)
+
+Turns World of Warcraft combat logs into concrete improvement suggestions for
+**Mythic+** and **raid**, at both the **group** and the **individual** level.
+
+Two data sources feed one analysis pipeline:
+
+- **Raw `WoWCombatLog*.txt`**: streaming parser, offline, ~200+ MB/s.
+- **Warcraft Logs v2 API**: fetches a public report's fights and events (and per-player
+  rankings for benchmarking) and maps them into the same event model.
+
+```
+raw log ──► combatlog.rs ─┐
+                          ├─► model::Event ─► analysis.rs ─► rules.rs ─► report.rs (HTML/JSON)
+WCL API ──► wcl.rs ───────┘     (segments,      (suggestions)
+                                 metrics)
+```
+
+## Usage
+
+```bash
+cargo build --release            # add --no-default-features for an offline-only build
+
+# Raw log (enable Advanced Combat Logging in System > Network, then /combatlog)
+./target/release/wowcoach analyze ~/WoW/_retail_/Logs/WoWCombatLog-112326_201500.txt \
+    -o report.html --json report.json -c wowcoach.toml
+
+# Warcraft Logs (client from https://www.warcraftlogs.com/api/clients/)
+export WCL_CLIENT_ID=... WCL_CLIENT_SECRET=...
+./target/release/wowcoach wcl aBcD1234 -o report.html            # all boss/key fights
+./target/release/wowcoach wcl aBcD1234 --fight 12 --fight 15
+
+# Season/tier knowledge (avoidable spells, must-kick casts, thresholds)
+./target/release/wowcoach init-config -o wowcoach.toml
+```
+
+## What it looks at
+
+**Segmentation**: `ENCOUNTER_START/END` → raid pulls, `CHALLENGE_MODE_START/END` → M+ runs
+(bosses inside a key become timeline markers). Runs are split into pulls by combat gaps.
+Repeated pulls of the same boss are grouped into a **progression** summary.
+
+| Group rules | Individual rules |
+|---|---|
+| Deaths and most common killing blows (+ M+ timer cost) | Death recap (last hits, HP%), avoidable vs not, healthstone/potion used |
+| Raid wipe: early first death that snowballed | Avoidable damage vs group median (config-listed) |
+| Missed interrupts: a cast counts as interruptible if it was kicked at least once, or is listed in config | "Possibly avoidable": took far more of a spell than peers (heuristic) |
+| Avoidable damage (config) + uneven-hit heuristic | Estimated casting activity (GCD coverage while alive) |
+| Bloodlust missing / late | DPS vs group DPS median with likely causes |
+| M+ pacing: downtime %, longest gaps, near-wipe pulls | Healer overheal %, zero interrupts in M+ |
+| Progression: recurring first-death cause, repeat deaths | WCL rank percentile (API source) |
+
+## Tuning for the current season
+
+Spell IDs change every season, so the rules stay generic and the specifics live
+in `wowcoach.toml`:
+
+```toml
+[[avoidable]]
+spell_id = 1231001
+name = "Dark Swirl"
+note = "Step out of the swirl before it lands"
+
+[[priority_interrupt]]
+spell_id = 77777
+name = "Shadow Volley"
+```
+
+## Known limits
+
+- **Activity** is approximated from cast events plus one GCD each, so channelled spells are
+  undercounted. Compare a player against their own earlier logs, not against other specs.
+- **"Possibly avoidable"** is a heuristic: targeted debuffs can trip it. Promote confirmed
+  spells to `[[avoidable]]`.
+- Healing is effective healing: heals minus overheal, plus healing that cleared heal-absorb
+  debuffs, plus shields credited to their caster (`SPELL_ABSORBED`). Shields that only delay
+  damage (Stagger, Purgatory) are excluded, and Stagger ticks don't count twice as damage taken.
+  Both lists live in the config. Shields that expire unused aren't counted as overhealing.
+- The raw parser learns the advanced-logging field count from the log (19 in Midnight 12.x,
+  17 in The War Within) and finds the spec ID by position relative to the talent list, so
+  small layout changes between patches are handled automatically.
+- On raid wipes, deaths after roughly a quarter of the raid is down count as the wipe cascade
+  and are ignored. Missed interrupts only count casts that showed a cast bar.
+- The WCL adapter supports public reports (client-credentials flow) only. Private
+  reports need the user OAuth flow.
+
+## Development
+
+```bash
+cargo test
+python3 tools/gen_sample_log.py mplus > samples/mplus.txt   # synthetic logs with known problems
+python3 tools/gen_sample_log.py raid  > samples/raid.txt
+cargo run -- analyze samples/mplus.txt -c samples/wowcoach.toml
+```
+
+Adding a rule means writing a small function over `FightReport` in `rules.rs`
+that pushes a `Suggestion`.
+
+## Contributing
+
+Changes go through pull requests against `main`; CI runs `cargo fmt --check`,
+`cargo clippy -D warnings` and `cargo test` on Linux, macOS and Windows.
+
+Please don't commit real combat logs or reports. They contain other players'
+names and GUIDs. Use `tools/gen_sample_log.py`, or anonymise lines when adding
+regression tests. `.gitignore` excludes `test logs/` and `WoWCombatLog*.txt`.
+
+## License
+
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
+
+at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
+
