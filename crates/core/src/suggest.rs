@@ -8,6 +8,7 @@
 
 use crate::analysis::{FightKind, FightReport, SpellEvidence};
 use crate::season::{Boss, SeasonPack, Source, SpellEntry, Tag, tag_name};
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 /// Where a fight came from. Kept separate because "top groups kick this every
@@ -271,6 +272,29 @@ impl SpellAgg {
     }
 }
 
+/// What `suggest` needs from one analysed fight. Small and serialisable, so
+/// analysed public runs can be cached instead of their (huge) event streams.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct FightEvidence {
+    pub title: String,
+    pub kind: FightKind,
+    pub spell_evidence: Vec<SpellEvidence>,
+}
+
+impl From<&FightReport> for FightEvidence {
+    fn from(f: &FightReport) -> Self {
+        FightEvidence {
+            title: f.title.clone(),
+            kind: f.kind.clone(),
+            spell_evidence: f.spell_evidence.clone(),
+        }
+    }
+}
+
+/// Bump when analysis changes what goes into `FightEvidence`, so cached
+/// evidence from older versions is ignored.
+pub const EVIDENCE_VERSION: u32 = 1;
+
 /// Everything learned from a set of fights, keyed by (instance map ID, spell ID).
 #[derive(Clone, Debug, Default)]
 pub struct Collected {
@@ -345,6 +369,10 @@ fn edit_distance(a: &str, b: &str) -> usize {
 impl Collected {
     /// Add one fight's evidence. Fights in instances the pack doesn't know are skipped.
     pub fn add(&mut self, pack: &SeasonPack, f: &FightReport, origin: Origin) {
+        self.add_evidence(pack, &f.into(), origin);
+    }
+
+    pub fn add_evidence(&mut self, pack: &SeasonPack, f: &FightEvidence, origin: Origin) {
         // Resolve the instance and the boss context of the fight.
         let (map_id, bosses, raid_boss): (u32, &[Boss], Option<(String, u32)>) = match &f.kind {
             FightKind::MythicPlus {

@@ -537,6 +537,9 @@ fn spell_evidence_for_season_suggest() {
         log.damage(t, &boss, &party.tank, 700, "Crush", 50_000);
     }
     log.damage(13_500, &boss, &party.dps[0], 700, "Crush", 10_000);
+    // Melee: ID 1 in raw logs, 0 from Warcraft Logs. Neither is evidence.
+    log.cast(14_000, &boss, 0, "Melee")
+        .cast(14_100, &boss, 1, "Melee");
     log.encounter_end(20_000, 3010, "Big Boss", 8, true);
     log.key_end(30_000, 2000, true, 30_000);
 
@@ -547,7 +550,11 @@ fn spell_evidence_for_season_suggest() {
     assert_eq!(bosses[0].encounter_id, 3010);
 
     let ids: Vec<u32> = f.spell_evidence.iter().map(|e| e.spell_id).collect();
-    assert_eq!(ids, [500, 600, 700], "sorted, enemy buffs excluded");
+    assert_eq!(
+        ids,
+        [500, 600, 700],
+        "sorted; enemy buffs and melee excluded"
+    );
     let get = |id| f.spell_evidence.iter().find(|e| e.spell_id == id).unwrap();
 
     let bolt = get(500);
