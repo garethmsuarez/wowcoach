@@ -615,3 +615,12 @@ fn interrupt_list_puts_priority_casts_first() {
         "{m}"
     );
 }
+
+/// For `rules::kickplan` tests: an M+/raid fight shell and a DPS player.
+pub(crate) fn fight_for_plans(kind: FightKind) -> FightReport {
+    fight(kind, 1500.0)
+}
+
+pub(crate) fn player_for_plans(name: &str) -> PlayerReport {
+    player(name, Role::Dps)
+}

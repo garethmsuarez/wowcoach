@@ -36,11 +36,13 @@ pub fn build_report(source: String, mut fights: Vec<FightReport>, cfg: &Config) 
     for p in progression.iter_mut() {
         rules::apply_progression(p);
     }
+    let kick_plans = rules::kickplan::kick_plans(&fights);
     Report {
         source,
         season_pack: cfg.knowledge.pack_key.clone(),
         fights,
         progression,
+        kick_plans,
     }
 }
 

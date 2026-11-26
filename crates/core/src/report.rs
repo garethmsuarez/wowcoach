@@ -12,6 +12,8 @@ pub struct Report {
     pub season_pack: Option<String>,
     pub fights: Vec<FightReport>,
     pub progression: Vec<ProgressionReport>,
+    /// Suggested kick assignments per M+ dungeon, across its keys.
+    pub kick_plans: Vec<crate::rules::kickplan::KickPlan>,
 }
 
 fn esc(s: &str) -> String {
@@ -84,6 +86,73 @@ fn one(x: &Suggestion, out: &mut String, _player: bool) {
             format!("<div class=ev>{}</div>", esc(&x.evidence))
         }
     );
+}
+
+/// Suggested kick assignments for one dungeon.
+fn kick_plan_html(k: &crate::rules::kickplan::KickPlan, o: &mut String) {
+    if k.packs.is_empty() {
+        return;
+    }
+    let _ = write!(
+        o,
+        "<div class=card><details open><summary><h2>Kick plan: {}</h2><span class=chip>{} key{}</span><span class=chip>{} packs</span></summary><div class=body><div class=sub>For {}. Each pack is the set of enemies casting priority spells in a pull; rates are casts per minute while that pack was in combat. Kickers can do 60 ÷ cooldown kicks a minute, with a 25% margin, preferring whoever already kicked that spell, then whoever was usually in range. A starting point, not a rule.</div><table><tr><th>Pack</th><th>Priority casts</th><th>Suggested kickers</th></tr>",
+        esc(&k.dungeon),
+        k.keys,
+        if k.keys == 1 { "" } else { "s" },
+        k.packs.len(),
+        esc(&k.group.join(", "))
+    );
+    for p in &k.packs {
+        let spells = p
+            .spells
+            .iter()
+            .map(|s| {
+                format!(
+                    "{} <span class=sub>{:.1}/min · {} kicked, {} stopped, {}</span>",
+                    esc(&s.spell),
+                    s.casts_per_min,
+                    s.kicked,
+                    s.stopped,
+                    if s.went_off > 0 {
+                        format!("<b class=bad>{} went off</b>", s.went_off)
+                    } else {
+                        "0 went off".into()
+                    }
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("<br>");
+        let mut who = p
+            .assignments
+            .iter()
+            .map(|a| {
+                format!(
+                    "{} ({}): {}",
+                    esc(&a.player),
+                    esc(&a.ability),
+                    esc(&a.spells.join(", "))
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("<br>");
+        if !p.uncovered.is_empty() {
+            let _ = write!(
+                who,
+                "<br><b class=bad>Not enough kicks for {}: plan a stun or another kicker</b>",
+                esc(&p.uncovered.join(", "))
+            );
+        }
+        let _ = write!(
+            o,
+            "<tr><td>{}<div class=sub>{} pull{}</div></td><td>{}</td><td>{}</td></tr>",
+            esc(&p.name),
+            p.pulls,
+            if p.pulls == 1 { "" } else { "s" },
+            spells,
+            who
+        );
+    }
+    o.push_str("</table></div></details></div>");
 }
 
 /// Every priority cast of a key and how it ended, grouped by pull.
@@ -200,6 +269,10 @@ pub fn html(r: &Report) -> String {
             o.push_str("</table></div>");
         }
         o.push_str("</div></div></details></div>");
+    }
+
+    for k in &r.kick_plans {
+        kick_plan_html(k, &mut o);
     }
 
     for f in &r.fights {

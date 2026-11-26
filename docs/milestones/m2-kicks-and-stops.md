@@ -68,7 +68,7 @@ From that it proposes an assignment ("Bravo and Charlie: Lightning Bolt casters;
    - Group: stoppable casts that went off while a stop was available (needs `stoppable` tags, PR 5).
    - HTML: a per-pull kick table with outcome per priority cast.
    - Golden snapshot updated, after extending `gen_sample_log.py` with kicks, stops and a wasted kick.
-4. **Kick plan.** Pack identification, cast rates, assignment, and a "Kick plan" section per dungeon in the report. Built from all keys of that dungeon in the input (cross-week history comes with M6).
+4. **Kick plan.** *(done. `analyze` now takes several logs as one report. Over the 13 local logs the plans merge 1–4 keys per dungeon; e.g. Voidscar Arena's Brawler + Magi pack, seen in 5 pulls, where 13 of 35 Shadowbolt Volleys went off, gets 3 kickers)* Pack identification, cast rates, assignment, and a "Kick plan" section per dungeon in the report. Built from all keys of that dungeon in the input (cross-week history comes with M6).
 5. **`stoppable` content.**
    - `season suggest` gains stop evidence ("stopped by CC in N of M top-key casts").
    - `promote_suggestions.py` gains a `stoppable` criterion.
