@@ -38,6 +38,9 @@ struct OutOpts {
     /// Don't use any season pack: only the spells in --config
     #[arg(long)]
     no_season_pack: bool,
+    /// Debugging: write every enemy cast bar and how it ended (JSON)
+    #[arg(long, hide = true, value_name = "PATH")]
+    dump_casts: Option<PathBuf>,
 }
 
 impl OutOpts {
@@ -677,6 +680,14 @@ fn finish(
     o: &OutOpts,
 ) -> anyhow::Result<()> {
     let rep = wowcoach_core::build_report(source, fights, cfg);
+    if let Some(p) = &o.dump_casts {
+        let all: Vec<_> = rep
+            .fights
+            .iter()
+            .map(|f| serde_json::json!({ "title": f.title, "casts": f.casts }))
+            .collect();
+        std::fs::write(p, serde_json::to_string_pretty(&all)?)?;
+    }
     std::fs::write(&o.out, report::html(&rep))
         .with_context(|| format!("writing {}", o.out.display()))?;
     if let Some(j) = &o.json {

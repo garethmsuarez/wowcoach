@@ -211,6 +211,46 @@ impl Log {
             },
         )
     }
+    /// An event that logs `u`'s position (a cast with advanced info).
+    pub fn at(&mut self, ts: i64, u: &Unit, x: f32, y: f32) -> &mut Self {
+        self.push(
+            ts,
+            Some(u),
+            None,
+            Kind::CastSuccess {
+                spell: spell(999_999, "Position"),
+                info: Some(AdvInfo {
+                    guid: u.guid.clone(),
+                    owner_guid: "0000000000000000".into(),
+                    hp: 1,
+                    max_hp: 1,
+                    pos: Some(Pos { x, y, map: 1 }),
+                }),
+            },
+        )
+    }
+    /// `src` interrupts `dst`'s `kicked` cast with its own `with` spell.
+    #[allow(clippy::too_many_arguments)]
+    pub fn kick_with(
+        &mut self,
+        ts: i64,
+        src: &Unit,
+        dst: &Unit,
+        with: u32,
+        with_name: &str,
+        kicked: u32,
+        kicked_name: &str,
+    ) -> &mut Self {
+        self.push(
+            ts,
+            Some(src),
+            Some(dst),
+            Kind::Interrupt {
+                spell: spell(with, with_name),
+                extra: spell(kicked, kicked_name),
+            },
+        )
+    }
     pub fn death(&mut self, ts: i64, u: &Unit) -> &mut Self {
         self.push(ts, None, Some(u), Kind::Death)
     }

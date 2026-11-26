@@ -59,6 +59,7 @@ fn fight(kind: FightKind, duration_s: f64) -> FightReport {
         lust_at_s: vec![0.0],
         suggestions: vec![],
         spell_evidence: vec![],
+        casts: vec![],
     }
 }
 
@@ -114,6 +115,10 @@ fn pull(index: usize, start_s: f64, end_s: f64, deaths: u32) -> PullReport {
         deaths,
         enemies_killed: 0,
         boss: None,
+        casts_kicked: 0,
+        casts_stopped: 0,
+        casters_killed: 0,
+        priority_completed: 0,
     }
 }
 
