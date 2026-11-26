@@ -129,6 +129,13 @@ pub struct SpellEntry {
     /// Short advice shown to players, e.g. "Step out of the line".
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub note: String,
+    /// Tags a reviewer rejected: `season suggest` won't propose them again.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dismissed: Vec<Tag>,
+    /// Counts behind the latest suggestion, written by `season suggest` for
+    /// reviewers. Not shown to players.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub evidence: String,
     /// User overrides only: switch this pack entry off.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub exclude: bool,
@@ -280,6 +287,9 @@ impl SeasonPack {
                 if s.tags.contains(t) {
                     out.push(format!("{label}: {t:?} is both tagged and suggested"));
                 }
+                if s.dismissed.contains(t) {
+                    out.push(format!("{label}: {t:?} is both dismissed and suggested"));
+                }
             }
         }
         out
@@ -412,6 +422,63 @@ impl Knowledge {
     pub fn has_tag(&self, id: u32, tag: Tag) -> bool {
         self.by_id.get(&id).is_some_and(|k| k.tags.contains(&tag))
     }
+}
+
+/// Deterministic order so re-syncing gives clean diffs: instances by name,
+/// spells by instance, then boss (journal order, trash last), then name.
+pub fn sort(pack: &mut SeasonPack) {
+    pack.dungeons.sort_by(|a, b| a.name.cmp(&b.name));
+    pack.raids.sort_by(|a, b| a.name.cmp(&b.name));
+    let mut inst_order: HashMap<u32, (usize, Vec<String>)> = HashMap::new();
+    for (i, (map, bosses)) in pack
+        .dungeons
+        .iter()
+        .map(|d| (d.map_id, &d.bosses))
+        .chain(pack.raids.iter().map(|r| (r.map_id, &r.bosses)))
+        .enumerate()
+    {
+        inst_order.insert(map, (i, bosses.iter().map(|b| b.name.clone()).collect()));
+    }
+    for s in pack.spells.iter_mut() {
+        s.ids.sort_unstable();
+        s.ids.dedup();
+        s.sources.sort();
+        s.sources.dedup();
+    }
+    pack.spells.sort_by_cached_key(|s| {
+        let (inst, bosses) = inst_order
+            .get(&s.map_id)
+            .map(|(i, b)| (*i, b.as_slice()))
+            .unwrap_or((usize::MAX, &[]));
+        let boss = s
+            .boss
+            .as_ref()
+            .and_then(|b| bosses.iter().position(|x| x == b))
+            .unwrap_or(usize::MAX);
+        (
+            inst,
+            boss,
+            s.name.clone(),
+            s.ids.first().copied().unwrap_or(0),
+        )
+    });
+}
+
+/// Render a pack as TOML, keeping the comment block at the top of the
+/// previous file (`header`).
+pub fn render(pack: &SeasonPack, previous: &str) -> anyhow::Result<String> {
+    let header: String = previous
+        .lines()
+        .take_while(|l| l.starts_with('#') || l.trim().is_empty())
+        .map(|l| format!("{l}\n"))
+        .collect();
+    let body = toml::to_string(pack)?;
+    let header = header.trim();
+    Ok(if header.is_empty() {
+        body
+    } else {
+        format!("{header}\n\n{}", body.trim_start())
+    })
 }
 
 #[cfg(test)]

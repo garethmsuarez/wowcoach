@@ -81,6 +81,221 @@ enum SeasonCmd {
         #[arg(long, env = "BLIZZARD_CLIENT_SECRET", hide_env_values = true)]
         client_secret: String,
     },
+    /// Learn spell and boss encounter IDs from logs and propose tags for review.
+    /// Proposals go to `suggested`; tags are never set.
+    Suggest(SuggestArgs),
+}
+
+#[derive(clap::Args)]
+struct SuggestArgs {
+    /// Your raw combat logs
+    logs: Vec<PathBuf>,
+    /// Pack file to update
+    #[arg(long, default_value = "data/seasons/midnight-s2.toml")]
+    pack: PathBuf,
+    /// Write the pack (default: only print the review)
+    #[arg(long)]
+    write: bool,
+    /// Your Warcraft Logs reports, as CODE or CODE:FIGHT
+    #[cfg(feature = "wcl")]
+    #[arg(long = "wcl", value_name = "CODE[:FIGHT]")]
+    wcl: Vec<String>,
+    /// Also analyse the top N public runs of each pack dungeon on Warcraft Logs
+    #[cfg(feature = "wcl")]
+    #[arg(long, default_value_t = 0, value_name = "N")]
+    wcl_top: usize,
+    /// Key levels for --wcl-top, e.g. 12..15 or 20 (default: any)
+    #[cfg(feature = "wcl")]
+    #[arg(long, value_name = "MIN..MAX")]
+    level: Option<String>,
+    /// Most Warcraft Logs API points to spend in this run (the hourly limit is 9000)
+    #[cfg(feature = "wcl")]
+    #[arg(long, default_value_t = 3000.0)]
+    max_points: f64,
+    /// Where fetched public reports are cached (default: ~/.cache/wowcoach/wcl)
+    #[cfg(feature = "wcl")]
+    #[arg(long)]
+    cache_dir: Option<PathBuf>,
+}
+
+/// "12..15" -> (12, 15), "20" -> (20, 20), none -> any level.
+#[cfg(feature = "wcl")]
+fn level_range(s: Option<&str>) -> anyhow::Result<(u32, u32)> {
+    let Some(s) = s else {
+        return Ok((0, u32::MAX));
+    };
+    let parse = |x: &str| {
+        x.trim()
+            .parse::<u32>()
+            .with_context(|| format!("bad key level {x:?} in --level"))
+    };
+    Ok(match s.split_once("..") {
+        Some((a, b)) => (parse(a)?, parse(b)?),
+        None => (parse(s)?, parse(s)?),
+    })
+}
+
+fn season_suggest(a: SuggestArgs) -> anyhow::Result<()> {
+    use wowcoach_core::suggest::{self, Collected, Origin};
+    let previous = std::fs::read_to_string(&a.pack)
+        .with_context(|| format!("reading {}", a.pack.display()))?;
+    let mut pack = SeasonPack::parse(&previous)
+        .with_context(|| format!("{} is not a valid pack", a.pack.display()))?;
+    let mut c = Collected::default();
+
+    for log in &a.logs {
+        let file =
+            std::fs::File::open(log).with_context(|| format!("opening {}", log.display()))?;
+        let cfg = Config::load_with(None, PackChoice::None)?;
+        let (_, fights, _) =
+            wowcoach_core::analyze_log(std::io::BufReader::with_capacity(1 << 20, file), cfg)?;
+        eprintln!("{}: {} fight(s)", log.display(), fights.len());
+        for f in &fights {
+            c.add(&pack, f, Origin::Own);
+        }
+    }
+
+    #[cfg(feature = "wcl")]
+    suggest_from_wcl(&a, &pack, &mut c)?;
+
+    if c.fights_used.is_empty() && c.fights_skipped.is_empty() {
+        anyhow::bail!("nothing to learn from: pass logs, --wcl reports or --wcl-top N");
+    }
+    let applied = suggest::apply(&mut pack, &c);
+    let problems = pack.problems();
+    if !problems.is_empty() {
+        anyhow::bail!(
+            "the updated pack is invalid, nothing written:\n  - {}",
+            problems.join("\n  - ")
+        );
+    }
+    print!("{}", suggest::review(&c, &applied));
+    println!("{}", pack.summary());
+    let text = wowcoach_core::season::render(&pack, &previous)?;
+    if !a.write {
+        println!("Review only: pass --write to update {}.", a.pack.display());
+    } else if text == previous {
+        println!("{} is already up to date.", a.pack.display());
+    } else {
+        std::fs::write(&a.pack, text).with_context(|| format!("writing {}", a.pack.display()))?;
+        println!(
+            "Wrote {}. Promote suggestions to `tags` (or move them to `dismissed`) in review.",
+            a.pack.display()
+        );
+    }
+    Ok(())
+}
+
+#[cfg(feature = "wcl")]
+fn suggest_from_wcl(
+    a: &SuggestArgs,
+    pack: &SeasonPack,
+    c: &mut wowcoach_core::suggest::Collected,
+) -> anyhow::Result<()> {
+    use wowcoach_core::suggest::Origin;
+    if a.wcl.is_empty() && a.wcl_top == 0 {
+        return Ok(());
+    }
+    let (Ok(id), Ok(secret)) = (
+        std::env::var("WCL_CLIENT_ID"),
+        std::env::var("WCL_CLIENT_SECRET"),
+    ) else {
+        anyhow::bail!("--wcl / --wcl-top need WCL_CLIENT_ID and WCL_CLIENT_SECRET (env or ./.env)");
+    };
+    let cache = a.cache_dir.clone().unwrap_or_else(|| {
+        std::env::var_os("XDG_CACHE_HOME")
+            .map(PathBuf::from)
+            .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))
+            .unwrap_or_else(std::env::temp_dir)
+            .join("wowcoach/wcl")
+    });
+    eprintln!(
+        "Connecting to Warcraft Logs (report cache: {})...",
+        cache.display()
+    );
+    let client = wcl::net::Client::connect(&id, &secret)?.with_cache(cache);
+    let (spent0, limit, _) = client.rate_limit()?;
+    // Stop at the run budget, and always leave 10% of the hourly limit.
+    let ceiling = (spent0 + a.max_points).min(limit * 0.9);
+
+    let analyse = |code: &str, fights: &[i64]| -> anyhow::Result<Vec<analysis::FightReport>> {
+        let fetched = wcl::net::fetch(&client, code, fights, false)?;
+        let mut an = Analyzer::new(Config::load_with(None, PackChoice::None)?);
+        for e in fetched.events {
+            an.feed(e);
+        }
+        Ok(an.finish().0)
+    };
+
+    for spec in &a.wcl {
+        let (code, fights) = match spec.split_once(':') {
+            Some((code, f)) => (
+                code,
+                vec![
+                    f.parse::<i64>()
+                        .with_context(|| format!("bad fight ID in {spec:?}"))?,
+                ],
+            ),
+            None => (spec.as_str(), vec![]),
+        };
+        for f in analyse(code, &fights)? {
+            c.add(pack, &f, Origin::Own);
+        }
+    }
+
+    if a.wcl_top > 0 {
+        let (lo, hi) = level_range(a.level.as_deref())?;
+        let encounters = client.zone_encounters()?;
+        'dungeons: for d in &pack.dungeons {
+            let Some((_, enc)) = encounters
+                .iter()
+                .find(|(n, id)| n.eq_ignore_ascii_case(&d.name) && *id % 10_000 == d.map_id)
+            else {
+                eprintln!("  {}: not found on Warcraft Logs, skipped", d.name);
+                continue;
+            };
+            let mut keys = vec![];
+            for page in 1..=10 {
+                let (ranked, more) = client.top_keys(*enc, page)?;
+                keys.extend(ranked.into_iter().filter(|k| (lo..=hi).contains(&k.level)));
+                if keys.len() >= a.wcl_top || !more {
+                    break;
+                }
+            }
+            keys.truncate(a.wcl_top);
+            eprintln!(
+                "  {}: {} public run(s) at levels {}",
+                d.name,
+                keys.len(),
+                keys.iter()
+                    .map(|k| format!("+{}", k.level))
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            );
+            for k in &keys {
+                let (spent, _, reset) = client.rate_limit()?;
+                if spent + 60.0 > ceiling {
+                    eprintln!(
+                        "  Stopping: {spent:.0} of {limit:.0} Warcraft Logs points used this hour (budget {:.0}); resets in {} min. Re-run later: fetched reports are cached.",
+                        ceiling,
+                        reset / 60
+                    );
+                    break 'dungeons;
+                }
+                match analyse(&k.code, &[k.fight_id]) {
+                    Ok(fights) => {
+                        for f in &fights {
+                            c.add(pack, f, Origin::Top);
+                        }
+                    }
+                    Err(e) => eprintln!("    skipped {}:{}: {e:#}", k.code, k.fight_id),
+                }
+            }
+        }
+        let (spent, _, _) = client.rate_limit()?;
+        eprintln!("Warcraft Logs points used: {:.0}", spent - spent0);
+    }
+    Ok(())
 }
 
 #[cfg(feature = "blizzard")]
@@ -292,6 +507,9 @@ fn main() -> anyhow::Result<()> {
                     client_secret,
                 },
         } => season_sync(&pack, raids, &region, dry_run, &client_id, &client_secret)?,
+        Cmd::Season {
+            cmd: SeasonCmd::Suggest(args),
+        } => season_suggest(args)?,
         Cmd::Analyze { log, o } => {
             let cfg = o.load_config()?;
             let file =

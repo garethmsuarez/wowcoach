@@ -98,6 +98,25 @@ wowcoach season sync --raid 1320 --raid 1317 --raid 1324         # add raids by 
 wowcoach season sync                                             # refresh (raids already in the pack)
 ```
 
+### Learning from logs
+
+The journal knows boss abilities but not the IDs the game actually logs, and
+nothing about trash. `wowcoach season suggest` learns them from your logs and
+from top public runs on Warcraft Logs. It fills spell IDs and M+ boss encounter
+IDs, and **proposes** tags with the evidence behind them:
+
+```bash
+wowcoach season suggest ~/WoW/_retail_/Logs/WoWCombatLog-*.txt             # review only
+wowcoach season suggest LOGS... --wcl-top 5 --level 12..16 --write          # + top public keys, write the pack
+```
+
+Proposals land in each spell's `suggested` list with an `evidence` line, for
+example `top keys (5 fights): kicked 30/30`. They never affect coaching until a
+reviewer moves them to `tags`. Move a rejected one to `dismissed` and it won't
+be proposed again. Public reports are cached (`~/.cache/wowcoach/wcl`), and a
+run stops before using more than `--max-points` (default 3000) of the hourly
+Warcraft Logs limit.
+
 The older `[[avoidable]]` and `[[priority_interrupt]]` lists still work. How
 packs are built from the Blizzard API, your logs and Warcraft Logs is described
 in [`docs/milestones/m1-season-data.md`](docs/milestones/m1-season-data.md).

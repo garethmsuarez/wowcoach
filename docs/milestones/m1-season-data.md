@@ -136,7 +136,7 @@ Lookups are global by spell ID across the whole pack, not scoped to the current 
      - merges into the pack without touching `tags`, `note`, `suggested`, log IDs or `encounter_id`
      - prints a summary of what was added and removed.
    - Run it once to create the S2 skeleton (8 dungeons; Venomous Abyss 1320, Tidebound Grotto 1317, Unbinding of Kith'ix 1324).
-3. **WCL adapter fixes + `season suggest`.**
+3. **WCL adapter fixes + `season suggest`.** *(done: over the 12 local logs, 52 fights gave 21 M+ boss encounter IDs (all bosses in dungeons the logs cover), 215 new spells, 230 logged IDs joined to existing entries and 67 proposals. Fixed on the way: an entry with several IDs is judged once on per-fight merged evidence, and no proposal comes from a single fight. Journal/log boss names that differ by a typo are matched ("Ziekket"/"Ziekett"))*
    - Fix the WCL adapter: `map_id` from fight `gameZone`, and boss markers (`EncounterStart/End` inside the key) from `dungeonPulls`. Tested offline with `json!` like the other WCL tests.
    - `wowcoach season suggest [LOG…] [--wcl CODE[:FIGHT]…] [--wcl-top N --level MIN..MAX] [--write]`:
      - Inputs are local logs, explicit WCL reports, and/or the top N public keys per pack dungeon at the given key levels (found via `fightRankings`).
