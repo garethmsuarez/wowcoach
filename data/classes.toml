@@ -1,0 +1,1286 @@
+# Class abilities that matter for coaching: interrupts, crowd control that
+# stops casts, defensives and dispels. Expansion data (Midnight, 12.x), not
+# season data. Compiled into wowcoach.
+#
+# One [[ability]] per (ability, kind). `ids` lists every spell ID the ability
+# shows up under: the cast, and sometimes a separate ID for its effect (e.g.
+# Skull Bash is cast as 106839 but interrupts as 93985). `specs` empty = every
+# spec of the class. class = "Racial" for racial abilities.
+#
+#   kind = "interrupt"                      cd_s
+#   kind = "stop"       cc = stun | incapacitate | disorient | fear | knock | silence
+#   kind = "defensive"  scope = personal | external | group
+#   kind = "dispel"     types = [magic, curse, poison, disease, bleed, enrage]
+#                       target = friendly | enemy
+#   cdr = true          talents routinely cut the cooldown a lot; the log audit
+#                       doesn't check its reuse
+#
+# Cooldowns are base values; talents can shorten them. For "was a defensive
+# available?" rules a base cooldown errs on the side of not blaming players.
+# Validate: wowcoach classes check [--live] [LOGS...]
+# "seen in logs" = confirmed by SPELL_INTERRUPT / SPELL_DISPEL in local logs, 2026-11.
+# Warlock pet abilities are unconfirmed: the spell API doesn't list pet spells
+# and the logs had no warlocks.
+
+# ------------------------------------------------------------------ Death Knight
+
+[[ability]]
+ids = [47528]
+name = "Mind Freeze"
+class = "Death Knight"
+kind = "interrupt"
+cd_s = 15        # seen in logs (Blood, Frost)
+
+[[ability]]
+ids = [221562]
+name = "Asphyxiate"
+class = "Death Knight"
+kind = "stop"
+cc = "stun"
+cd_s = 45        # one ID for every spec in Midnight: 108194 is gone from the spell API
+
+[[ability]]
+ids = [108199]
+name = "Gorefiend's Grasp"
+class = "Death Knight"
+specs = ["Blood"]
+kind = "stop"
+cc = "knock"
+cd_s = 120
+
+[[ability]]
+ids = [207167]
+name = "Blinding Sleet"
+class = "Death Knight"
+kind = "stop"
+cc = "disorient"
+cd_s = 60
+
+[[ability]]
+ids = [48792]
+name = "Icebound Fortitude"
+class = "Death Knight"
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [48707]
+name = "Anti-Magic Shell"
+class = "Death Knight"
+kind = "defensive"
+scope = "personal"
+cd_s = 60
+
+[[ability]]
+ids = [51052]
+name = "Anti-Magic Zone"
+class = "Death Knight"
+kind = "defensive"
+scope = "group"
+cd_s = 120
+
+[[ability]]
+ids = [55233]
+name = "Vampiric Blood"
+class = "Death Knight"
+specs = ["Blood"]
+kind = "defensive"
+scope = "personal"
+cd_s = 90
+
+[[ability]]
+ids = [49039]
+name = "Lichborne"
+class = "Death Knight"
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+# ------------------------------------------------------------------ Demon Hunter
+
+[[ability]]
+ids = [183752]
+name = "Disrupt"
+class = "Demon Hunter"
+kind = "interrupt"
+cd_s = 15        # seen in logs (Havoc, Vengeance, Devourer)
+
+[[ability]]
+ids = [179057]
+name = "Chaos Nova"
+class = "Demon Hunter"
+kind = "stop"
+cc = "stun"
+cd_s = 45
+
+[[ability]]
+ids = [211881]
+name = "Fel Eruption"
+class = "Demon Hunter"
+kind = "stop"
+cc = "stun"
+cd_s = 30
+
+[[ability]]
+ids = [217832]
+name = "Imprison"
+class = "Demon Hunter"
+kind = "stop"
+cc = "incapacitate"
+cd_s = 45
+
+[[ability]]
+ids = [202137]
+name = "Sigil of Silence"
+class = "Demon Hunter"
+kind = "stop"
+cc = "silence"
+cd_s = 90
+
+[[ability]]
+ids = [207684]
+name = "Sigil of Misery"
+class = "Demon Hunter"
+kind = "stop"
+cc = "fear"
+cd_s = 120
+
+[[ability]]
+ids = [202138]
+name = "Sigil of Chains"
+class = "Demon Hunter"
+specs = ["Vengeance"]
+kind = "stop"
+cc = "knock"
+cd_s = 90
+
+[[ability]]
+ids = [198589]
+name = "Blur"
+class = "Demon Hunter"
+specs = ["Havoc", "Devourer"]
+kind = "defensive"
+scope = "personal"
+cd_s = 60
+
+[[ability]]
+ids = [196718]
+name = "Darkness"
+class = "Demon Hunter"
+kind = "defensive"
+scope = "group"
+cd_s = 300
+
+# Metamorphosis (187827) is not listed as a Vengeance defensive: in Midnight
+# logs it's reused every ~34s (median of 207 reuses), so it isn't a button a
+# "did you press your defensive?" rule should expect.
+
+[[ability]]
+ids = [204021]
+name = "Fiery Brand"
+class = "Demon Hunter"
+specs = ["Vengeance"]
+kind = "defensive"
+scope = "personal"
+cd_s = 60
+
+[[ability]]
+ids = [278326]
+name = "Consume Magic"
+class = "Demon Hunter"
+kind = "dispel"
+types = ["magic"]
+target = "enemy"
+cd_s = 10
+
+[[ability]]
+ids = [1266617]
+name = "Soul Cleanse"
+class = "Demon Hunter"
+kind = "dispel"
+types = ["magic"]
+target = "friendly"
+cd_s = 8         # seen in logs (Havoc); new in Midnight, types/cooldown unconfirmed
+
+# ------------------------------------------------------------------ Druid
+
+[[ability]]
+ids = [106839, 93985]
+name = "Skull Bash"
+class = "Druid"
+specs = ["Feral", "Guardian"]
+kind = "interrupt"
+cd_s = 15        # interrupts as 93985: seen in logs (Feral, Guardian)
+
+[[ability]]
+ids = [78675, 97547]
+name = "Solar Beam"
+class = "Druid"
+specs = ["Balance"]
+kind = "interrupt"
+cd_s = 60
+
+[[ability]]
+ids = [5211]
+name = "Mighty Bash"
+class = "Druid"
+kind = "stop"
+cc = "stun"
+cd_s = 60
+
+[[ability]]
+ids = [99]
+name = "Incapacitating Roar"
+class = "Druid"
+kind = "stop"
+cc = "incapacitate"
+cd_s = 30
+
+[[ability]]
+ids = [132469]
+name = "Typhoon"
+class = "Druid"
+kind = "stop"
+cc = "knock"
+cd_s = 30
+
+[[ability]]
+ids = [22812]
+name = "Barkskin"
+class = "Druid"
+kind = "defensive"
+scope = "personal"
+cd_s = 60
+
+[[ability]]
+ids = [61336]
+name = "Survival Instincts"
+class = "Druid"
+specs = ["Feral", "Guardian"]
+kind = "defensive"
+scope = "personal"
+cd_s = 180
+
+[[ability]]
+ids = [102342]
+name = "Ironbark"
+class = "Druid"
+specs = ["Restoration"]
+kind = "defensive"
+scope = "external"
+cd_s = 90
+
+[[ability]]
+ids = [740]
+name = "Tranquility"
+class = "Druid"
+specs = ["Restoration"]
+kind = "defensive"
+scope = "group"
+cd_s = 180
+
+[[ability]]
+ids = [88423]
+name = "Nature's Cure"
+class = "Druid"
+specs = ["Restoration"]
+kind = "dispel"
+types = ["magic", "curse", "poison"]
+target = "friendly"
+cd_s = 8         # seen in logs
+
+[[ability]]
+ids = [2782]
+name = "Remove Corruption"
+class = "Druid"
+specs = ["Balance", "Feral", "Guardian"]
+kind = "dispel"
+types = ["curse", "poison"]
+target = "friendly"
+cd_s = 8         # seen in logs (Feral, Guardian)
+
+[[ability]]
+ids = [2908]
+name = "Soothe"
+class = "Druid"
+kind = "dispel"
+types = ["enrage"]
+target = "enemy"
+cd_s = 10
+
+# ------------------------------------------------------------------ Evoker
+
+[[ability]]
+ids = [351338]
+name = "Quell"
+class = "Evoker"
+kind = "interrupt"
+cd_s = 20
+
+[[ability]]
+ids = [368970]
+name = "Tail Swipe"
+class = "Evoker"
+kind = "stop"
+cc = "knock"
+cd_s = 180
+
+[[ability]]
+ids = [357214]
+name = "Wing Buffet"
+class = "Evoker"
+kind = "stop"
+cc = "knock"
+cd_s = 180
+
+[[ability]]
+ids = [360806]
+name = "Sleep Walk"
+class = "Evoker"
+kind = "stop"
+cc = "disorient"
+cd_s = 15
+
+[[ability]]
+ids = [363916]
+name = "Obsidian Scales"
+class = "Evoker"
+kind = "defensive"
+scope = "personal"
+cd_s = 90
+
+[[ability]]
+ids = [374348]
+name = "Renewing Blaze"
+class = "Evoker"
+kind = "defensive"
+scope = "personal"
+cd_s = 90
+
+[[ability]]
+ids = [374227]
+name = "Zephyr"
+class = "Evoker"
+kind = "defensive"
+scope = "group"
+cd_s = 120
+
+[[ability]]
+ids = [357170]
+name = "Time Dilation"
+class = "Evoker"
+specs = ["Preservation"]
+kind = "defensive"
+scope = "external"
+cd_s = 60
+
+[[ability]]
+ids = [363534]
+name = "Rewind"
+class = "Evoker"
+specs = ["Preservation"]
+kind = "defensive"
+scope = "group"
+cd_s = 240
+
+[[ability]]
+ids = [360823]
+name = "Naturalize"
+class = "Evoker"
+specs = ["Preservation"]
+kind = "dispel"
+types = ["magic", "poison"]
+target = "friendly"
+cd_s = 8
+
+[[ability]]
+ids = [365585]
+name = "Expunge"
+class = "Evoker"
+specs = ["Devastation", "Augmentation"]
+kind = "dispel"
+types = ["poison"]
+target = "friendly"
+cd_s = 8
+
+[[ability]]
+ids = [374251]
+name = "Cauterizing Flame"
+class = "Evoker"
+kind = "dispel"
+types = ["curse", "poison", "disease", "bleed"]
+target = "friendly"
+cd_s = 60
+
+# ------------------------------------------------------------------ Hunter
+
+[[ability]]
+ids = [147362]
+name = "Counter Shot"
+class = "Hunter"
+specs = ["Beast Mastery", "Marksmanship"]
+kind = "interrupt"
+cd_s = 24        # seen in logs (Beast Mastery)
+
+[[ability]]
+ids = [187707]
+name = "Muzzle"
+class = "Hunter"
+specs = ["Survival"]
+kind = "interrupt"
+cd_s = 15
+
+[[ability]]
+ids = [19577]
+name = "Intimidation"
+class = "Hunter"
+kind = "stop"
+cc = "stun"
+cd_s = 60
+
+[[ability]]
+ids = [109248]
+name = "Binding Shot"
+class = "Hunter"
+kind = "stop"
+cc = "stun"
+cd_s = 45
+
+[[ability]]
+ids = [213691]
+name = "Scatter Shot"
+class = "Hunter"
+kind = "stop"
+cc = "incapacitate"
+cd_s = 30
+
+[[ability]]
+ids = [186265]
+name = "Aspect of the Turtle"
+class = "Hunter"
+kind = "defensive"
+scope = "personal"
+cd_s = 180
+
+[[ability]]
+ids = [264735]
+name = "Survival of the Fittest"
+class = "Hunter"
+kind = "defensive"
+scope = "personal"
+cd_s = 90
+
+[[ability]]
+ids = [109304]
+name = "Exhilaration"
+class = "Hunter"
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [19801]
+name = "Tranquilizing Shot"
+class = "Hunter"
+kind = "dispel"
+types = ["magic", "enrage"]
+target = "enemy"
+cd_s = 10        # seen in logs
+
+# ------------------------------------------------------------------ Mage
+
+[[ability]]
+ids = [2139]
+name = "Counterspell"
+class = "Mage"
+kind = "interrupt"
+cd_s = 24        # seen in logs (Arcane, Fire, Frost)
+
+[[ability]]
+ids = [31661]
+name = "Dragon's Breath"
+class = "Mage"
+kind = "stop"
+cc = "disorient"
+cd_s = 45
+
+[[ability]]
+ids = [157981]
+name = "Blast Wave"
+class = "Mage"
+kind = "stop"
+cc = "knock"
+cd_s = 30
+
+[[ability]]
+ids = [113724]
+name = "Ring of Frost"
+class = "Mage"
+kind = "stop"
+cc = "incapacitate"
+cd_s = 45
+
+[[ability]]
+ids = [45438]
+name = "Ice Block"
+class = "Mage"
+kind = "defensive"
+scope = "personal"
+cd_s = 240
+
+[[ability]]
+ids = [414658]
+name = "Ice Cold"
+class = "Mage"
+kind = "defensive"
+scope = "personal"
+cd_s = 240       # talent that replaces Ice Block
+
+[[ability]]
+ids = [342245]
+name = "Alter Time"
+class = "Mage"
+kind = "defensive"
+scope = "personal"
+cd_s = 60
+
+[[ability]]
+ids = [55342]
+name = "Mirror Image"
+class = "Mage"
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [110959]
+name = "Greater Invisibility"
+class = "Mage"
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [475]
+name = "Remove Curse"
+class = "Mage"
+kind = "dispel"
+types = ["curse"]
+target = "friendly"
+cd_s = 8         # seen in logs
+
+[[ability]]
+ids = [30449]
+name = "Spellsteal"
+class = "Mage"
+kind = "dispel"
+types = ["magic"]
+target = "enemy"
+cd_s = 1
+
+# ------------------------------------------------------------------ Monk
+
+[[ability]]
+ids = [116705]
+name = "Spear Hand Strike"
+class = "Monk"
+kind = "interrupt"
+cd_s = 15        # seen in logs (Brewmaster, Windwalker)
+
+[[ability]]
+ids = [119381]
+name = "Leg Sweep"
+class = "Monk"
+kind = "stop"
+cc = "stun"
+cd_s = 60
+
+[[ability]]
+ids = [115078]
+name = "Paralysis"
+class = "Monk"
+kind = "stop"
+cc = "incapacitate"
+cd_s = 45
+
+[[ability]]
+ids = [116844]
+name = "Ring of Peace"
+class = "Monk"
+kind = "stop"
+cc = "knock"
+cd_s = 45
+
+[[ability]]
+ids = [115203]
+name = "Fortifying Brew"
+class = "Monk"
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [122783]
+name = "Diffuse Magic"
+class = "Monk"
+kind = "defensive"
+scope = "personal"
+cd_s = 90
+
+[[ability]]
+ids = [122470]
+name = "Touch of Karma"
+class = "Monk"
+specs = ["Windwalker"]
+kind = "defensive"
+scope = "personal"
+cd_s = 90
+
+[[ability]]
+ids = [116849]
+name = "Life Cocoon"
+class = "Monk"
+specs = ["Mistweaver"]
+kind = "defensive"
+scope = "external"
+cd_s = 120
+
+[[ability]]
+ids = [115310]
+name = "Revival"
+class = "Monk"
+specs = ["Mistweaver"]
+kind = "defensive"
+scope = "group"
+cd_s = 180
+
+[[ability]]
+ids = [115310]
+name = "Revival"
+class = "Monk"
+specs = ["Mistweaver"]
+kind = "dispel"
+types = ["magic", "poison", "disease"]
+target = "friendly"
+cd_s = 180       # group heal that also dispels everyone: seen in logs
+
+[[ability]]
+ids = [115450]
+name = "Detox"
+class = "Monk"
+specs = ["Mistweaver"]
+kind = "dispel"
+types = ["magic", "poison", "disease"]
+target = "friendly"
+cd_s = 8         # seen in logs
+
+[[ability]]
+ids = [218164]
+name = "Detox"
+class = "Monk"
+specs = ["Brewmaster", "Windwalker"]
+kind = "dispel"
+types = ["poison", "disease"]
+target = "friendly"
+cd_s = 8         # seen in logs
+
+# ------------------------------------------------------------------ Paladin
+
+[[ability]]
+ids = [96231]
+name = "Rebuke"
+class = "Paladin"
+kind = "interrupt"
+cd_s = 15        # seen in logs (Protection, Retribution)
+
+[[ability]]
+ids = [31935]
+name = "Avenger's Shield"
+class = "Paladin"
+specs = ["Protection"]
+kind = "interrupt"
+cd_s = 15        # seen in logs
+
+[[ability]]
+ids = [853]
+name = "Hammer of Justice"
+class = "Paladin"
+kind = "stop"
+cc = "stun"
+cd_s = 45
+
+[[ability]]
+ids = [115750]
+name = "Blinding Light"
+class = "Paladin"
+kind = "stop"
+cc = "disorient"
+cd_s = 90
+
+[[ability]]
+ids = [642]
+name = "Divine Shield"
+class = "Paladin"
+kind = "defensive"
+scope = "personal"
+cd_s = 300
+
+[[ability]]
+ids = [498]
+name = "Divine Protection"
+class = "Paladin"
+specs = ["Holy", "Retribution"]
+kind = "defensive"
+scope = "personal"
+cd_s = 60
+
+[[ability]]
+ids = [31850]
+name = "Ardent Defender"
+class = "Paladin"
+specs = ["Protection"]
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [86659]
+name = "Guardian of Ancient Kings"
+class = "Paladin"
+specs = ["Protection"]
+kind = "defensive"
+scope = "personal"
+cd_s = 300       # base; talents cut it a lot (median reuse in logs ~100s)
+cdr = true
+
+[[ability]]
+ids = [1022]
+name = "Blessing of Protection"
+class = "Paladin"
+kind = "defensive"
+scope = "external"
+cd_s = 300
+
+[[ability]]
+ids = [6940]
+name = "Blessing of Sacrifice"
+class = "Paladin"
+kind = "defensive"
+scope = "external"
+cd_s = 120
+
+[[ability]]
+ids = [633]
+name = "Lay on Hands"
+class = "Paladin"
+kind = "defensive"
+scope = "external"
+cd_s = 600
+
+[[ability]]
+ids = [31821]
+name = "Aura Mastery"
+class = "Paladin"
+specs = ["Holy"]
+kind = "defensive"
+scope = "group"
+cd_s = 180
+
+[[ability]]
+ids = [4987]
+name = "Cleanse"
+class = "Paladin"
+specs = ["Holy"]
+kind = "dispel"
+types = ["magic", "poison", "disease"]
+target = "friendly"
+cd_s = 8         # seen in logs
+
+[[ability]]
+ids = [213644]
+name = "Cleanse Toxins"
+class = "Paladin"
+specs = ["Protection", "Retribution"]
+kind = "dispel"
+types = ["poison", "disease"]
+target = "friendly"
+cd_s = 8         # seen in logs (Retribution)
+
+# ------------------------------------------------------------------ Priest
+
+[[ability]]
+ids = [15487, 220543]
+name = "Silence"
+class = "Priest"
+specs = ["Shadow"]
+kind = "interrupt"
+cd_s = 45        # interrupts as 220543: seen in logs
+
+[[ability]]
+ids = [8122]
+name = "Psychic Scream"
+class = "Priest"
+kind = "stop"
+cc = "fear"
+cd_s = 45
+
+[[ability]]
+ids = [64044]
+name = "Psychic Horror"
+class = "Priest"
+specs = ["Shadow"]
+kind = "stop"
+cc = "stun"
+cd_s = 45
+
+[[ability]]
+ids = [88625]
+name = "Holy Word: Chastise"
+class = "Priest"
+specs = ["Holy"]
+kind = "stop"
+cc = "incapacitate"
+cd_s = 60        # base; Smite casts shorten it (median reuse in logs ~29s)
+cdr = true
+
+[[ability]]
+ids = [47585]
+name = "Dispersion"
+class = "Priest"
+specs = ["Shadow"]
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [19236]
+name = "Desperate Prayer"
+class = "Priest"
+kind = "defensive"
+scope = "personal"
+cd_s = 90
+
+[[ability]]
+ids = [33206]
+name = "Pain Suppression"
+class = "Priest"
+specs = ["Discipline"]
+kind = "defensive"
+scope = "external"
+cd_s = 180
+
+[[ability]]
+ids = [47788]
+name = "Guardian Spirit"
+class = "Priest"
+specs = ["Holy"]
+kind = "defensive"
+scope = "external"
+cd_s = 180
+
+[[ability]]
+ids = [62618]
+name = "Power Word: Barrier"
+class = "Priest"
+specs = ["Discipline"]
+kind = "defensive"
+scope = "group"
+cd_s = 180
+
+[[ability]]
+ids = [64843]
+name = "Divine Hymn"
+class = "Priest"
+specs = ["Holy"]
+kind = "defensive"
+scope = "group"
+cd_s = 180
+
+[[ability]]
+ids = [15286]
+name = "Vampiric Embrace"
+class = "Priest"
+specs = ["Shadow"]
+kind = "defensive"
+scope = "group"
+cd_s = 120
+
+[[ability]]
+ids = [527]
+name = "Purify"
+class = "Priest"
+specs = ["Discipline", "Holy"]
+kind = "dispel"
+types = ["magic", "disease"]
+target = "friendly"
+cd_s = 8         # seen in logs
+
+[[ability]]
+ids = [213634]
+name = "Purify Disease"
+class = "Priest"
+specs = ["Shadow"]
+kind = "dispel"
+types = ["disease"]
+target = "friendly"
+cd_s = 8
+
+[[ability]]
+ids = [32375, 32592]
+name = "Mass Dispel"
+class = "Priest"
+kind = "dispel"
+types = ["magic"]
+target = "friendly"
+cd_s = 120       # seen in logs; 32592 is the effect on enemies
+
+[[ability]]
+ids = [528]
+name = "Dispel Magic"
+class = "Priest"
+kind = "dispel"
+types = ["magic"]
+target = "enemy"
+cd_s = 1
+
+# ------------------------------------------------------------------ Rogue
+
+[[ability]]
+ids = [1766]
+name = "Kick"
+class = "Rogue"
+kind = "interrupt"
+cd_s = 15        # seen in logs (Subtlety)
+
+[[ability]]
+ids = [408]
+name = "Kidney Shot"
+class = "Rogue"
+kind = "stop"
+cc = "stun"
+cd_s = 30
+
+[[ability]]
+ids = [1776]
+name = "Gouge"
+class = "Rogue"
+kind = "stop"
+cc = "incapacitate"
+cd_s = 20
+
+[[ability]]
+ids = [2094]
+name = "Blind"
+class = "Rogue"
+kind = "stop"
+cc = "disorient"
+cd_s = 120
+
+[[ability]]
+ids = [31224]
+name = "Cloak of Shadows"
+class = "Rogue"
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [5277]
+name = "Evasion"
+class = "Rogue"
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [1966]
+name = "Feint"
+class = "Rogue"
+kind = "defensive"
+scope = "personal"
+cd_s = 15
+
+[[ability]]
+ids = [185311]
+name = "Crimson Vial"
+class = "Rogue"
+kind = "defensive"
+scope = "personal"
+cd_s = 30
+
+[[ability]]
+ids = [5938]
+name = "Shiv"
+class = "Rogue"
+kind = "dispel"
+types = ["enrage"]
+target = "enemy"
+cd_s = 25        # seen in logs
+
+# ------------------------------------------------------------------ Shaman
+
+[[ability]]
+ids = [57994]
+name = "Wind Shear"
+class = "Shaman"
+kind = "interrupt"
+cd_s = 12        # seen in logs (all specs)
+
+[[ability]]
+ids = [192058]
+name = "Capacitor Totem"
+class = "Shaman"
+kind = "stop"
+cc = "stun"
+cd_s = 60
+
+[[ability]]
+ids = [51490]
+name = "Thunderstorm"
+class = "Shaman"
+kind = "stop"
+cc = "knock"
+cd_s = 30
+
+[[ability]]
+ids = [51514]
+name = "Hex"
+class = "Shaman"
+kind = "stop"
+cc = "incapacitate"
+cd_s = 30
+
+[[ability]]
+ids = [108271]
+name = "Astral Shift"
+class = "Shaman"
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [98008]
+name = "Spirit Link Totem"
+class = "Shaman"
+specs = ["Restoration"]
+kind = "defensive"
+scope = "group"
+cd_s = 180
+
+[[ability]]
+ids = [108280]
+name = "Healing Tide Totem"
+class = "Shaman"
+specs = ["Restoration"]
+kind = "defensive"
+scope = "group"
+cd_s = 180
+
+[[ability]]
+ids = [77130]
+name = "Purify Spirit"
+class = "Shaman"
+specs = ["Restoration"]
+kind = "dispel"
+types = ["magic", "curse"]
+target = "friendly"
+cd_s = 8         # seen in logs
+
+[[ability]]
+ids = [51886]
+name = "Cleanse Spirit"
+class = "Shaman"
+specs = ["Elemental", "Enhancement"]
+kind = "dispel"
+types = ["curse"]
+target = "friendly"
+cd_s = 8
+
+[[ability]]
+ids = [383013, 383015]
+name = "Poison Cleansing Totem"
+class = "Shaman"
+kind = "dispel"
+types = ["poison"]
+target = "friendly"
+cd_s = 45        # dispels as 383015 ("Poison Cleansing"): seen in logs
+
+[[ability]]
+ids = [370]
+name = "Purge"
+class = "Shaman"
+kind = "dispel"
+types = ["magic"]
+target = "enemy"
+cd_s = 1         # seen in logs
+
+# ------------------------------------------------------------------ Warlock
+
+[[ability]]
+ids = [19647, 119910]
+name = "Spell Lock"
+class = "Warlock"
+specs = ["Affliction", "Destruction"]
+kind = "interrupt"
+cd_s = 24        # Felhunter; 119910 = cast through Command Demon
+
+[[ability]]
+ids = [89766, 119914]
+name = "Axe Toss"
+class = "Warlock"
+specs = ["Demonology"]
+kind = "interrupt"
+cd_s = 30        # Felguard; 119914 = cast through Command Demon
+
+[[ability]]
+ids = [30283]
+name = "Shadowfury"
+class = "Warlock"
+kind = "stop"
+cc = "stun"
+cd_s = 60
+
+[[ability]]
+ids = [6789]
+name = "Mortal Coil"
+class = "Warlock"
+kind = "stop"
+cc = "fear"
+cd_s = 45
+
+[[ability]]
+ids = [104773]
+name = "Unending Resolve"
+class = "Warlock"
+kind = "defensive"
+scope = "personal"
+cd_s = 180
+
+[[ability]]
+ids = [108416]
+name = "Dark Pact"
+class = "Warlock"
+kind = "defensive"
+scope = "personal"
+cd_s = 60
+
+[[ability]]
+ids = [89808, 119905]
+name = "Singe Magic"
+class = "Warlock"
+kind = "dispel"
+types = ["magic"]
+target = "friendly"
+cd_s = 15        # Imp; 119905 = cast through Command Demon
+
+[[ability]]
+ids = [19505]
+name = "Devour Magic"
+class = "Warlock"
+kind = "dispel"
+types = ["magic"]
+target = "enemy"
+cd_s = 15        # Felhunter
+
+# ------------------------------------------------------------------ Warrior
+
+[[ability]]
+ids = [6552]
+name = "Pummel"
+class = "Warrior"
+kind = "interrupt"
+cd_s = 15        # seen in logs (all specs)
+
+[[ability]]
+ids = [386071]
+name = "Disrupting Shout"
+class = "Warrior"
+specs = ["Protection"]
+kind = "interrupt"
+cd_s = 90        # seen in logs
+
+[[ability]]
+ids = [107570]
+name = "Storm Bolt"
+class = "Warrior"
+kind = "stop"
+cc = "stun"
+cd_s = 30
+
+[[ability]]
+ids = [46968]
+name = "Shockwave"
+class = "Warrior"
+kind = "stop"
+cc = "stun"
+cd_s = 40
+
+[[ability]]
+ids = [5246]
+name = "Intimidating Shout"
+class = "Warrior"
+kind = "stop"
+cc = "fear"
+cd_s = 90
+
+[[ability]]
+ids = [118038]
+name = "Die by the Sword"
+class = "Warrior"
+specs = ["Arms"]
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [184364]
+name = "Enraged Regeneration"
+class = "Warrior"
+specs = ["Fury"]
+kind = "defensive"
+scope = "personal"
+cd_s = 120
+
+[[ability]]
+ids = [871]
+name = "Shield Wall"
+class = "Warrior"
+specs = ["Protection"]
+kind = "defensive"
+scope = "personal"
+cd_s = 180
+
+[[ability]]
+ids = [12975]
+name = "Last Stand"
+class = "Warrior"
+specs = ["Protection"]
+kind = "defensive"
+scope = "personal"
+cd_s = 180
+
+[[ability]]
+ids = [97462]
+name = "Rallying Cry"
+class = "Warrior"
+kind = "defensive"
+scope = "group"
+cd_s = 180
+
+[[ability]]
+ids = [23920]
+name = "Spell Reflection"
+class = "Warrior"
+kind = "defensive"
+scope = "personal"
+cd_s = 25
+
+# ------------------------------------------------------------------ Racial
+
+[[ability]]
+ids = [28730, 25046, 50613, 69179, 80483, 129597, 155145, 202719, 232633, 32747]
+name = "Arcane Torrent"
+class = "Racial"
+kind = "interrupt"
+cd_s = 120       # Blood Elf; one ID per class. Interrupts as 32747: seen in logs

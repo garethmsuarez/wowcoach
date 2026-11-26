@@ -86,6 +86,102 @@ enum SeasonCmd {
     Suggest(SuggestArgs),
 }
 
+#[derive(Subcommand)]
+enum ClassesCmd {
+    /// Validate the class table; with logs, check it against what players did
+    Check {
+        /// Raw combat logs to audit against
+        logs: Vec<PathBuf>,
+        /// Table file (default: the built-in data/classes.toml)
+        #[arg(long)]
+        table: Option<PathBuf>,
+        /// Also check every spell ID and name against the Blizzard spell API
+        #[cfg(feature = "blizzard")]
+        #[arg(long)]
+        live: bool,
+        /// API region for --live
+        #[cfg(feature = "blizzard")]
+        #[arg(long, default_value = "us")]
+        region: String,
+    },
+}
+
+fn classes_check(
+    table: Option<PathBuf>,
+    logs: &[PathBuf],
+    live: Option<&str>,
+) -> anyhow::Result<()> {
+    use wowcoach_core::classes::{Audit, ClassData};
+    let data = match &table {
+        Some(p) => ClassData::load(p)?,
+        None => ClassData::embedded(),
+    };
+    println!("{}", data.summary());
+    let mut failed = false;
+
+    #[cfg(feature = "blizzard")]
+    if let Some(region) = live {
+        let (Ok(id), Ok(secret)) = (
+            std::env::var("BLIZZARD_CLIENT_ID"),
+            std::env::var("BLIZZARD_CLIENT_SECRET"),
+        ) else {
+            anyhow::bail!(
+                "--live needs BLIZZARD_CLIENT_ID and BLIZZARD_CLIENT_SECRET (env or ./.env)"
+            );
+        };
+        let client = wowcoach_core::blizzard::net::Client::connect(&id, &secret, region)?;
+        let spells: Vec<(u32, String)> = data
+            .abilities
+            .iter()
+            .flat_map(|a| a.ids.iter().map(|id| (*id, a.name.clone())))
+            .collect();
+        eprintln!(
+            "Checking {} spell IDs against the Blizzard API...",
+            spells.len()
+        );
+        let (unknown, renamed) = wowcoach_core::blizzard::check_spells(&client, &spells)?;
+        if !unknown.is_empty() {
+            println!(
+                "Not in the spell API ({}): effect-only IDs can be absent, anything else is a wrong ID:",
+                unknown.len()
+            );
+            for u in &unknown {
+                println!("  {u}");
+            }
+        }
+        if !renamed.is_empty() {
+            println!("Name differs from the API ({}):", renamed.len());
+            for r in &renamed {
+                println!("  {r}");
+            }
+        }
+        if unknown.is_empty() && renamed.is_empty() {
+            println!("All {} spell IDs exist with matching names.", spells.len());
+        }
+    }
+    #[cfg(not(feature = "blizzard"))]
+    let _ = live;
+
+    if !logs.is_empty() {
+        let mut audit = Audit::default();
+        for log in logs {
+            let file =
+                std::fs::File::open(log).with_context(|| format!("opening {}", log.display()))?;
+            wowcoach_core::combatlog::stream(
+                std::io::BufReader::with_capacity(1 << 20, file),
+                |e| audit.feed(&e),
+            )?;
+        }
+        let r = audit.report(&data);
+        print!("{r}");
+        failed |= !r.missing_interrupts.is_empty();
+    }
+    if failed {
+        anyhow::bail!("the class table is missing interrupts that players used");
+    }
+    Ok(())
+}
+
 #[derive(clap::Args)]
 struct SuggestArgs {
     /// Your raw combat logs
@@ -446,6 +542,11 @@ enum Cmd {
         #[command(subcommand)]
         cmd: SeasonCmd,
     },
+    /// Class abilities: interrupts, cast-stopping CC, defensives, dispels
+    Classes {
+        #[command(subcommand)]
+        cmd: ClassesCmd,
+    },
     /// Write the default config (thresholds and season pack overrides)
     InitConfig {
         #[arg(short, long, default_value = "wowcoach.toml")]
@@ -541,6 +642,23 @@ fn main() -> anyhow::Result<()> {
         Cmd::Season {
             cmd: SeasonCmd::Suggest(args),
         } => season_suggest(args)?,
+        Cmd::Classes {
+            cmd:
+                ClassesCmd::Check {
+                    logs,
+                    table,
+                    #[cfg(feature = "blizzard")]
+                    live,
+                    #[cfg(feature = "blizzard")]
+                    region,
+                },
+        } => {
+            #[cfg(feature = "blizzard")]
+            let live = live.then_some(region.as_str());
+            #[cfg(not(feature = "blizzard"))]
+            let live = None;
+            classes_check(table, &logs, live)?
+        }
         Cmd::Analyze { log, o } => {
             let cfg = o.load_config()?;
             let file =

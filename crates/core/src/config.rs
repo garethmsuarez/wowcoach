@@ -28,8 +28,8 @@ heuristic_min_share = 0.02  # enemy spell must be >=2% of group damage taken to 
 lust_spell_ids = [2825, 32182, 80353, 264667, 272678, 390386]
 # Healthstone, Demonic Healthstone
 healthstone_spell_ids = [6262, 452930]
-# Add the current expansion's healing potion spell IDs here
-potion_spell_ids = []
+# Healing potions (Midnight): Silvermoon, Concentrated Silvermoon, Potent, Invigorating
+potion_spell_ids = [1234768, 1295247, 1262857, 1238009]
 # Absorbs that only delay damage (not healing): Stagger, Purgatory
 absorb_exclude_spell_ids = [115069, 114556]
 # The delayed damage those produce later; excluded from damage-taken totals
@@ -91,7 +91,7 @@ impl Default for General {
             heuristic_min_share: 0.02,
             lust_spell_ids: vec![2825, 32182, 80353, 264667, 272678, 390386],
             healthstone_spell_ids: vec![6262, 452930],
-            potion_spell_ids: vec![],
+            potion_spell_ids: vec![1234768, 1295247, 1262857, 1238009],
             absorb_exclude_spell_ids: vec![115069, 114556],
             deferred_damage_spell_ids: vec![124255, 324393],
         }

@@ -153,7 +153,7 @@ Lookups are global by spell ID across the whole pack, not scoped to the current 
      - times the debuff was dispelled. This needs a new per-spell dispel count in `analysis.rs`, taken from `Dispel.extra`.
      - share of damage taken by the tank, and the biggest single hit.
    - Prints a review table. `--write` records candidates in `suggested` with an evidence note and never touches `tags`.
-4. **Class tables + `classes check`.**
+4. **Class tables + `classes check`.** *(done: 146 abilities for 13 classes. Every interrupt used in the 12 local logs is listed (119 players), and every ID was checked against the spell API. Midnight findings: the Devourer DH spec; Soul Cleanse, a DH friendly dispel; Asphyxiate is one ID (221562) for all DK specs; Vengeance Metamorphosis is reused every ~34s, so it's not listed as a defensive; delve companion interrupts aren't class abilities. Warlock pet spells are unconfirmed: the spell API doesn't list pet spells and the logs had no warlocks. Midnight healing potion IDs are now in the default `potion_spell_ids`)*
    - Hand-curated `data/classes.toml` for all 13 classes.
    - `wowcoach classes check` confirms every ID exists and its name matches via `spell/{id}`, which works for player spells.
    - A log check: every `SPELL_INTERRUPT` source spell seen in `test logs/` (run locally) and in the anonymised fixtures must be in the table.

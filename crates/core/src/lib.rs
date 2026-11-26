@@ -5,6 +5,7 @@
 pub mod analysis;
 #[cfg(feature = "blizzard")]
 pub mod blizzard;
+pub mod classes;
 pub mod combatlog;
 pub mod config;
 pub mod dotenv;

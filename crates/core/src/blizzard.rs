@@ -505,10 +505,49 @@ pub fn merge(
     sum
 }
 
+// ------------------------------------------------------------ spell check
+
+/// The API has no such object (HTTP 404), as opposed to a network failure.
+#[derive(Debug)]
+pub struct NotFound(pub String);
+
+impl std::fmt::Display for NotFound {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "not found: {}", self.0)
+    }
+}
+
+impl std::error::Error for NotFound {}
+
+/// Check (id, expected name) pairs against the spell API. Returns
+/// (unknown IDs, name mismatches). NPC spells 404 by design; player spells
+/// should all exist, except effect-only IDs some abilities are logged under.
+pub fn check_spells(
+    api: &dyn Api,
+    spells: &[(u32, String)],
+) -> anyhow::Result<(Vec<String>, Vec<String>)> {
+    let (mut unknown, mut renamed) = (vec![], vec![]);
+    for (id, want) in spells {
+        match api.get(&format!("/data/wow/spell/{id}"), Namespace::Static) {
+            Ok(v) => {
+                let got = v["name"].as_str().unwrap_or_default();
+                if !got.eq_ignore_ascii_case(want) {
+                    renamed.push(format!(
+                        "{id}: the API calls it {got:?}, the table {want:?}"
+                    ));
+                }
+            }
+            Err(e) if e.is::<NotFound>() => unknown.push(format!("{id} ({want})")),
+            Err(e) => return Err(e),
+        }
+    }
+    Ok((unknown, renamed))
+}
+
 // ----------------------------------------------------------------- network
 
 pub mod net {
-    use super::{Api, Namespace};
+    use super::{Api, Namespace, NotFound};
     use anyhow::Context;
     use serde_json::Value;
 
@@ -545,15 +584,18 @@ pub mod net {
                 Namespace::Dynamic => format!("dynamic-{}", self.region),
             };
             let url = format!("https://{}.api.blizzard.com{path}", self.region);
-            self.agent
+            match self
+                .agent
                 .get(&url)
                 .set("Authorization", &format!("Bearer {}", self.token))
                 .set("Battlenet-Namespace", &ns)
                 .query("locale", "en_US")
                 .call()
-                .with_context(|| format!("GET {path}"))?
-                .into_json()
-                .with_context(|| format!("decoding {path}"))
+            {
+                Ok(r) => r.into_json().with_context(|| format!("decoding {path}")),
+                Err(ureq::Error::Status(404, _)) => Err(NotFound(path.to_string()).into()),
+                Err(e) => Err(e).with_context(|| format!("GET {path}")),
+            }
         }
     }
 }
