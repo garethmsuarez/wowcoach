@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Planned milestones (workspace split, Blizzard-sourced season data, M+ coaching, history, hosted service) are in `docs/ROADMAP.md`. Check it before starting feature work.
+
 ## Commands
 
 Single Rust binary crate (edition 2024, needs Rust ≥ 1.85). CI (`.github/workflows/ci.yml`) runs all of these on every PR; keep them green:
