@@ -293,7 +293,9 @@ impl From<&FightReport> for FightEvidence {
 
 /// Bump when analysis changes what goes into `FightEvidence`, so cached
 /// evidence from older versions is ignored.
-pub const EVIDENCE_VERSION: u32 = 1;
+/// v2: Warcraft Logs NPC instances became separate units (casts of several
+/// mobs of the same type were merged before).
+pub const EVIDENCE_VERSION: u32 = 2;
 
 /// Everything learned from a set of fights, keyed by (instance map ID, spell ID).
 #[derive(Clone, Debug, Default)]

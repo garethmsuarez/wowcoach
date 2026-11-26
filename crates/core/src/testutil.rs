@@ -104,6 +104,7 @@ impl Log {
             owner_guid: "0000000000000000".into(),
             hp,
             max_hp,
+            pos: None,
         });
         self.push(
             ts,

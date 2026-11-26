@@ -7,8 +7,10 @@
 # Skull Bash is cast as 106839 but interrupts as 93985). `specs` empty = every
 # spec of the class. class = "Racial" for racial abilities.
 #
-#   kind = "interrupt"                      cd_s
+#   kind = "interrupt"  range_yd (5 = melee)  cd_s
 #   kind = "stop"       cc = stun | incapacitate | disorient | fear | knock | silence
+#                       aura_ids = the debuff(s) it shows up as on the target,
+#                       when they differ from ids (Shockwave: cast 46968, stun 132168)
 #   kind = "defensive"  scope = personal | external | group
 #   kind = "dispel"     types = [magic, curse, poison, disease, bleed, enrage]
 #                       target = friendly | enemy
@@ -19,10 +21,30 @@
 # available?" rules a base cooldown errs on the side of not blaming players.
 # Validate: wowcoach classes check [--live] [LOGS...]
 # "seen in logs" = confirmed by SPELL_INTERRUPT / SPELL_DISPEL in local logs, 2026-11.
-# Warlock pet abilities are unconfirmed: the spell API doesn't list pet spells
-# and the logs had no warlocks.
+# Warlock pet abilities: the spell API doesn't list pet spells. Spell Lock and
+# Singe Magic (132411) are confirmed from public keys (`classes check --wcl`);
+# Axe Toss and Devour Magic are not yet.
 
 # ------------------------------------------------------------------ Death Knight
+
+[[ability]]
+ids = [49576]
+name = "Death Grip"
+class = "Death Knight"
+kind = "stop"
+cc = "knock"
+cd_s = 25
+aura_ids = [51399]  # pulling the target ends its cast; seen in logs (Blood)
+
+[[ability]]
+ids = [279302]
+name = "Frostwyrm's Fury"
+class = "Death Knight"
+specs = ["Frost"]
+kind = "stop"
+cc = "stun"
+cd_s = 90
+aura_ids = [377048]  # the Absolute Zero talent's stun; seen in logs
 
 [[ability]]
 ids = [47528]
@@ -30,6 +52,7 @@ name = "Mind Freeze"
 class = "Death Knight"
 kind = "interrupt"
 cd_s = 15        # seen in logs (Blood, Frost)
+range_yd = 15
 
 [[ability]]
 ids = [221562]
@@ -47,6 +70,7 @@ specs = ["Blood"]
 kind = "stop"
 cc = "knock"
 cd_s = 120
+aura_ids = [108199, 374776]  # 374776 = the Tightening Grasp silence; seen in public keys
 
 [[ability]]
 ids = [207167]
@@ -87,7 +111,8 @@ class = "Death Knight"
 specs = ["Blood"]
 kind = "defensive"
 scope = "personal"
-cd_s = 90
+cd_s = 90        # base; median reuse ~34s in own logs and public keys
+cdr = true
 
 [[ability]]
 ids = [49039]
@@ -100,11 +125,32 @@ cd_s = 120
 # ------------------------------------------------------------------ Demon Hunter
 
 [[ability]]
+ids = [191427]
+name = "Metamorphosis"
+class = "Demon Hunter"
+specs = ["Havoc"]
+kind = "stop"
+cc = "stun"
+cd_s = 120
+cdr = true
+aura_ids = [200166]  # stun on landing; seen in logs
+
+[[ability]]
+ids = [1234195]
+name = "Void Nova"
+class = "Demon Hunter"
+specs = ["Devourer"]
+kind = "stop"
+cc = "stun"
+cd_s = 60        # new in Midnight; ends casts like a stun, shortest reuse in logs 65s
+
+[[ability]]
 ids = [183752]
 name = "Disrupt"
 class = "Demon Hunter"
 kind = "interrupt"
 cd_s = 15        # seen in logs (Havoc, Vengeance, Devourer)
+range_yd = 10
 
 [[ability]]
 ids = [179057]
@@ -145,6 +191,7 @@ class = "Demon Hunter"
 kind = "stop"
 cc = "fear"
 cd_s = 120
+aura_ids = [207685]  # seen in logs
 
 [[ability]]
 ids = [202138]
@@ -154,6 +201,7 @@ specs = ["Vengeance"]
 kind = "stop"
 cc = "knock"
 cd_s = 90
+aura_ids = [204843]  # seen in logs
 
 [[ability]]
 ids = [198589]
@@ -206,12 +254,23 @@ cd_s = 8         # seen in logs (Havoc); new in Midnight, types/cooldown unconfi
 # ------------------------------------------------------------------ Druid
 
 [[ability]]
+ids = [1822]
+name = "Rake"
+class = "Druid"
+specs = ["Feral"]
+kind = "stop"
+cc = "stun"
+cd_s = 1         # stuns only from stealth, so availability can't be inferred
+aura_ids = [163505]  # seen in logs
+
+[[ability]]
 ids = [106839, 93985]
 name = "Skull Bash"
 class = "Druid"
 specs = ["Feral", "Guardian"]
 kind = "interrupt"
 cd_s = 15        # interrupts as 93985: seen in logs (Feral, Guardian)
+range_yd = 13        # charges to the target
 
 [[ability]]
 ids = [78675, 97547]
@@ -220,6 +279,7 @@ class = "Druid"
 specs = ["Balance"]
 kind = "interrupt"
 cd_s = 60
+range_yd = 40
 
 [[ability]]
 ids = [5211]
@@ -244,6 +304,7 @@ class = "Druid"
 kind = "stop"
 cc = "knock"
 cd_s = 30
+aura_ids = [61391]  # seen in logs
 
 [[ability]]
 ids = [22812]
@@ -317,6 +378,7 @@ name = "Quell"
 class = "Evoker"
 kind = "interrupt"
 cd_s = 20
+range_yd = 25
 
 [[ability]]
 ids = [368970]
@@ -422,6 +484,7 @@ class = "Hunter"
 specs = ["Beast Mastery", "Marksmanship"]
 kind = "interrupt"
 cd_s = 24        # seen in logs (Beast Mastery)
+range_yd = 40
 
 [[ability]]
 ids = [187707]
@@ -430,6 +493,7 @@ class = "Hunter"
 specs = ["Survival"]
 kind = "interrupt"
 cd_s = 15
+range_yd = 5
 
 [[ability]]
 ids = [19577]
@@ -438,6 +502,7 @@ class = "Hunter"
 kind = "stop"
 cc = "stun"
 cd_s = 60
+aura_ids = [24394, 1258508]  # the pet's stun; seen in logs
 
 [[ability]]
 ids = [109248]
@@ -446,6 +511,7 @@ class = "Hunter"
 kind = "stop"
 cc = "stun"
 cd_s = 45
+aura_ids = [117526]  # the stun; 117405 is only the tether
 
 [[ability]]
 ids = [213691]
@@ -496,6 +562,7 @@ name = "Counterspell"
 class = "Mage"
 kind = "interrupt"
 cd_s = 24        # seen in logs (Arcane, Fire, Frost)
+range_yd = 40
 
 [[ability]]
 ids = [31661]
@@ -587,6 +654,7 @@ name = "Spear Hand Strike"
 class = "Monk"
 kind = "interrupt"
 cd_s = 15        # seen in logs (Brewmaster, Windwalker)
+range_yd = 5
 
 [[ability]]
 ids = [119381]
@@ -688,11 +756,22 @@ cd_s = 8         # seen in logs
 # ------------------------------------------------------------------ Paladin
 
 [[ability]]
+ids = [255937]
+name = "Wake of Ashes"
+class = "Paladin"
+specs = ["Retribution"]
+kind = "stop"
+cc = "stun"
+cd_s = 30
+aura_ids = [255941]  # seen in logs
+
+[[ability]]
 ids = [96231]
 name = "Rebuke"
 class = "Paladin"
 kind = "interrupt"
 cd_s = 15        # seen in logs (Protection, Retribution)
+range_yd = 5
 
 [[ability]]
 ids = [31935]
@@ -701,6 +780,7 @@ class = "Paladin"
 specs = ["Protection"]
 kind = "interrupt"
 cd_s = 15        # seen in logs
+range_yd = 30
 
 [[ability]]
 ids = [853]
@@ -717,6 +797,7 @@ class = "Paladin"
 kind = "stop"
 cc = "disorient"
 cd_s = 90
+aura_ids = [105421]  # seen in logs
 
 [[ability]]
 ids = [642]
@@ -816,6 +897,7 @@ class = "Priest"
 specs = ["Shadow"]
 kind = "interrupt"
 cd_s = 45        # interrupts as 220543: seen in logs
+range_yd = 30
 
 [[ability]]
 ids = [8122]
@@ -842,6 +924,7 @@ specs = ["Holy"]
 kind = "stop"
 cc = "incapacitate"
 cd_s = 60        # base; Smite casts shorten it (median reuse in logs ~29s)
+aura_ids = [200196, 200200]  # 200196 seen in logs; 200200 = the stun talent
 cdr = true
 
 [[ability]]
@@ -952,6 +1035,7 @@ name = "Kick"
 class = "Rogue"
 kind = "interrupt"
 cd_s = 15        # seen in logs (Subtlety)
+range_yd = 5
 
 [[ability]]
 ids = [408]
@@ -976,6 +1060,7 @@ class = "Rogue"
 kind = "stop"
 cc = "disorient"
 cd_s = 120
+aura_ids = [2094, 427773]  # 427773 seen in logs
 
 [[ability]]
 ids = [31224]
@@ -1026,6 +1111,7 @@ name = "Wind Shear"
 class = "Shaman"
 kind = "interrupt"
 cd_s = 12        # seen in logs (all specs)
+range_yd = 30
 
 [[ability]]
 ids = [192058]
@@ -1034,6 +1120,7 @@ class = "Shaman"
 kind = "stop"
 cc = "stun"
 cd_s = 60
+aura_ids = [118905]  # applied by the totem; seen in logs
 
 [[ability]]
 ids = [51490]
@@ -1121,9 +1208,10 @@ cd_s = 1         # seen in logs
 ids = [19647, 119910]
 name = "Spell Lock"
 class = "Warlock"
-specs = ["Affliction", "Destruction"]
 kind = "interrupt"
-cd_s = 24        # Felhunter; 119910 = cast through Command Demon
+cd_s = 24        # Felhunter; 119910 = cast through Command Demon. 19647 seen in
+                 # public keys (Demonology, 27 kicks); pet spells aren't in the spell API
+range_yd = 40
 
 [[ability]]
 ids = [89766, 119914]
@@ -1132,6 +1220,7 @@ class = "Warlock"
 specs = ["Demonology"]
 kind = "interrupt"
 cd_s = 30        # Felguard; 119914 = cast through Command Demon
+range_yd = 30
 
 [[ability]]
 ids = [30283]
@@ -1166,7 +1255,7 @@ scope = "personal"
 cd_s = 60
 
 [[ability]]
-ids = [89808, 119905]
+ids = [89808, 119905, 132411]
 name = "Singe Magic"
 class = "Warlock"
 kind = "dispel"
@@ -1191,6 +1280,7 @@ name = "Pummel"
 class = "Warrior"
 kind = "interrupt"
 cd_s = 15        # seen in logs (all specs)
+range_yd = 5
 
 [[ability]]
 ids = [386071]
@@ -1199,6 +1289,7 @@ class = "Warrior"
 specs = ["Protection"]
 kind = "interrupt"
 cd_s = 90        # seen in logs
+range_yd = 10        # radius around the warrior
 
 [[ability]]
 ids = [107570]
@@ -1207,6 +1298,7 @@ class = "Warrior"
 kind = "stop"
 cc = "stun"
 cd_s = 30
+aura_ids = [132169]  # the stun; seen in public keys
 
 [[ability]]
 ids = [46968]
@@ -1215,6 +1307,7 @@ class = "Warrior"
 kind = "stop"
 cc = "stun"
 cd_s = 40
+aura_ids = [132168]  # seen in logs
 
 [[ability]]
 ids = [5246]
@@ -1279,8 +1372,18 @@ cd_s = 25
 # ------------------------------------------------------------------ Racial
 
 [[ability]]
+ids = [20549]
+name = "War Stomp"
+class = "Racial"
+kind = "stop"
+cc = "stun"
+cd_s = 90
+range_yd = 8     # Tauren; seen in logs
+
+[[ability]]
 ids = [28730, 25046, 50613, 69179, 80483, 129597, 155145, 202719, 232633, 32747]
 name = "Arcane Torrent"
 class = "Racial"
 kind = "interrupt"
 cd_s = 120       # Blood Elf; one ID per class. Interrupts as 32747: seen in logs
+range_yd = 8        # radius

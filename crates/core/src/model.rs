@@ -59,6 +59,25 @@ pub struct AdvInfo {
     pub owner_guid: String,
     pub hp: u64,
     pub max_hp: u64,
+    /// Where `guid` was, if logged.
+    pub pos: Option<Pos>,
+}
+
+/// World position in yards, in the raw combat log's frame (Warcraft Logs
+/// coordinates are converted to it). Only positions on the same `map` are
+/// comparable.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Pos {
+    pub x: f32,
+    pub y: f32,
+    pub map: u32,
+}
+
+impl Pos {
+    /// Distance in yards, or None across maps.
+    pub fn distance(&self, o: &Pos) -> Option<f32> {
+        (self.map == o.map).then(|| ((self.x - o.x).powi(2) + (self.y - o.y).powi(2)).sqrt())
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
