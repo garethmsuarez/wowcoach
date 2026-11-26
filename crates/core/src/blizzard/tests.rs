@@ -400,3 +400,35 @@ fn same_name_on_another_boss_stays_separate() {
     );
     assert_eq!(pack.problems(), Vec::<String>::new());
 }
+
+struct Spells;
+impl Api for Spells {
+    fn get(&self, path: &str, _: Namespace) -> anyhow::Result<Value> {
+        match path {
+            "/data/wow/spell/1766" => Ok(serde_json::json!({"id": 1766, "name": "Kick"})),
+            "/data/wow/spell/2139" => Ok(serde_json::json!({"id": 2139, "name": "Counterspell"})),
+            "/data/wow/spell/500" => anyhow::bail!("connection reset"),
+            _ => Err(NotFound(path.into()).into()),
+        }
+    }
+}
+
+#[test]
+fn spell_check_separates_unknown_renamed_and_failures() {
+    let (unknown, renamed) = check_spells(
+        &Spells,
+        &[
+            (1766, "kick".into()),
+            (2139, "Counter Spell".into()),
+            (9, "Gone".into()),
+        ],
+    )
+    .unwrap();
+    assert_eq!(unknown, ["9 (Gone)"]);
+    assert_eq!(
+        renamed,
+        ["2139: the API calls it \"Counterspell\", the table \"Counter Spell\""]
+    );
+    // A network error is an error, not "unknown".
+    assert!(check_spells(&Spells, &[(500, "x".into())]).is_err());
+}

@@ -118,6 +118,22 @@ analysed evidence (a few KB per run, no events) is cached in
 `~/.cache/wowcoach/suggest`, so re-runs are nearly free. A run stops before it
 uses more than `--max-points` (default 3000) of the hourly limit.
 
+### Class abilities
+
+`data/classes.toml` lists each class's interrupts, crowd control that stops
+casts, defensives and dispels, with cooldowns and the spell IDs they're logged
+under. It's compiled in, and coaching rules use it to ask "who could have
+kicked or dispelled this?" and "was a defensive available?".
+
+```bash
+wowcoach classes check                         # validate the table
+wowcoach classes check --live LOGS...          # + Blizzard spell API, + audit against real logs
+```
+
+The log audit fails if players used an interrupt the table doesn't list. It
+also reports abilities that are usually reused faster than their listed
+cooldown, dispels that came from side effects, and abilities nobody used.
+
 The older `[[avoidable]]` and `[[priority_interrupt]]` lists still work. How
 packs are built from the Blizzard API, your logs and Warcraft Logs is described
 in [`docs/milestones/m1-season-data.md`](docs/milestones/m1-season-data.md).
