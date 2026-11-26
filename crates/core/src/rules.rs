@@ -789,5 +789,7 @@ pub fn apply_progression(p: &mut ProgressionReport) {
     p.suggestions = out;
 }
 
+pub mod kickplan;
+
 #[cfg(test)]
 mod tests;

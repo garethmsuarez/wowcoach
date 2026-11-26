@@ -632,9 +632,11 @@ fn load_dotenv() {
 
 #[derive(Subcommand)]
 enum Cmd {
-    /// Analyze a raw WoWCombatLog*.txt file
+    /// Analyze raw WoWCombatLog*.txt files (several logs make one report, so
+    /// e.g. the kick plan sees every key of a dungeon)
     Analyze {
-        log: PathBuf,
+        #[arg(required = true)]
+        logs: Vec<PathBuf>,
         #[command(flatten)]
         o: OutOpts,
     },
@@ -792,26 +794,38 @@ fn main() -> anyhow::Result<()> {
             let wcl_reports: Vec<String> = vec![];
             classes_check(table, &logs, &wcl_reports, live)?
         }
-        Cmd::Analyze { log, o } => {
-            let cfg = o.load_config()?;
-            let file =
-                std::fs::File::open(&log).with_context(|| format!("opening {}", log.display()))?;
-            let t0 = std::time::Instant::now();
-            let (p, fights, cfg) =
-                wowcoach_core::analyze_log(std::io::BufReader::with_capacity(1 << 20, file), cfg)?;
-            eprintln!(
-                "Parsed {} lines in {:.1}s (log version {}, advanced logging {}, {} advanced fields)",
-                p.lines,
-                t0.elapsed().as_secs_f64(),
-                p.log_version.map(|v| v.to_string()).unwrap_or("?".into()),
-                if p.advanced {
-                    "on"
-                } else {
-                    "OFF: enable it in System > Network for HP data"
-                },
-                p.adv_fields
-            );
-            finish(log.display().to_string(), fights, &cfg, &o)?;
+        Cmd::Analyze { logs, o } => {
+            let mut cfg = o.load_config()?;
+            let mut all = vec![];
+            for log in &logs {
+                let file = std::fs::File::open(log)
+                    .with_context(|| format!("opening {}", log.display()))?;
+                let t0 = std::time::Instant::now();
+                let (p, fights, c) = wowcoach_core::analyze_log(
+                    std::io::BufReader::with_capacity(1 << 20, file),
+                    cfg,
+                )?;
+                cfg = c;
+                eprintln!(
+                    "{}: {} lines in {:.1}s (log version {}, advanced logging {}, {} advanced fields)",
+                    log.display(),
+                    p.lines,
+                    t0.elapsed().as_secs_f64(),
+                    p.log_version.map(|v| v.to_string()).unwrap_or("?".into()),
+                    if p.advanced {
+                        "on"
+                    } else {
+                        "OFF: enable it in System > Network for HP data"
+                    },
+                    p.adv_fields
+                );
+                all.extend(fights);
+            }
+            let source = match logs.as_slice() {
+                [one] => one.display().to_string(),
+                many => format!("{} logs ({} …)", many.len(), many[0].display()),
+            };
+            finish(source, all, &cfg, &o)?;
         }
         #[cfg(feature = "wcl")]
         Cmd::Wcl {

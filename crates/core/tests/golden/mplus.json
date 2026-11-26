@@ -1015,5 +1015,266 @@
       ]
     }
   ],
-  "progression": []
+  "progression": [],
+  "kick_plans": [
+    {
+      "dungeon": "Test Spire",
+      "keys": 1,
+      "group": [
+        "Shieldy-Realm",
+        "Leafy-Realm",
+        "Glaive-Realm",
+        "Slacky-Realm",
+        "Pyro-Realm"
+      ],
+      "packs": [
+        {
+          "name": "Shade Caster",
+          "npc_ids": [
+            100005
+          ],
+          "pulls": 1,
+          "spells": [
+            {
+              "spell": "Shadow Volley",
+              "casts": 6,
+              "casts_per_min": 9.1,
+              "kicked": 0,
+              "stopped": 0,
+              "went_off": 6
+            }
+          ],
+          "assignments": [
+            {
+              "player": "Shieldy-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Glaive-Realm",
+              "ability": "Disrupt",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Slacky-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            }
+          ],
+          "uncovered": []
+        },
+        {
+          "name": "Shade Caster",
+          "npc_ids": [
+            100010
+          ],
+          "pulls": 1,
+          "spells": [
+            {
+              "spell": "Shadow Volley",
+              "casts": 6,
+              "casts_per_min": 9.1,
+              "kicked": 2,
+              "stopped": 1,
+              "went_off": 3
+            }
+          ],
+          "assignments": [
+            {
+              "player": "Shieldy-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Glaive-Realm",
+              "ability": "Disrupt",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Slacky-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            }
+          ],
+          "uncovered": []
+        },
+        {
+          "name": "Shade Caster",
+          "npc_ids": [
+            100000
+          ],
+          "pulls": 1,
+          "spells": [
+            {
+              "spell": "Shadow Volley",
+              "casts": 5,
+              "casts_per_min": 7.59,
+              "kicked": 2,
+              "stopped": 0,
+              "went_off": 3
+            }
+          ],
+          "assignments": [
+            {
+              "player": "Shieldy-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Glaive-Realm",
+              "ability": "Disrupt",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Slacky-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            }
+          ],
+          "uncovered": []
+        },
+        {
+          "name": "Shade Caster",
+          "npc_ids": [
+            100020
+          ],
+          "pulls": 1,
+          "spells": [
+            {
+              "spell": "Shadow Volley",
+              "casts": 5,
+              "casts_per_min": 7.59,
+              "kicked": 2,
+              "stopped": 0,
+              "went_off": 3
+            }
+          ],
+          "assignments": [
+            {
+              "player": "Shieldy-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Glaive-Realm",
+              "ability": "Disrupt",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Slacky-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            }
+          ],
+          "uncovered": []
+        },
+        {
+          "name": "Shade Caster",
+          "npc_ids": [
+            100025
+          ],
+          "pulls": 1,
+          "spells": [
+            {
+              "spell": "Shadow Volley",
+              "casts": 5,
+              "casts_per_min": 7.59,
+              "kicked": 2,
+              "stopped": 0,
+              "went_off": 3
+            }
+          ],
+          "assignments": [
+            {
+              "player": "Shieldy-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Glaive-Realm",
+              "ability": "Disrupt",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Slacky-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            }
+          ],
+          "uncovered": []
+        },
+        {
+          "name": "Shade Caster",
+          "npc_ids": [
+            100030
+          ],
+          "pulls": 1,
+          "spells": [
+            {
+              "spell": "Shadow Volley",
+              "casts": 5,
+              "casts_per_min": 7.59,
+              "kicked": 3,
+              "stopped": 0,
+              "went_off": 2
+            }
+          ],
+          "assignments": [
+            {
+              "player": "Shieldy-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Glaive-Realm",
+              "ability": "Disrupt",
+              "spells": [
+                "Shadow Volley"
+              ]
+            },
+            {
+              "player": "Slacky-Realm",
+              "ability": "Rebuke",
+              "spells": [
+                "Shadow Volley"
+              ]
+            }
+          ],
+          "uncovered": []
+        }
+      ]
+    }
+  ]
 }

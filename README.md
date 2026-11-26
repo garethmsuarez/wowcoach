@@ -26,6 +26,8 @@ cargo build --release            # add --no-default-features for an offline-only
 # Raw log (enable Advanced Combat Logging in System > Network, then /combatlog)
 ./target/release/wowcoach analyze ~/WoW/_retail_/Logs/WoWCombatLog-112326_201500.txt \
     -o report.html --json report.json -c wowcoach.toml
+# Several logs make one report (e.g. a week of keys: the kick plan uses all of them)
+./target/release/wowcoach analyze ~/WoW/_retail_/Logs/WoWCombatLog-*.txt -o week.html
 
 # Warcraft Logs (client from https://www.warcraftlogs.com/api/clients/)
 export WCL_CLIENT_ID=... WCL_CLIENT_SECRET=...
@@ -48,6 +50,7 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 | Raid wipe: early first death that snowballed | Avoidable damage vs group median (config-listed) |
 | Missed interrupts: a cast counts as interruptible if it was kicked at least once, or is listed in config | "Possibly avoidable": took far more of a spell than peers (heuristic) |
 | M+ priority kicks: each priority cast that went off, and who had a kick ready and in range | Priority casts you could have kicked; kicks wasted on filler while a priority cast went off |
+| M+ kick plan per dungeon: who should cover which priority casters, from all keys of that dungeon | |
 | Avoidable damage (config) + uneven-hit heuristic | Estimated casting activity (GCD coverage while alive) |
 | Bloodlust missing / late | DPS vs group DPS median with likely causes |
 | M+ pacing: downtime %, longest gaps, near-wipe pulls | Healer overheal %, zero interrupts in M+ |
