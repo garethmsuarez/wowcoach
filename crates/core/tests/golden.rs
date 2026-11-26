@@ -7,7 +7,7 @@
 //!     WOWCOACH_BLESS=1 cargo test -p wowcoach-core --test golden
 
 use std::path::{Path, PathBuf};
-use wowcoach_core::config::Config;
+use wowcoach_core::config::{Config, PackChoice};
 
 fn repo_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
@@ -15,7 +15,9 @@ fn repo_root() -> PathBuf {
 
 fn check(sample: &str, config: &str, golden: &str) {
     let root = repo_root();
-    let cfg = Config::load(Some(&root.join(config))).expect("load config");
+    // No season pack: the synthetic log uses made-up spell IDs, and the snapshot
+    // must not change whenever the real pack gains entries.
+    let cfg = Config::load_with(Some(&root.join(config)), PackChoice::None).expect("load config");
     let file = std::fs::File::open(root.join(sample)).expect("open sample log");
     let (_, fights, cfg) =
         wowcoach_core::analyze_log(std::io::BufReader::new(file), cfg).expect("parse");
@@ -62,4 +64,58 @@ fn check(sample: &str, config: &str, golden: &str) {
 #[test]
 fn mplus_sample_report() {
     check("samples/mplus.txt", "samples/wowcoach.toml", "mplus.json");
+}
+
+/// The same knowledge expressed as a season pack must coach exactly like the
+/// older `[[avoidable]]` / `[[priority_interrupt]]` lists in samples/wowcoach.toml.
+#[test]
+fn season_pack_matches_legacy_config() {
+    use wowcoach_core::season::{Knowledge, SeasonPack};
+    let root = repo_root();
+    let run = |cfg: Config| {
+        let file = std::fs::File::open(root.join("samples/mplus.txt")).unwrap();
+        let (_, fights, cfg) =
+            wowcoach_core::analyze_log(std::io::BufReader::new(file), cfg).unwrap();
+        let mut v =
+            serde_json::to_value(wowcoach_core::build_report("x".into(), fights, &cfg)).unwrap();
+        v["season_pack"] = serde_json::Value::Null;
+        v
+    };
+    let legacy =
+        Config::load_with(Some(&root.join("samples/wowcoach.toml")), PackChoice::None).unwrap();
+
+    let pack = SeasonPack::parse(
+        r#"
+        [season]
+        key = "synthetic"
+        name = "Synthetic"
+        [[spell]]
+        ids = [1231001]
+        name = "Dark Swirl"
+        tags = ["avoidable"]
+        note = "Step out of the swirl before it lands"
+        [[spell]]
+        ids = [88888]
+        name = "Void Pool"
+        tags = ["avoidable"]
+        note = "Don't stand in the purple pools"
+        [[spell]]
+        ids = [77777]
+        name = "Shadow Volley"
+        tags = ["priority_kick"]
+        "#,
+    )
+    .unwrap();
+    let mut from_pack = Config::load_with(None, PackChoice::None).unwrap();
+    from_pack.knowledge = Knowledge::build(Some(pack), &[]);
+
+    let (a, b) = (run(legacy), run(from_pack));
+    assert!(
+        a == b,
+        "pack-based report differs from the legacy-config report"
+    );
+    assert!(
+        a.to_string().contains("PRIORITY"),
+        "sanity: the priority kick was used"
+    );
 }

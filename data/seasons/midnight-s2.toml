@@ -1,0 +1,16 @@
+# Season data pack: Midnight Season 2 (M+ dungeons and the current raid tier).
+#
+# Compiled into wowcoach. IDs are filled by `wowcoach season sync` (Blizzard API)
+# and `wowcoach season suggest` (combat logs, Warcraft Logs). Only `tags` drive
+# coaching rules, and they are set by a reviewer, never by a tool. `suggested`
+# holds tool proposals awaiting review.
+#
+# Tags: priority_kick, stoppable, avoidable, dispel_priority, tank_buster,
+#       dangerous_cast, affix
+# Format and workflow: docs/milestones/m1-season-data.md
+# Validate with: wowcoach season check data/seasons/midnight-s2.toml
+
+[season]
+key = "midnight-s2"
+name = "Mythic+ Dungeons (Midnight Season 2)"
+blizzard_season_id = 18

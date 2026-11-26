@@ -8,6 +8,8 @@ use std::fmt::Write;
 #[derive(Serialize)]
 pub struct Report {
     pub source: String,
+    /// Season pack the spell knowledge came from ("midnight-s2"), if any.
+    pub season_pack: Option<String>,
     pub fights: Vec<FightReport>,
     pub progression: Vec<ProgressionReport>,
 }
@@ -92,9 +94,13 @@ pub fn html(r: &Report) -> String {
     );
     let _ = write!(
         o,
-        "<h1>wowcoach report</h1><div class=sub>{} · {} fights analysed</div>",
+        "<h1>wowcoach report</h1><div class=sub>{} · {} fights analysed{}</div>",
         esc(&r.source),
-        r.fights.len()
+        r.fights.len(),
+        r.season_pack
+            .as_deref()
+            .map(|k| format!(" · season pack {}", esc(k)))
+            .unwrap_or_default()
     );
 
     for p in &r.progression {

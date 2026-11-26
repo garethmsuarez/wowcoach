@@ -119,7 +119,7 @@ Lookups are global by spell ID across the whole pack, not scoped to the current 
 
 ## PRs
 
-1. **Pack schema + loader (offline).**
+1. **Pack schema + loader (offline).** *(done)*
    - `crates/core/src/season.rs`: types, parse, validation (unique IDs, known tags, bosses have names), the embedded pack and `Config` layering.
    - CLI flags `--season-pack` and `--no-season-pack`, and `wowcoach season check [PATH]`.
    - Ships an empty `midnight-s2.toml` skeleton.

@@ -1,11 +1,18 @@
 //! Tunable thresholds and spell knowledge. Ships with sensible defaults;
-//! dump them with `wowcoach init-config` and extend per season/tier.
+//! dump them with `wowcoach init-config`.
+//!
+//! Spell knowledge is layered: the season pack compiled into the binary (or
+//! `--season-pack PATH`), then the user's `[[spell]]` overrides, then the
+//! older `[[avoidable]]` / `[[priority_interrupt]]` lists.
 
+use crate::season::{Knowledge, SeasonPack, SpellEntry, Tag};
 use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
 
 pub const DEFAULT_CONFIG: &str = r#"# wowcoach configuration
-# Spell IDs change every season/tier: add the avoidable mechanics and
-# must-kick casts for the dungeons and bosses you're running.
+# Season knowledge (dungeons, bosses, must-kick and avoidable spells) ships in
+# the built-in season pack: see `wowcoach season check`. Use this file for
+# thresholds and to adjust the pack for your group.
 
 [general]
 pull_gap_ms = 5000          # M+: no group combat for this long ends a pull
@@ -29,13 +36,25 @@ absorb_exclude_spell_ids = [115069, 114556]
 # (it was already counted when the original hit was absorbed). Stagger ticks.
 deferred_damage_spell_ids = [124255, 324393]
 
-# Mechanics that should never hit anyone (or never hit the wrong role).
+# Adjust the season pack. Tags are added to the pack's; name/note replace it.
+# Tags: priority_kick, stoppable, avoidable, dispel_priority, tank_buster,
+#       dangerous_cast, affix
+# [[spell]]
+# ids = [123456]
+# name = "Example Swirlies"
+# tags = ["avoidable"]
+# note = "Move out of the orange circles"
+#
+# Switch a pack entry off:
+# [[spell]]
+# ids = [654321]
+# exclude = true
+
+# Older shorthand, still supported (same as tags = ["avoidable"] / ["priority_kick"]):
 # [[avoidable]]
 # spell_id = 123456
 # name = "Example Swirlies"
 # note = "Move out of the orange circles"
-
-# Enemy casts that must always be interrupted/stopped.
 # [[priority_interrupt]]
 # spell_id = 654321
 # name = "Example Bolt"
@@ -94,20 +113,204 @@ pub struct Config {
     pub general: General,
     pub avoidable: Vec<SpellNote>,
     pub priority_interrupt: Vec<SpellNote>,
+    /// User overrides of the season pack.
+    #[serde(rename = "spell")]
+    pub spell_overrides: Vec<SpellEntry>,
+    /// Pack + overrides, resolved by spell ID. Built by [`Config::load_with`].
+    #[serde(skip)]
+    pub knowledge: Knowledge,
+}
+
+/// Which season pack to use.
+#[derive(Clone, Debug, PartialEq)]
+pub enum PackChoice {
+    /// The newest pack compiled into the binary.
+    Embedded,
+    /// A pack file, e.g. while editing one (`--season-pack PATH`).
+    File(PathBuf),
+    /// No pack: only the user config (`--no-season-pack`).
+    None,
+}
+
+/// Name and advice for a known spell, from the pack or the user config.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Note<'a> {
+    pub name: &'a str,
+    pub note: &'a str,
 }
 
 impl Config {
-    pub fn load(path: Option<&std::path::Path>) -> anyhow::Result<Config> {
+    /// User config (or the defaults) plus the embedded season pack.
+    pub fn load(path: Option<&Path>) -> anyhow::Result<Config> {
+        Self::load_with(path, PackChoice::Embedded)
+    }
+
+    pub fn load_with(path: Option<&Path>, pack: PackChoice) -> anyhow::Result<Config> {
         let text = match path {
-            Some(p) => std::fs::read_to_string(p)?,
+            Some(p) => std::fs::read_to_string(p)
+                .map_err(|e| anyhow::anyhow!("reading {}: {e}", p.display()))?,
             None => DEFAULT_CONFIG.to_string(),
         };
-        Ok(toml::from_str(&text)?)
+        let mut cfg: Config = toml::from_str(&text)?;
+        let pack = match pack {
+            PackChoice::Embedded => Some(SeasonPack::embedded()),
+            PackChoice::File(p) => Some(SeasonPack::load(&p)?),
+            PackChoice::None => None,
+        };
+        cfg.knowledge = Knowledge::build(pack, &cfg.spell_overrides);
+        Ok(cfg)
     }
-    pub fn avoidable_note(&self, id: u32) -> Option<&SpellNote> {
-        self.avoidable.iter().find(|s| s.spell_id == id)
+
+    /// Is this spell tagged `tag` by the pack, a `[[spell]]` override or the
+    /// older `[[avoidable]]` / `[[priority_interrupt]]` lists?
+    pub fn has_tag(&self, id: u32, tag: Tag) -> bool {
+        let legacy = match tag {
+            Tag::Avoidable => self.avoidable.iter().any(|s| s.spell_id == id),
+            Tag::PriorityKick => self.priority_interrupt.iter().any(|s| s.spell_id == id),
+            _ => false,
+        };
+        legacy || self.knowledge.has_tag(id, tag)
     }
+
+    /// Name and advice if the spell is avoidable.
+    pub fn avoidable_note(&self, id: u32) -> Option<Note<'_>> {
+        if let Some(s) = self.avoidable.iter().find(|s| s.spell_id == id) {
+            return Some(Note {
+                name: &s.name,
+                note: &s.note,
+            });
+        }
+        self.knowledge
+            .get(id)
+            .filter(|k| k.tags.contains(&Tag::Avoidable))
+            .map(|k| Note {
+                name: &k.name,
+                note: &k.note,
+            })
+    }
+
     pub fn is_priority_kick(&self, id: u32) -> bool {
-        self.priority_interrupt.iter().any(|s| s.spell_id == id)
+        self.has_tag(id, Tag::PriorityKick)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn pack() -> SeasonPack {
+        SeasonPack::parse(
+            r#"
+            [season]
+            key = "test"
+            name = "Test"
+            [[dungeon]]
+            name = "Spire"
+            keystone_id = 1
+            map_id = 2000
+            [[spell]]
+            ids = [10, 11]
+            name = "Void Pool"
+            map_id = 2000
+            tags = ["avoidable"]
+            note = "Move"
+            [[spell]]
+            ids = [20]
+            name = "Shadow Volley"
+            map_id = 2000
+            tags = ["priority_kick", "stoppable"]
+            [[spell]]
+            ids = [30]
+            name = "Maybe"
+            map_id = 2000
+            suggested = ["avoidable"]
+            "#,
+        )
+        .unwrap()
+    }
+
+    fn cfg(user: &str, pack: Option<SeasonPack>) -> Config {
+        let mut c: Config = toml::from_str(user).unwrap();
+        c.knowledge = Knowledge::build(pack, &c.spell_overrides);
+        c
+    }
+
+    #[test]
+    fn pack_tags_reach_the_rule_helpers() {
+        let c = cfg("", Some(pack()));
+        assert_eq!(
+            c.avoidable_note(11),
+            Some(Note {
+                name: "Void Pool",
+                note: "Move"
+            })
+        );
+        assert!(c.is_priority_kick(20));
+        assert!(c.has_tag(20, Tag::Stoppable));
+        assert!(!c.is_priority_kick(10));
+        // Suggestions are not tags until a reviewer promotes them.
+        assert!(c.avoidable_note(30).is_none());
+        assert!(c.avoidable_note(999).is_none());
+    }
+
+    #[test]
+    fn user_overrides_add_replace_and_exclude() {
+        let c = cfg(
+            r#"
+            [[spell]]
+            ids = [20]
+            exclude = true
+            [[spell]]
+            ids = [10]
+            note = "Our strat: soak it"
+            tags = ["dangerous_cast"]
+            [[spell]]
+            ids = [40]
+            name = "New Thing"
+            tags = ["priority_kick"]
+            "#,
+            Some(pack()),
+        );
+        assert!(!c.is_priority_kick(20));
+        assert!(!c.has_tag(20, Tag::Stoppable));
+        // Overrides are per ID: 11 keeps the pack's note.
+        assert_eq!(c.avoidable_note(10).unwrap().note, "Our strat: soak it");
+        assert_eq!(c.avoidable_note(11).unwrap().note, "Move");
+        assert!(c.has_tag(10, Tag::Avoidable) && c.has_tag(10, Tag::DangerousCast));
+        assert!(c.is_priority_kick(40));
+    }
+
+    #[test]
+    fn legacy_lists_still_work_without_a_pack() {
+        let c = cfg(
+            r#"
+            [[avoidable]]
+            spell_id = 88
+            name = "Swirl"
+            note = "Dodge"
+            [[priority_interrupt]]
+            spell_id = 77
+            "#,
+            None,
+        );
+        assert_eq!(c.avoidable_note(88).unwrap().note, "Dodge");
+        assert!(c.is_priority_kick(77));
+        assert!(c.knowledge.pack_key.is_none());
+    }
+
+    #[test]
+    fn default_config_text_parses_with_the_embedded_pack() {
+        let c = Config::load(None).unwrap();
+        assert_eq!(c.knowledge.pack_key.as_deref(), Some("midnight-s2"));
+        assert_eq!(c.general.pull_gap_ms, General::default().pull_gap_ms);
+        let none = Config::load_with(None, PackChoice::None).unwrap();
+        assert!(none.knowledge.pack_key.is_none());
+    }
+
+    #[test]
+    fn unknown_tag_is_an_error() {
+        let e =
+            toml::from_str::<Config>("[[spell]]\nids = [1]\ntags = [\"avoidble\"]\n").unwrap_err();
+        assert!(e.to_string().contains("avoidble"), "{e}");
     }
 }

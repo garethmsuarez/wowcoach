@@ -52,21 +52,37 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 | M+ pacing: downtime %, longest gaps, near-wipe pulls | Healer overheal %, zero interrupts in M+ |
 | Progression: recurring first-death cause, repeat deaths | WCL rank percentile (API source) |
 
-## Tuning for the current season
+## Season data
 
-Spell IDs change every season, so the rules stay generic and the specifics live
-in `wowcoach.toml`:
+Spell IDs change every season, so the rules stay generic. Season knowledge
+(dungeons, bosses, and enemy spells tagged `priority_kick`, `avoidable`, …)
+lives in a **season pack**, `data/seasons/midnight-s2.toml`, which is compiled
+into the binary:
+
+```bash
+wowcoach season check                    # summarise the built-in pack
+wowcoach season check my-pack.toml       # validate a pack you're editing
+wowcoach analyze LOG --season-pack my-pack.toml
+wowcoach analyze LOG --no-season-pack    # only the spells in -c wowcoach.toml
+```
+
+Adjust the pack for your group in `wowcoach.toml` (see `wowcoach init-config`):
 
 ```toml
-[[avoidable]]
-spell_id = 1231001
+[[spell]]
+ids = [1231001]
 name = "Dark Swirl"
+tags = ["avoidable"]
 note = "Step out of the swirl before it lands"
 
-[[priority_interrupt]]
-spell_id = 77777
-name = "Shadow Volley"
+[[spell]]            # switch a pack entry off
+ids = [77777]
+exclude = true
 ```
+
+The older `[[avoidable]]` and `[[priority_interrupt]]` lists still work. How
+packs are built from the Blizzard API, your logs and Warcraft Logs is described
+in [`docs/milestones/m1-season-data.md`](docs/milestones/m1-season-data.md).
 
 ## Known limits
 
