@@ -3,9 +3,14 @@
 //! only handle I/O around [`build_report`].
 
 pub mod analysis;
+#[cfg(feature = "blizzard")]
+pub mod blizzard;
 pub mod combatlog;
 pub mod config;
+pub mod dotenv;
 pub mod model;
+#[cfg(any(feature = "wcl", feature = "blizzard"))]
+pub mod net;
 pub mod report;
 pub mod rules;
 pub mod season;

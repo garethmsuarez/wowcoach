@@ -1,0 +1,79 @@
+{
+ "_links": {
+  "self": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-instance/1317?namespace=static-12.1.5_70077-us"
+  }
+ },
+ "category": {
+  "type": "RAID"
+ },
+ "description": "Hidden beneath the waves of Atal'Utek lies the Tidebound Grotto, a submerged cave veiled by shifting tides. Within, the naga sorceress Nymrissa Wavecaller bends the tides to conceal her domain--and to drown any who dare uncover it.",
+ "encounters": [
+  {
+   "id": 2849,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/journal-encounter/2849?namespace=static-12.1.5_70077-us"
+   },
+   "name": "Nymrissa Wavecaller"
+  }
+ ],
+ "expansion": {
+  "id": 516,
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-expansion/516?namespace=static-12.1.5_70077-us"
+  },
+  "name": "Midnight"
+ },
+ "id": 1317,
+ "location": {
+  "id": 16365,
+  "name": "The Coiled Isle"
+ },
+ "map": {
+  "id": 2987,
+  "name": "The Tidebound Grotto"
+ },
+ "media": {
+  "id": 1317,
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/journal-instance/1317?namespace=static-12.1.5_70077-us"
+  }
+ },
+ "minimum_level": 90,
+ "modes": [
+  {
+   "is_tracked": true,
+   "mode": {
+    "name": "Normal",
+    "type": "NORMAL"
+   },
+   "players": 30
+  },
+  {
+   "is_tracked": true,
+   "mode": {
+    "name": "Heroic",
+    "type": "HEROIC"
+   },
+   "players": 30
+  },
+  {
+   "is_tracked": true,
+   "mode": {
+    "name": "Mythic",
+    "type": "MYTHIC"
+   },
+   "players": 25
+  },
+  {
+   "is_tracked": true,
+   "mode": {
+    "name": "Raid Finder",
+    "type": "LFR"
+   },
+   "players": 40
+  }
+ ],
+ "name": "The Tidebound Grotto",
+ "order_index": 5
+}

@@ -124,7 +124,7 @@ Lookups are global by spell ID across the whole pack, not scoped to the current 
    - CLI flags `--season-pack` and `--no-season-pack`, and `wowcoach season check [PATH]`.
    - Ships an empty `midnight-s2.toml` skeleton.
    - Tests: layering and overrides, validation errors, an embedded-pack-is-valid test, and the golden test unchanged (the synthetic IDs don't collide).
-2. **Blizzard client + `season sync`.**
+2. **Blizzard client + `season sync`.** *(done: first live sync gave 8 dungeons, 3 raids, 38 bosses, 565 journal spells and all 10 raid encounter IDs from WCL. A second run changed nothing. Same-name journal spells are joined only within the same boss)*
    - `crates/core/src/blizzard.rs`: pure JSON → pack mapping, tested offline on API responses saved under `crates/core/tests/fixtures/blizzard/` (game data only).
    - `blizzard::net` behind a `blizzard` feature: ureq, client credentials at `oauth.battle.net`, a `--region` flag (default `us`).
    - Move the hand-rolled base64 from `wcl::net` into a shared `net` helper.

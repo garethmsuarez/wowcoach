@@ -342,6 +342,34 @@ impl FightMeta {
     }
 }
 
+/// (boss name, encounter ID) for every encounter in the current (not frozen,
+/// not PTR/Beta) zones of a `worldData.expansions.zones` response. WCL encounter IDs for
+/// raid bosses are the IDs `ENCOUNTER_START` logs, unlike Blizzard's journal IDs.
+pub fn zone_encounters(v: &Value) -> Vec<(String, u32)> {
+    let mut out = vec![];
+    for x in v["worldData"]["expansions"]
+        .as_array()
+        .into_iter()
+        .flatten()
+    {
+        for z in x["zones"].as_array().into_iter().flatten() {
+            let name = z["name"].as_str().unwrap_or_default();
+            if z["frozen"].as_bool().unwrap_or(false)
+                || name.contains("(PTR)")
+                || name.contains("(Beta)")
+            {
+                continue;
+            }
+            for e in z["encounters"].as_array().into_iter().flatten() {
+                if let (Some(name), Some(id)) = (e["name"].as_str(), e["id"].as_u64()) {
+                    out.push((name.to_string(), id as u32));
+                }
+            }
+        }
+    }
+    out
+}
+
 /// name -> rankPercent from a `report.rankings` JSON blob.
 pub fn parse_rankings(v: &Value) -> HashMap<String, f64> {
     let mut out = HashMap::new();
@@ -366,26 +394,8 @@ pub fn parse_rankings(v: &Value) -> HashMap<String, f64> {
 #[cfg(feature = "wcl")]
 pub mod net {
     use super::*;
-    use anyhow::{Context, bail};
+    use anyhow::bail;
     use serde_json::json;
-
-    fn b64(input: &[u8]) -> String {
-        const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-        let mut s = String::new();
-        for c in input.chunks(3) {
-            let n = (c[0] as u32) << 16
-                | (*c.get(1).unwrap_or(&0) as u32) << 8
-                | *c.get(2).unwrap_or(&0) as u32;
-            for k in 0..4 {
-                if k <= c.len() {
-                    s.push(T[(n >> (18 - 6 * k) & 63) as usize] as char);
-                } else {
-                    s.push('=');
-                }
-            }
-        }
-        s
-    }
 
     pub struct Client {
         agent: ureq::Agent,
@@ -394,20 +404,9 @@ pub mod net {
 
     impl Client {
         pub fn connect(id: &str, secret: &str) -> anyhow::Result<Client> {
-            let agent = ureq::AgentBuilder::new().try_proxy_from_env(true).build();
-            let resp: Value = agent
-                .post(TOKEN_URL)
-                .set(
-                    "Authorization",
-                    &format!("Basic {}", b64(format!("{id}:{secret}").as_bytes())),
-                )
-                .send_form(&[("grant_type", "client_credentials")])
-                .context("requesting Warcraft Logs access token")?
-                .into_json()?;
-            let token = resp["access_token"]
-                .as_str()
-                .context("no access_token in response")?
-                .to_string();
+            let agent = crate::net::agent();
+            let token =
+                crate::net::client_credentials(&agent, TOKEN_URL, id, secret, "Warcraft Logs")?;
             Ok(Client { agent, token })
         }
 
@@ -436,6 +435,16 @@ pub mod net {
     }}}"#;
 
     const RANK_Q: &str = r#"query($code:String!,$fid:[Int]!){ reportData{ report(code:$code){ rankings(fightIDs:$fid) } } }"#;
+
+    const ZONES_Q: &str =
+        r#"{ worldData{ expansions{ id name zones{ id name frozen encounters{ id name } } } } }"#;
+
+    impl Client {
+        /// Boss name -> logged encounter ID for current content.
+        pub fn zone_encounters(&self) -> anyhow::Result<Vec<(String, u32)>> {
+            Ok(super::zone_encounters(&self.query(ZONES_Q, json!({}))?))
+        }
+    }
 
     pub struct Fetched {
         pub title: String,
@@ -569,6 +578,26 @@ mod tests {
             }
         ));
         assert_eq!(m.ownership_events(0).len(), 1);
+    }
+
+    #[test]
+    fn zone_encounters_skip_frozen_zones() {
+        let v: Value =
+            serde_json::from_str(include_str!("../tests/fixtures/wcl-zones.json")).unwrap();
+        let enc = zone_encounters(&v["data"]);
+        assert!(enc.contains(&("Nek'zali the Soulcoiler".into(), 3470)));
+        assert!(enc.contains(&("Nymrissa Wavecaller".into(), 3379)));
+        assert!(enc.contains(&("Kith'ix".into(), 3513)));
+        // M+ dungeons are listed as whole-run "encounters": ID = prefix * 10000 + map ID.
+        assert!(enc.contains(&("Voidscar Arena".into(), 12923)));
+        assert!(
+            !enc.iter().any(|(n, _)| n == "Rotmire"),
+            "PTR zones are skipped"
+        );
+        let frozen = json!({"worldData": {"expansions": [{"zones": [
+            {"frozen": true, "encounters": [{"id": 1, "name": "Old"}]}
+        ]}]}});
+        assert!(zone_encounters(&frozen).is_empty());
     }
 
     #[test]

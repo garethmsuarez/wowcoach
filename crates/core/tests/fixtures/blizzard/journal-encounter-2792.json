@@ -1,0 +1,283 @@
+{
+ "_links": {
+  "self": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-encounter/2792?namespace=static-12.1.5_70077-us"
+  }
+ },
+ "category": {
+  "type": "DUNGEON"
+ },
+ "creatures": [
+  {
+   "creature_display": {
+    "id": 131553,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/media/creature-display/131553?namespace=static-12.1.5_70077-us"
+    }
+   },
+   "id": 5961,
+   "name": "Atroxus"
+  },
+  {
+   "creature_display": {
+    "id": 140374,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/media/creature-display/140374?namespace=static-12.1.5_70077-us"
+    }
+   },
+   "id": 6189,
+   "name": "Toxic Creeper"
+  }
+ ],
+ "description": "Imprisoned by Charonus, this starving behemoth is hoping for a new victim to sate his appetite. Atroxus's sheer size is almost as dangerous as the poison he spews.",
+ "id": 2792,
+ "instance": {
+  "id": 1313,
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-instance/1313?namespace=static-12.1.5_70077-us"
+  },
+  "name": "Voidscar Arena"
+ },
+ "items": [
+  {
+   "id": 45870,
+   "item": {
+    "id": 250245,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/250245?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Tumor of the Swarm"
+   }
+  },
+  {
+   "id": 45871,
+   "item": {
+    "id": 251227,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251227?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Poisoner's Pauldrons"
+   }
+  },
+  {
+   "id": 45872,
+   "item": {
+    "id": 251226,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251226?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Hide of Pestilence"
+   }
+  },
+  {
+   "id": 45873,
+   "item": {
+    "id": 251228,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251228?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Behemoth Waistband"
+   }
+  },
+  {
+   "id": 45874,
+   "item": {
+    "id": 251229,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251229?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Visor of the Predator"
+   }
+  },
+  {
+   "id": 45875,
+   "item": {
+    "id": 251225,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251225?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Fang of Contagion"
+   }
+  },
+  {
+   "id": 45876,
+   "item": {
+    "id": 251224,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251224?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Hulking Handaxe"
+   }
+  },
+  {
+   "id": 46015,
+   "item": {
+    "id": 252258,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/252258?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Sickening Signet of Atroxus"
+   }
+  }
+ ],
+ "modes": [
+  {
+   "name": "Normal",
+   "type": "NORMAL"
+  },
+  {
+   "name": "Heroic",
+   "type": "HEROIC"
+  },
+  {
+   "name": "Mythic",
+   "type": "MYTHIC"
+  },
+  {
+   "name": "Mythic+ Dungeons",
+   "type": "MYTHIC_KEYSTONE"
+  }
+ ],
+ "name": "Atroxus",
+ "sections": [
+  {
+   "body_text": "Atroxus assaults players with its powerful venoms using [Noxious Breath] and [Poison Splash]. Its [Monstrous Roar] inflicts heavy physical damage to all players summons a Toxic Creeper.",
+   "id": 32971,
+   "sections": [
+    {
+     "body_text": "$bullet;[Noxious Breath] inflicts high damage in front of Atroxus.\r\n\r\n$bullet;[Monstrous Roar] inflicts heavy physical damage to all players summons a Toxic Creeper to attack its target.",
+     "id": 32972,
+     "title": "Damage Dealers"
+    },
+    {
+     "body_text": "$bullet;[Hulking Claw] inflicts high Nature damage to the primary target.\r\n\r\n$bullet;[Noxious Breath] inflicts high damage in front of Atroxus.",
+     "id": 32973,
+     "title": "Healers"
+    },
+    {
+     "body_text": "$bullet;[Hulking Claw] inflicts high Nature damage to the primary target.\r\n\r\n$bullet;[Sickening Bite] applies stacking vulnerability to Nature damage.",
+     "id": 32974,
+     "title": "Tanks"
+    }
+   ],
+   "title": "Overview"
+  },
+  {
+   "id": 34340,
+   "sections": [
+    {
+     "creature_display": {
+      "id": 140374,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/media/creature-display/140374?namespace=static-12.1.5_70077-us"
+      }
+     },
+     "id": 33906,
+     "sections": [
+      {
+       "id": 35165,
+       "spell": {
+        "id": 1283506,
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/1283506?namespace=static-12.1.5_70077-us"
+        },
+        "name": "Fixate"
+       },
+       "title": "Fixate"
+      },
+      {
+       "id": 35141,
+       "spell": {
+        "id": 1282892,
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/1282892?namespace=static-12.1.5_70077-us"
+        },
+        "name": "Sickening Bite"
+       },
+       "title": "Sickening Bite"
+      },
+      {
+       "id": 33907,
+       "spell": {
+        "id": 1222692,
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/1222692?namespace=static-12.1.5_70077-us"
+        },
+        "name": "Toxic Aura"
+       },
+       "title": "Toxic Aura"
+      }
+     ],
+     "title": "Toxic Creeper"
+    }
+   ],
+   "spell": {
+    "id": 1262497,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1262497?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Monstrous Roar"
+   },
+   "title": "Monstrous Roar"
+  },
+  {
+   "id": 32977,
+   "sections": [
+    {
+     "id": 34341,
+     "sections": [
+      {
+       "id": 34342,
+       "spell": {
+        "id": 1263971,
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/1263971?namespace=static-12.1.5_70077-us"
+        },
+        "name": "Mind-Numbing Poison"
+       },
+       "title": "Mind-Numbing Poison"
+      }
+     ],
+     "spell": {
+      "id": 1222484,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1222484?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Poison Pool"
+     },
+     "title": "Poison Pool"
+    }
+   ],
+   "spell": {
+    "id": 1226031,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1226031?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Poison Splash"
+   },
+   "title": "Poison Splash"
+  },
+  {
+   "id": 32975,
+   "spell": {
+    "id": 1222724,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1222724?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Noxious Breath"
+   },
+   "title": "Noxious Breath"
+  },
+  {
+   "id": 32976,
+   "spell": {
+    "id": 1222642,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1222642?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Hulking Claw"
+   },
+   "title": "Hulking Claw"
+  }
+ ]
+}

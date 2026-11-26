@@ -1,0 +1,93 @@
+{
+ "_links": {
+  "self": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-instance/1313?namespace=static-12.1.5_70077-us"
+  }
+ },
+ "category": {
+  "type": "DUNGEON"
+ },
+ "description": "The Voidscar Arena awaits worthy challengers! Overseer Charonus has filled the arena with opponents plucked from across Azeroth, forcing them to participate in his games.",
+ "encounters": [
+  {
+   "id": 2791,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/journal-encounter/2791?namespace=static-12.1.5_70077-us"
+   },
+   "name": "Taz'Rah"
+  },
+  {
+   "id": 2792,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/journal-encounter/2792?namespace=static-12.1.5_70077-us"
+   },
+   "name": "Atroxus"
+  },
+  {
+   "id": 2793,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/journal-encounter/2793?namespace=static-12.1.5_70077-us"
+   },
+   "name": "Charonus"
+  }
+ ],
+ "expansion": {
+  "id": 516,
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-expansion/516?namespace=static-12.1.5_70077-us"
+  },
+  "name": "Midnight"
+ },
+ "id": 1313,
+ "location": {
+  "id": 15458,
+  "name": "Voidstorm"
+ },
+ "map": {
+  "id": 2923,
+  "name": "Voidscar Arena"
+ },
+ "media": {
+  "id": 1313,
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/media/journal-instance/1313?namespace=static-12.1.5_70077-us"
+  }
+ },
+ "minimum_level": 1,
+ "modes": [
+  {
+   "is_tracked": true,
+   "mode": {
+    "name": "Normal",
+    "type": "NORMAL"
+   },
+   "players": 5
+  },
+  {
+   "is_tracked": true,
+   "mode": {
+    "name": "Heroic",
+    "type": "HEROIC"
+   },
+   "players": 5
+  },
+  {
+   "is_tracked": true,
+   "mode": {
+    "name": "Mythic",
+    "type": "MYTHIC"
+   },
+   "players": 5
+  },
+  {
+   "is_tracked": false,
+   "mode": {
+    "name": "Mythic+ Dungeons",
+    "type": "MYTHIC_KEYSTONE"
+   },
+   "players": 5
+  }
+ ],
+ "name": "Voidscar Arena",
+ "order_index": 6
+}

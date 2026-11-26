@@ -1,0 +1,611 @@
+{
+ "_links": {
+  "self": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-encounter/2849?namespace=static-12.1.5_70077-us"
+  }
+ },
+ "category": {
+  "type": "RAID"
+ },
+ "creatures": [
+  {
+   "creature_display": {
+    "id": 137687,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/media/creature-display/137687?namespace=static-12.1.5_70077-us"
+    }
+   },
+   "id": 6197,
+   "name": "Nymrissa Wavecaller"
+  },
+  {
+   "creature_display": {
+    "id": 139267,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/media/creature-display/139267?namespace=static-12.1.5_70077-us"
+    }
+   },
+   "id": 6198,
+   "name": "Bubblefin Shorerunner"
+  },
+  {
+   "creature_display": {
+    "id": 117058,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/media/creature-display/117058?namespace=static-12.1.5_70077-us"
+    }
+   },
+   "id": 6200,
+   "name": "Bubblefin Frostscale"
+  },
+  {
+   "creature_display": {
+    "id": 86462,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/media/creature-display/86462?namespace=static-12.1.5_70077-us"
+    }
+   },
+   "id": 6199,
+   "name": "Bubblefin Berserker"
+  }
+ ],
+ "description": "Nymrissa Wavecaller commands the restless sea itself, concealing her lair beneath shifting tides. Those who dare uncover her sanctuary find her murloc minions eager to answer their mistress' call.",
+ "id": 2849,
+ "instance": {
+  "id": 1317,
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-instance/1317?namespace=static-12.1.5_70077-us"
+  },
+  "name": "The Tidebound Grotto"
+ },
+ "items": [
+  {
+   "id": 47234,
+   "item": {
+    "id": 279112,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/279112?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Clumped Asteroidea"
+   }
+  },
+  {
+   "id": 47005,
+   "item": {
+    "id": 270167,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/270167?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Wavecaller's Seastone"
+   }
+  },
+  {
+   "id": 47006,
+   "item": {
+    "id": 268199,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/268199?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Tidepiercer's Bubble Popper"
+   }
+  },
+  {
+   "id": 47007,
+   "item": {
+    "id": 268221,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/268221?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Tidebound Sorcereress's Robes"
+   }
+  },
+  {
+   "id": 47009,
+   "item": {
+    "id": 268238,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/268238?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Grips of Swirling Fury"
+   }
+  },
+  {
+   "id": 47010,
+   "item": {
+    "id": 268226,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/268226?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Swelling Sea Spaulders"
+   }
+  },
+  {
+   "id": 47011,
+   "item": {
+    "id": 268263,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/268263?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Frostscale's Mystic Frond"
+   }
+  },
+  {
+   "id": 47012,
+   "item": {
+    "id": 268262,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/268262?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Bubblefin Splash Guard"
+   }
+  },
+  {
+   "id": 47013,
+   "item": {
+    "id": 268232,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/268232?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Cincture of the Abyssal Grotto"
+   }
+  },
+  {
+   "id": 47014,
+   "item": {
+    "id": 268247,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/268247?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Breakwater Boots"
+   }
+  },
+  {
+   "id": 47015,
+   "item": {
+    "id": 268217,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/268217?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Rising Tide Wristguards"
+   }
+  },
+  {
+   "id": 47016,
+   "item": {
+    "id": 268244,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/268244?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Forgotten Grotto Girdle"
+   }
+  },
+  {
+   "id": 47017,
+   "item": {
+    "id": 268266,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/268266?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Alluring Bubbleband"
+   }
+  }
+ ],
+ "modes": [
+  {
+   "name": "Normal",
+   "type": "NORMAL"
+  },
+  {
+   "name": "Heroic",
+   "type": "HEROIC"
+  },
+  {
+   "name": "Mythic",
+   "type": "MYTHIC"
+  },
+  {
+   "name": "Raid Finder",
+   "type": "LFR"
+  }
+ ],
+ "name": "Nymrissa Wavecaller",
+ "sections": [
+  {
+   "body_text": "Nymrissa Wavecaller creates an [Alluring Bubble] within the grotto that lures nearby murlocs into her grasp. She then summons [Swirling Whirlpools] to break the bubble, empowering murlocs within.",
+   "id": 34109,
+   "sections": [
+    {
+     "body_text": "$bullet;[Water Jet] inflicts sustained damage to Nymrissa Wavecaller's current target, and removes icy patches of [Lingering Frost].\r\n$bullet;[Alluring Bubble] attracts a large group of Bubblefin Shorerunners to rush toward the giant bubble.",
+     "id": 35757,
+     "title": "Tank"
+    },
+    {
+     "body_text": "$bullet;[Iceblade Flurry] inflicts sustained damage to Nymrissa Wavecaller's current target.\r\n$bullet;[Alluring Bubble] attracts a large group of Bubblefin Shorerunners to rush toward the giant bubble.",
+     "id": 34110,
+     "title": "Tank"
+    },
+    {
+     "body_text": "$bullet;[Abyssal Rain] inflicts significant damage to all players.\r\n$bullet;[Alluring Bubble] inflicts a large burst of damage to all players when it [Pops!]",
+     "id": 36631,
+     "title": "Healer"
+    },
+    {
+     "body_text": "$bullet;[Alluring Bubble] attracts a large group of Bubblefin Shorerunners to rush toward the giant bubble.\r\n$bullet;Murlocs that enter a [Alluring Bubble] become empowered.",
+     "id": 34111,
+     "title": "Damage Dealers"
+    }
+   ],
+   "title": "Overview"
+  },
+  {
+   "id": 37201,
+   "sections": [
+    {
+     "body_text": "Murlocs heed the call of the bubble and swarm toward it.",
+     "creature_display": {
+      "id": 139267,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/media/creature-display/139267?namespace=static-12.1.5_70077-us"
+      }
+     },
+     "id": 37202,
+     "title": "Bubblefin Shorerunner"
+    },
+    {
+     "body_text": "Murlocs that enter the bubble transform into Bubblefin Berserkers.",
+     "creature_display": {
+      "id": 86462,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/media/creature-display/86462?namespace=static-12.1.5_70077-us"
+      }
+     },
+     "id": 37204,
+     "sections": [
+      {
+       "id": 37205,
+       "spell": {
+        "id": 1258894,
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/1258894?namespace=static-12.1.5_70077-us"
+        },
+        "name": "Pulsing Tides"
+       },
+       "title": "Pulsing Tides"
+      }
+     ],
+     "title": "Bubblefin Berserker"
+    },
+    {
+     "id": 37203,
+     "spell": {
+      "id": 1258150,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1258150?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Pop!"
+     },
+     "title": "Pop!"
+    }
+   ],
+   "spell": {
+    "id": 1257717,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1257717?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Alluring Bubble"
+   },
+   "title": "Alluring Bubble"
+  },
+  {
+   "id": 35142,
+   "sections": [
+    {
+     "body_text": "Murlocs heed the call of the bubble and swarm toward it.",
+     "creature_display": {
+      "id": 139267,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/media/creature-display/139267?namespace=static-12.1.5_70077-us"
+      }
+     },
+     "id": 35144,
+     "title": "Bubblefin Shorerunner"
+    },
+    {
+     "body_text": "A deepwater murloc that protects nearby allies.",
+     "creature_display": {
+      "id": 117058,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/media/creature-display/117058?namespace=static-12.1.5_70077-us"
+      }
+     },
+     "id": 35726,
+     "sections": [
+      {
+       "id": 35727,
+       "spell": {
+        "id": 1273091,
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/1273091?namespace=static-12.1.5_70077-us"
+        },
+        "name": "Waterfog Shield"
+       },
+       "title": "Waterfog Shield"
+      }
+     ],
+     "title": "Bubblefin Frostscale"
+    },
+    {
+     "body_text": "Murlocs that enter the bubble transform into Bubblefin Berserkers.",
+     "creature_display": {
+      "id": 86462,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/media/creature-display/86462?namespace=static-12.1.5_70077-us"
+      }
+     },
+     "id": 35148,
+     "sections": [
+      {
+       "id": 35149,
+       "spell": {
+        "id": 1258894,
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/1258894?namespace=static-12.1.5_70077-us"
+        },
+        "name": "Pulsing Tides"
+       },
+       "title": "Pulsing Tides"
+      }
+     ],
+     "title": "Bubblefin Berserker"
+    },
+    {
+     "id": 35147,
+     "spell": {
+      "id": 1258150,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1258150?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Pop!"
+     },
+     "title": "Pop!"
+    }
+   ],
+   "spell": {
+    "id": 1257717,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1257717?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Alluring Bubble"
+   },
+   "title": "Alluring Bubble"
+  },
+  {
+   "id": 37200,
+   "spell": {
+    "id": 1258668,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1258668?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Swirling Whirlpools"
+   },
+   "title": "Swirling Whirlpools"
+  },
+  {
+   "id": 34880,
+   "spell": {
+    "id": 1258668,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1258668?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Swirling Whirlpools"
+   },
+   "title": "Swirling Whirlpools"
+  },
+  {
+   "id": 37213,
+   "sections": [
+    {
+     "id": 37214,
+     "spell": {
+      "id": 1313402,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1313402?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Frost Orb"
+     },
+     "title": "Frost Orb"
+    },
+    {
+     "id": 37220,
+     "spell": {
+      "id": 1257654,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1257654?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Lingering Frost"
+     },
+     "title": "Lingering Frost"
+    }
+   ],
+   "spell": {
+    "id": 1313393,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1313393?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Chilling Frost"
+   },
+   "title": "Chilling Frost"
+  },
+  {
+   "id": 37211,
+   "sections": [
+    {
+     "id": 37218,
+     "spell": {
+      "id": 1313402,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1313402?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Frost Orb"
+     },
+     "title": "Frost Orb"
+    },
+    {
+     "id": 37227,
+     "spell": {
+      "id": 1257654,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1257654?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Lingering Frost"
+     },
+     "title": "Lingering Frost"
+    },
+    {
+     "id": 37219,
+     "spell": {
+      "id": 1313456,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1313456?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Shatter"
+     },
+     "title": "Shatter"
+    }
+   ],
+   "spell": {
+    "id": 1313393,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1313393?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Chilling Frost"
+   },
+   "title": "Chilling Frost"
+  },
+  {
+   "id": 37210,
+   "sections": [
+    {
+     "id": 37215,
+     "spell": {
+      "id": 1313402,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1313402?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Frost Orb"
+     },
+     "title": "Frost Orb"
+    },
+    {
+     "id": 37221,
+     "spell": {
+      "id": 1257654,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1257654?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Lingering Frost"
+     },
+     "title": "Lingering Frost"
+    },
+    {
+     "id": 37212,
+     "spell": {
+      "id": 1313450,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1313450?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Frost Burst"
+     },
+     "title": "Frost Burst"
+    },
+    {
+     "id": 37222,
+     "spell": {
+      "id": 1313456,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1313456?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Shatter"
+     },
+     "title": "Shatter"
+    }
+   ],
+   "spell": {
+    "id": 1313393,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1313393?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Chilling Frost"
+   },
+   "title": "Chilling Frost"
+  },
+  {
+   "id": 35044,
+   "spell": {
+    "id": 1282937,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1282937?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Iceblade Flurry"
+   },
+   "title": "Iceblade Flurry"
+  },
+  {
+   "id": 35150,
+   "spell": {
+    "id": 1258901,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1258901?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Water Jet"
+   },
+   "title": "Water Jet"
+  },
+  {
+   "id": 37198,
+   "spell": {
+    "id": 1260837,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1260837?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Abyssal Rain"
+   },
+   "title": "Abyssal Rain"
+  },
+  {
+   "id": 37199,
+   "sections": [
+    {
+     "id": 35766,
+     "spell": {
+      "id": 1277386,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1277386?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Wavecaller's Might"
+     },
+     "title": "Wavecaller's Might"
+    }
+   ],
+   "spell": {
+    "id": 1260837,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1260837?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Abyssal Rain"
+   },
+   "title": "Abyssal Rain"
+  },
+  {
+   "id": 37209,
+   "spell": {
+    "id": 1294867,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1294867?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Unending Tides"
+   },
+   "title": "Unending Tides"
+  }
+ ]
+}

@@ -17,5 +17,6 @@ clap.workspace = true
 serde_json.workspace = true
 
 [features]
-default = ["wcl"]
+default = ["wcl", "blizzard"]
 wcl = ["wowcoach-core/wcl"]
+blizzard = ["wowcoach-core/blizzard"]

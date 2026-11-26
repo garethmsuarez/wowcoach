@@ -14,3 +14,4220 @@
 key = "midnight-s2"
 name = "Mythic+ Dungeons (Midnight Season 2)"
 blizzard_season_id = 18
+synced_build = "12.1.5"
+
+[[dungeon]]
+name = "Altar of Fangs"
+keystone_id = 588
+map_id = 2993
+journal_id = 1322
+timer_s = [1800, 1440, 1080]
+
+[[dungeon.bosses]]
+name = "Rav'i"
+journal_id = 2878
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "The Writhing Coil"
+journal_id = 2879
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Zul'jan"
+journal_id = 2880
+encounter_id = 0
+
+[[dungeon]]
+name = "Den of Nalorakk"
+keystone_id = 586
+map_id = 2825
+journal_id = 1311
+timer_s = [1920, 1536, 1152]
+
+[[dungeon.bosses]]
+name = "The Hoardmonger"
+journal_id = 2776
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Sentinel of Winter"
+journal_id = 2777
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Nalorakk"
+journal_id = 2778
+encounter_id = 0
+
+[[dungeon]]
+name = "Kings' Rest"
+keystone_id = 249
+map_id = 1762
+journal_id = 1041
+timer_s = [1980, 1584, 1188]
+
+[[dungeon.bosses]]
+name = "The Golden Serpent"
+journal_id = 2165
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Mchimba the Embalmer"
+journal_id = 2171
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "The Council of Tribes"
+journal_id = 2170
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Dazar, The First King"
+journal_id = 2172
+encounter_id = 0
+
+[[dungeon]]
+name = "Murder Row"
+keystone_id = 587
+map_id = 2813
+journal_id = 1304
+timer_s = [2040, 1632, 1224]
+
+[[dungeon.bosses]]
+name = "Kystia Manaheart"
+journal_id = 2679
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Zaen Bladesorrow"
+journal_id = 2680
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Xathuux the Annihilator"
+journal_id = 2681
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Lithiel Cinderfury"
+journal_id = 2682
+encounter_id = 0
+
+[[dungeon]]
+name = "Ruby Life Pools"
+keystone_id = 399
+map_id = 2521
+journal_id = 1202
+timer_s = [1680, 1344, 1008]
+
+[[dungeon.bosses]]
+name = "Melidrussa Chillworn"
+journal_id = 2488
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Kokia Blazehoof"
+journal_id = 2485
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Kyrakka and Erkhart Stormvein"
+journal_id = 2503
+encounter_id = 0
+
+[[dungeon]]
+name = "Temple of Sethraliss"
+keystone_id = 250
+map_id = 1877
+journal_id = 1030
+timer_s = [1920, 1536, 1152]
+
+[[dungeon.bosses]]
+name = "Adderis and Aspix"
+journal_id = 2142
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Merektha"
+journal_id = 2143
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Galvazzt"
+journal_id = 2144
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Avatar of Sethraliss"
+journal_id = 2145
+encounter_id = 0
+
+[[dungeon]]
+name = "The Blinding Vale"
+keystone_id = 584
+map_id = 2859
+journal_id = 1309
+timer_s = [1800, 1440, 1080]
+
+[[dungeon.bosses]]
+name = "Lightblossom Trinity"
+journal_id = 2769
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Ikuzz the Light Hunter"
+journal_id = 2770
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Lightwarden Ruia"
+journal_id = 2771
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Ziekket"
+journal_id = 2772
+encounter_id = 0
+
+[[dungeon]]
+name = "Voidscar Arena"
+keystone_id = 585
+map_id = 2923
+journal_id = 1313
+timer_s = [1800, 1440, 1080]
+
+[[dungeon.bosses]]
+name = "Taz'Rah"
+journal_id = 2791
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Atroxus"
+journal_id = 2792
+encounter_id = 0
+
+[[dungeon.bosses]]
+name = "Charonus"
+journal_id = 2793
+encounter_id = 0
+
+[[raid]]
+name = "The Tidebound Grotto"
+map_id = 2987
+journal_id = 1317
+
+[[raid.bosses]]
+name = "Nymrissa Wavecaller"
+journal_id = 2849
+encounter_id = 3379
+
+[[raid]]
+name = "The Unbinding of Kith'ix"
+map_id = 3095
+journal_id = 1324
+
+[[raid.bosses]]
+name = "Kith'ix"
+journal_id = 2896
+encounter_id = 3513
+
+[[raid]]
+name = "The Venomous Abyss"
+map_id = 3004
+journal_id = 1320
+
+[[raid.bosses]]
+name = "Nek'zali the Soulcoiler"
+journal_id = 2888
+encounter_id = 3470
+
+[[raid.bosses]]
+name = "Entombed Sentinels"
+journal_id = 2874
+encounter_id = 3445
+
+[[raid.bosses]]
+name = "The Lost Explorers"
+journal_id = 2894
+encounter_id = 3497
+
+[[raid.bosses]]
+name = "Vashnik the Malignant"
+journal_id = 2882
+encounter_id = 3455
+
+[[raid.bosses]]
+name = "Sszorak"
+journal_id = 2871
+encounter_id = 3420
+
+[[raid.bosses]]
+name = "The Twin Fangs"
+journal_id = 2887
+encounter_id = 3421
+
+[[raid.bosses]]
+name = "The Coiled Altar"
+journal_id = 2883
+encounter_id = 3429
+
+[[raid.bosses]]
+name = "Ula'tek"
+journal_id = 2895
+encounter_id = 3492
+
+[[spell]]
+ids = [1307700]
+name = "Carrion Burst"
+map_id = 2993
+boss = "Rav'i"
+sources = ["journal"]
+
+[[spell]]
+ids = [1307765]
+name = "Feeding Frenzy"
+map_id = 2993
+boss = "Rav'i"
+sources = ["journal"]
+
+[[spell]]
+ids = [1307703]
+name = "Fresh Meat"
+map_id = 2993
+boss = "Rav'i"
+sources = ["journal"]
+
+[[spell]]
+ids = [1298683]
+name = "Hydrastrike"
+map_id = 2993
+boss = "Rav'i"
+sources = ["journal"]
+
+[[spell]]
+ids = [1306345]
+name = "Messy Eater"
+map_id = 2993
+boss = "Rav'i"
+sources = ["journal"]
+
+[[spell]]
+ids = [1307915]
+name = "Ravenous Stomp"
+map_id = 2993
+boss = "Rav'i"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296069]
+name = "Regurgitate"
+map_id = 2993
+boss = "Rav'i"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310378]
+name = "Scent of Blood"
+map_id = 2993
+boss = "Rav'i"
+sources = ["journal"]
+
+[[spell]]
+ids = [1298221]
+name = "Ssscavenging"
+map_id = 2993
+boss = "Rav'i"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297876]
+name = "Triple Shot"
+map_id = 2993
+boss = "Rav'i"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300083]
+name = "Burrowing Charge"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299053]
+name = "Death Rattle"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300503]
+name = "Spiteful Hunt"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299189]
+name = "Synchronized Venom"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1298949]
+name = "Tail Scythe"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310974]
+name = "Toxic Atrophy"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310357]
+name = "Toxic Barrage"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1287811]
+name = "Uncoil"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300612]
+name = "Uncoiled"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305393]
+name = "Undermining"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300044]
+name = "Venom Jet"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299940]
+name = "Vindictive Onslaught"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1287798]
+name = "Vine Grip"
+map_id = 2993
+boss = "The Writhing Coil"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301111]
+name = "Axegrinder"
+map_id = 2993
+boss = "Zul'jan"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301217]
+name = "Bloodletting"
+map_id = 2993
+boss = "Zul'jan"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301413]
+name = "Boneslicer"
+map_id = 2993
+boss = "Zul'jan"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301350]
+name = "Chop Down"
+map_id = 2993
+boss = "Zul'jan"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300888]
+name = "Fang Empowered"
+map_id = 2993
+boss = "Zul'jan"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300894]
+name = "Ritual Venom"
+map_id = 2993
+boss = "Zul'jan"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300876]
+name = "Ritual of the Fang"
+map_id = 2993
+boss = "Zul'jan"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235129]
+name = "Bonespike Slam"
+map_id = 2825
+boss = "The Hoardmonger"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235405]
+name = "Bonespiked"
+map_id = 2825
+boss = "The Hoardmonger"
+sources = ["journal"]
+
+[[spell]]
+ids = [1234021]
+name = "Earthshatter Slam"
+map_id = 2825
+boss = "The Hoardmonger"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235125]
+name = "Hearty Bellow"
+map_id = 2825
+boss = "The Hoardmonger"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235105]
+name = "Overflowing Supplies"
+map_id = 2825
+boss = "The Hoardmonger"
+sources = ["journal"]
+
+[[spell]]
+ids = [1245593]
+name = "Putrid Burst"
+map_id = 2825
+boss = "The Hoardmonger"
+sources = ["journal"]
+
+[[spell]]
+ids = [1234681]
+name = "Ravenous Bellow"
+map_id = 2825
+boss = "The Hoardmonger"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235072]
+name = "Resourceful Measures"
+map_id = 2825
+boss = "The Hoardmonger"
+sources = ["journal"]
+
+[[spell]]
+ids = [1234233]
+name = "Spoiled Supplies"
+map_id = 2825
+boss = "The Hoardmonger"
+sources = ["journal"]
+
+[[spell]]
+ids = [1234846]
+name = "Toxic Spores"
+map_id = 2825
+boss = "The Hoardmonger"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235656]
+name = "Frozen Tempest"
+map_id = 2825
+boss = "Sentinel of Winter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235548]
+name = "Glacial Torment"
+map_id = 2825
+boss = "Sentinel of Winter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235623]
+name = "Raging Squall"
+map_id = 2825
+boss = "Sentinel of Winter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1263597]
+name = "Rime Detonation"
+map_id = 2825
+boss = "Sentinel of Winter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1263590]
+name = "Rimeshatter"
+map_id = 2825
+boss = "Sentinel of Winter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235783]
+name = "Shattering Frostspike"
+map_id = 2825
+boss = "Sentinel of Winter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1234314]
+name = "Snowdrift"
+map_id = 2825
+boss = "Sentinel of Winter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235829]
+name = "Winter's Shroud"
+map_id = 2825
+boss = "Sentinel of Winter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1243063]
+name = "Concussive Shock"
+map_id = 2825
+boss = "Nalorakk"
+sources = ["journal"]
+
+[[spell]]
+ids = [1261776]
+name = "Defensive Stance"
+map_id = 2825
+boss = "Nalorakk"
+sources = ["journal"]
+
+[[spell]]
+ids = [1262253]
+name = "Demoralizing Scream"
+map_id = 2825
+boss = "Nalorakk"
+sources = ["journal"]
+
+[[spell]]
+ids = [1243408]
+name = "Echoing Fury"
+map_id = 2825
+boss = "Nalorakk"
+sources = ["journal"]
+
+[[spell]]
+ids = [1242860]
+name = "Echoing Maul"
+map_id = 2825
+boss = "Nalorakk"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297797]
+name = "Forceful Slam"
+map_id = 2825
+boss = "Nalorakk"
+sources = ["journal"]
+
+[[spell]]
+ids = [1243002]
+name = "Fury of the War God"
+map_id = 2825
+boss = "Nalorakk"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297792]
+name = "Overwhelming Onslaught"
+map_id = 2825
+boss = "Nalorakk"
+sources = ["journal"]
+
+[[spell]]
+ids = [1255577]
+name = "Spectral Slash"
+map_id = 2825
+boss = "Nalorakk"
+sources = ["journal"]
+
+[[spell]]
+ids = [265923]
+name = "Lucre's Call"
+map_id = 1762
+boss = "The Golden Serpent"
+sources = ["journal"]
+
+[[spell]]
+ids = [265991]
+name = "Luster"
+map_id = 1762
+boss = "The Golden Serpent"
+sources = ["journal"]
+
+[[spell]]
+ids = [265914]
+name = "Molten Gold"
+map_id = 1762
+boss = "The Golden Serpent"
+sources = ["journal"]
+
+[[spell]]
+ids = [1311987]
+name = "Serpentine Gust"
+map_id = 1762
+boss = "The Golden Serpent"
+sources = ["journal"]
+
+[[spell]]
+ids = [265773]
+name = "Spit Gold"
+map_id = 1762
+boss = "The Golden Serpent"
+sources = ["journal"]
+
+[[spell]]
+ids = [265910]
+name = "Tail Thrash"
+map_id = 1762
+boss = "The Golden Serpent"
+sources = ["journal"]
+
+[[spell]]
+ids = [1312146]
+name = "Awakening Slam"
+map_id = 1762
+boss = "Mchimba the Embalmer"
+sources = ["journal"]
+
+[[spell]]
+ids = [267639]
+name = "Burn Corruption"
+map_id = 1762
+boss = "Mchimba the Embalmer"
+sources = ["journal"]
+
+[[spell]]
+ids = [267874]
+name = "Burning Ground"
+map_id = 1762
+boss = "Mchimba the Embalmer"
+sources = ["journal"]
+
+[[spell]]
+ids = [1312848]
+name = "Command Constructs"
+map_id = 1762
+boss = "Mchimba the Embalmer"
+sources = ["journal"]
+
+[[spell]]
+ids = [267626]
+name = "Desiccation"
+map_id = 1762
+boss = "Mchimba the Embalmer"
+sources = ["journal"]
+
+[[spell]]
+ids = [267618]
+name = "Drain Fluids"
+map_id = 1762
+boss = "Mchimba the Embalmer"
+sources = ["journal"]
+
+[[spell]]
+ids = [1312569]
+name = "Embalm"
+map_id = 1762
+boss = "Mchimba the Embalmer"
+sources = ["journal"]
+
+[[spell]]
+ids = [267702]
+name = "Entomb"
+map_id = 1762
+boss = "Mchimba the Embalmer"
+sources = ["journal"]
+
+[[spell]]
+ids = [1312143]
+name = "Explosive Acids"
+map_id = 1762
+boss = "Mchimba the Embalmer"
+sources = ["journal"]
+
+[[spell]]
+ids = [271290]
+name = "Open Coffin"
+map_id = 1762
+boss = "Mchimba the Embalmer"
+sources = ["journal"]
+
+[[spell]]
+ids = [267763]
+name = "Wretched Discharge"
+map_id = 1762
+boss = "Mchimba the Embalmer"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305810]
+name = "Arc Lightning"
+map_id = 1762
+boss = "The Council of Tribes"
+sources = ["journal"]
+
+[[spell]]
+ids = [266951]
+name = "Barrel Through"
+map_id = 1762
+boss = "The Council of Tribes"
+sources = ["journal"]
+
+[[spell]]
+ids = [267060]
+name = "Call of the Elements"
+map_id = 1762
+boss = "The Council of Tribes"
+sources = ["journal"]
+
+[[spell]]
+ids = [266237]
+name = "Debilitating Backhand"
+map_id = 1762
+boss = "The Council of Tribes"
+sources = ["journal"]
+
+[[spell]]
+ids = [267257]
+name = "Disruption"
+map_id = 1762
+boss = "The Council of Tribes"
+sources = ["journal"]
+
+[[spell]]
+ids = [267077]
+name = "Explode"
+map_id = 1762
+boss = "The Council of Tribes"
+sources = ["journal"]
+
+[[spell]]
+ids = [267273]
+name = "Poison Nova"
+map_id = 1762
+boss = "The Council of Tribes"
+sources = ["journal"]
+
+[[spell]]
+ids = [266231]
+name = "Severing Axe"
+map_id = 1762
+boss = "The Council of Tribes"
+sources = ["journal"]
+
+[[spell]]
+ids = [266238]
+name = "Shattered Defenses"
+map_id = 1762
+boss = "The Council of Tribes"
+sources = ["journal"]
+
+[[spell]]
+ids = [267105]
+name = "Torrent"
+map_id = 1762
+boss = "The Council of Tribes"
+sources = ["journal"]
+
+[[spell]]
+ids = [266206]
+name = "Whirling Axes"
+map_id = 1762
+boss = "The Council of Tribes"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303115]
+name = "Aerial Smash"
+map_id = 1762
+boss = "Dazar, The First King"
+sources = ["journal"]
+
+[[spell]]
+ids = [268586]
+name = "Blade Combo"
+map_id = 1762
+boss = "Dazar, The First King"
+sources = ["journal"]
+
+[[spell]]
+ids = [269369]
+name = "Deathly Roar"
+map_id = 1762
+boss = "Dazar, The First King"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303519, 1303523]
+name = "Eternal Bond"
+map_id = 1762
+boss = "Dazar, The First King"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303267]
+name = "Gilded Destruction"
+map_id = 1762
+boss = "Dazar, The First King"
+sources = ["journal"]
+
+[[spell]]
+ids = [269231]
+name = "Hunting Leap"
+map_id = 1762
+boss = "Dazar, The First King"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302945]
+name = "Impaling Spear"
+map_id = 1762
+boss = "Dazar, The First King"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303324]
+name = "Quaking Leap"
+map_id = 1762
+boss = "Dazar, The First King"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303490]
+name = "Savage Maul"
+map_id = 1762
+boss = "Dazar, The First King"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303372]
+name = "Searing Gold"
+map_id = 1762
+boss = "Dazar, The First King"
+sources = ["journal"]
+
+[[spell]]
+ids = [1230298]
+name = "Chaos Barrage"
+map_id = 2813
+boss = "Kystia Manaheart"
+sources = ["journal"]
+
+[[spell]]
+ids = [1228198]
+name = "Corroding Spittle"
+map_id = 2813
+boss = "Kystia Manaheart"
+sources = ["journal"]
+
+[[spell]]
+ids = [1265412]
+name = "Destabilized"
+map_id = 2813
+boss = "Kystia Manaheart"
+sources = ["journal"]
+
+[[spell]]
+ids = [1223906]
+name = "Fel Nova"
+map_id = 2813
+boss = "Kystia Manaheart"
+sources = ["journal"]
+
+[[spell]]
+ids = [1253811]
+name = "Fel Spray"
+map_id = 2813
+boss = "Kystia Manaheart"
+sources = ["journal"]
+
+[[spell]]
+ids = [1217989]
+name = "Felshield"
+map_id = 2813
+boss = "Kystia Manaheart"
+sources = ["journal"]
+
+[[spell]]
+ids = [1264106]
+name = "Felstorm"
+map_id = 2813
+boss = "Kystia Manaheart"
+sources = ["journal"]
+
+[[spell]]
+ids = [1230289]
+name = "Illicit Infusion"
+map_id = 2813
+boss = "Kystia Manaheart"
+sources = ["journal"]
+
+[[spell]]
+ids = [1230304]
+name = "Light Infusion"
+map_id = 2813
+boss = "Kystia Manaheart"
+sources = ["journal"]
+
+[[spell]]
+ids = [1264095]
+name = "Mirror Images"
+map_id = 2813
+boss = "Kystia Manaheart"
+sources = ["journal"]
+
+[[spell]]
+ids = [1222795]
+name = "Envenom"
+map_id = 2813
+boss = "Zaen Bladesorrow"
+sources = ["journal"]
+
+[[spell]]
+ids = [1201553]
+name = "Fel-Infused Freight"
+map_id = 2813
+boss = "Zaen Bladesorrow"
+sources = ["journal"]
+
+[[spell]]
+ids = [1214357]
+name = "Fire Bomb"
+map_id = 2813
+boss = "Zaen Bladesorrow"
+sources = ["journal"]
+
+[[spell]]
+ids = [1266241]
+name = "Freight Explosion"
+map_id = 2813
+boss = "Zaen Bladesorrow"
+sources = ["journal"]
+
+[[spell]]
+ids = [474515]
+name = "Heartstop Poison"
+map_id = 2813
+boss = "Zaen Bladesorrow"
+sources = ["journal"]
+
+[[spell]]
+ids = [474478]
+name = "Killing Spree"
+map_id = 2813
+boss = "Zaen Bladesorrow"
+sources = ["journal"]
+
+[[spell]]
+ids = [1218347]
+name = "Murder in a Row"
+map_id = 2813
+boss = "Zaen Bladesorrow"
+sources = ["journal"]
+
+[[spell]]
+ids = [474765]
+name = "Same-Day Delivery"
+map_id = 2813
+boss = "Zaen Bladesorrow"
+sources = ["journal"]
+
+[[spell]]
+ids = [1214663]
+name = "Axe Toss"
+map_id = 2813
+boss = "Xathuux the Annihilator"
+sources = ["journal"]
+
+[[spell]]
+ids = [474234]
+name = "Burning Steps"
+map_id = 2813
+boss = "Xathuux the Annihilator"
+sources = ["journal"]
+
+[[spell]]
+ids = [474197]
+name = "Demonic Rage"
+map_id = 2813
+boss = "Xathuux the Annihilator"
+sources = ["journal"]
+
+[[spell]]
+ids = [1214650]
+name = "Fel Lightning"
+map_id = 2813
+boss = "Xathuux the Annihilator"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295455]
+name = "Infernal Crush"
+map_id = 2813
+boss = "Xathuux the Annihilator"
+sources = ["journal"]
+
+[[spell]]
+ids = [473898]
+name = "Legion Strike"
+map_id = 2813
+boss = "Xathuux the Annihilator"
+sources = ["journal"]
+
+[[spell]]
+ids = [474375]
+name = "Chaos Bolt"
+map_id = 2813
+boss = "Lithiel Cinderfury"
+sources = ["journal"]
+
+[[spell]]
+ids = [1214675]
+name = "Demonic Gateway"
+map_id = 2813
+boss = "Lithiel Cinderfury"
+sources = ["journal"]
+
+[[spell]]
+ids = [1223204]
+name = "Felfire Burst"
+map_id = 2813
+boss = "Lithiel Cinderfury"
+sources = ["journal"]
+
+[[spell]]
+ids = [1231262]
+name = "Felfire Core"
+map_id = 2813
+boss = "Lithiel Cinderfury"
+sources = ["journal"]
+
+[[spell]]
+ids = [1217415]
+name = "Felshield"
+map_id = 2813
+boss = "Lithiel Cinderfury"
+sources = ["journal"]
+
+[[spell]]
+ids = [474457]
+name = "Fingers of Gul'dan"
+map_id = 2813
+boss = "Lithiel Cinderfury"
+sources = ["journal"]
+
+[[spell]]
+ids = [1226469]
+name = "Malefic Empowerment"
+map_id = 2813
+boss = "Lithiel Cinderfury"
+sources = ["journal"]
+
+[[spell]]
+ids = [1217384]
+name = "Malefic Wave"
+map_id = 2813
+boss = "Lithiel Cinderfury"
+sources = ["journal"]
+
+[[spell]]
+ids = [1216945]
+name = "Searing Fel Flame"
+map_id = 2813
+boss = "Lithiel Cinderfury"
+sources = ["journal"]
+
+[[spell]]
+ids = [1217881]
+name = "Shadow Bite"
+map_id = 2813
+boss = "Lithiel Cinderfury"
+sources = ["journal"]
+
+[[spell]]
+ids = [373046]
+name = "Awaken Whelps"
+map_id = 2521
+boss = "Melidrussa Chillworn"
+sources = ["journal"]
+
+[[spell]]
+ids = [372851]
+name = "Chillstorm"
+map_id = 2521
+boss = "Melidrussa Chillworn"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305233]
+name = "Cold Claws"
+map_id = 2521
+boss = "Melidrussa Chillworn"
+sources = ["journal"]
+
+[[spell]]
+ids = [372808]
+name = "Frigid Shard"
+map_id = 2521
+boss = "Melidrussa Chillworn"
+sources = ["journal"]
+
+[[spell]]
+ids = [373680]
+name = "Frost Overload"
+map_id = 2521
+boss = "Melidrussa Chillworn"
+sources = ["journal"]
+
+[[spell]]
+ids = [373593]
+name = "Frozen Solid"
+map_id = 2521
+boss = "Melidrussa Chillworn"
+sources = ["journal"]
+
+[[spell]]
+ids = [384024]
+name = "Hailbombs"
+map_id = 2521
+boss = "Melidrussa Chillworn"
+sources = ["journal"]
+
+[[spell]]
+ids = [396044]
+name = "Hailburst"
+map_id = 2521
+boss = "Melidrussa Chillworn"
+sources = ["journal"]
+
+[[spell]]
+ids = [372988]
+name = "Ice Bulwark"
+map_id = 2521
+boss = "Melidrussa Chillworn"
+sources = ["journal"]
+
+[[spell]]
+ids = [372963]
+name = "Storm's Eye"
+map_id = 2521
+boss = "Melidrussa Chillworn"
+sources = ["journal"]
+
+[[spell]]
+ids = [373017]
+name = "Blaze Volley"
+map_id = 2521
+boss = "Kokia Blazehoof"
+sources = ["journal"]
+
+[[spell]]
+ids = [373087]
+name = "Burnout"
+map_id = 2521
+boss = "Kokia Blazehoof"
+sources = ["journal"]
+
+[[spell]]
+ids = [384823]
+name = "Inferno"
+map_id = 2521
+boss = "Kokia Blazehoof"
+sources = ["journal"]
+
+[[spell]]
+ids = [372107]
+name = "Molten Boulder"
+map_id = 2521
+boss = "Kokia Blazehoof"
+sources = ["journal"]
+
+[[spell]]
+ids = [372863]
+name = "Ritual of Blazebinding"
+map_id = 2521
+boss = "Kokia Blazehoof"
+sources = ["journal"]
+
+[[spell]]
+ids = [372820]
+name = "Scorched Earth"
+map_id = 2521
+boss = "Kokia Blazehoof"
+sources = ["journal"]
+
+[[spell]]
+ids = [372858]
+name = "Searing Blows"
+map_id = 2521
+boss = "Kokia Blazehoof"
+sources = ["journal"]
+
+[[spell]]
+ids = [372860]
+name = "Searing Wounds"
+map_id = 2521
+boss = "Kokia Blazehoof"
+sources = ["journal"]
+
+[[spell]]
+ids = [384773]
+name = "Flaming Embers"
+map_id = 2521
+boss = "Kyrakka and Erkhart Stormvein"
+sources = ["journal"]
+
+[[spell]]
+ids = [381862]
+name = "Inferno Spit"
+map_id = 2521
+boss = "Kyrakka and Erkhart Stormvein"
+sources = ["journal"]
+
+[[spell]]
+ids = [381516]
+name = "Interrupting Cloudburst"
+map_id = 2521
+boss = "Kyrakka and Erkhart Stormvein"
+sources = ["journal"]
+
+[[spell]]
+ids = [381525]
+name = "Roaring Firebreath"
+map_id = 2521
+boss = "Kyrakka and Erkhart Stormvein"
+sources = ["journal"]
+
+[[spell]]
+ids = [381512]
+name = "Stormslam"
+map_id = 2521
+boss = "Kyrakka and Erkhart Stormvein"
+sources = ["journal"]
+
+[[spell]]
+ids = [381517]
+name = "Winds of Change"
+map_id = 2521
+boss = "Kyrakka and Erkhart Stormvein"
+sources = ["journal"]
+
+[[spell]]
+ids = [1292035]
+name = "Frenzy"
+map_id = 1877
+boss = "Adderis and Aspix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1289059]
+name = "Gale Force"
+map_id = 1877
+boss = "Adderis and Aspix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1288455]
+name = "Gust"
+map_id = 1877
+boss = "Adderis and Aspix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1288428]
+name = "Overload"
+map_id = 1877
+boss = "Adderis and Aspix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310311]
+name = "Storm Blessed"
+map_id = 1877
+boss = "Adderis and Aspix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1288864]
+name = "Tempest Winds"
+map_id = 1877
+boss = "Adderis and Aspix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1288049]
+name = "Thunder and Lightning"
+map_id = 1877
+boss = "Adderis and Aspix"
+sources = ["journal"]
+
+[[spell]]
+ids = [263958]
+name = "A Knot of Snakes"
+map_id = 1877
+boss = "Merektha"
+sources = ["journal"]
+
+[[spell]]
+ids = [264206]
+name = "Burrow"
+map_id = 1877
+boss = "Merektha"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300227]
+name = "Burrowquake"
+map_id = 1877
+boss = "Merektha"
+sources = ["journal"]
+
+[[spell]]
+ids = [1289205]
+name = "Hatch"
+map_id = 1877
+boss = "Merektha"
+sources = ["journal"]
+
+[[spell]]
+ids = [1290797]
+name = "Lightning Bite"
+map_id = 1877
+boss = "Merektha"
+sources = ["journal"]
+
+[[spell]]
+ids = [1289589]
+name = "Lingering Storm"
+map_id = 1877
+boss = "Merektha"
+sources = ["journal"]
+
+[[spell]]
+ids = [267027]
+name = "Poison Spit"
+map_id = 1877
+boss = "Merektha"
+sources = ["journal"]
+
+[[spell]]
+ids = [1293048]
+name = "Serpentstorm"
+map_id = 1877
+boss = "Merektha"
+sources = ["journal"]
+
+[[spell]]
+ids = [1291622]
+name = "Storm Catalyst"
+map_id = 1877
+boss = "Merektha"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296912]
+name = "Storm Strikes"
+map_id = 1877
+boss = "Merektha"
+sources = ["journal"]
+
+[[spell]]
+ids = [1289109]
+name = "Thunder Spit"
+map_id = 1877
+boss = "Merektha"
+sources = ["journal"]
+
+[[spell]]
+ids = [266511]
+name = "Capacitance"
+map_id = 1877
+boss = "Galvazzt"
+sources = ["journal"]
+
+[[spell]]
+ids = [266512]
+name = "Consume Charge"
+map_id = 1877
+boss = "Galvazzt"
+sources = ["journal"]
+
+[[spell]]
+ids = [265973]
+name = "Energize"
+map_id = 1877
+boss = "Galvazzt"
+sources = ["journal"]
+
+[[spell]]
+ids = [266923]
+name = "Galvanized"
+map_id = 1877
+boss = "Galvazzt"
+sources = ["journal"]
+
+[[spell]]
+ids = [1290531]
+name = "Induction"
+map_id = 1877
+boss = "Galvazzt"
+sources = ["journal"]
+
+[[spell]]
+ids = [1291815]
+name = "Induction Field"
+map_id = 1877
+boss = "Galvazzt"
+sources = ["journal"]
+
+[[spell]]
+ids = [1291618]
+name = "Lightning Spire"
+map_id = 1877
+boss = "Galvazzt"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301253]
+name = "Agony of Sethraliss"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302895]
+name = "Consume Lifeforce"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300871]
+name = "Corrupted Lifeforce"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300877]
+name = "Corruption"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302826]
+name = "Corruption Burst"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301199]
+name = "Defiling Taint"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302158]
+name = "Flame Shock"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300684]
+name = "Hex Muck"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302153]
+name = "Latent Hex"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300714]
+name = "Shadowlash"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302296]
+name = "Siphon the Weak"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300803]
+name = "Tainted Strike"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302761]
+name = "Unstable Corruption"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302616]
+name = "Vile Charge"
+map_id = 1877
+boss = "Avatar of Sethraliss"
+sources = ["journal"]
+
+[[spell]]
+ids = [1234753]
+name = "Bedrock Slam"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1276586]
+name = "Bedrock Surge"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1261011]
+name = "Fan Of Thorns"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1234782]
+name = "Fertile Loam"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235616]
+name = "Light Bolt"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235729]
+name = "Light-Gorged"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235814]
+name = "Light-Scorched Earth"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235751]
+name = "Lightbloom Overgrowth"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235564]
+name = "Lightblossom Beam"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1234850]
+name = "Lightsower Dash"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1253028]
+name = "Thicket's Trinity"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1235640]
+name = "Thornblade"
+map_id = 2859
+boss = "Lightblossom Trinity"
+sources = ["journal"]
+
+[[spell]]
+ids = [1237090]
+name = "Bloodthirsty Gaze"
+map_id = 2859
+boss = "Ikuzz the Light Hunter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1236658]
+name = "Bloodthorn Roots"
+map_id = 2859
+boss = "Ikuzz the Light Hunter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1272290]
+name = "Crunched"
+map_id = 2859
+boss = "Ikuzz the Light Hunter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1237093]
+name = "Crushing Footfalls"
+map_id = 2859
+boss = "Ikuzz the Light Hunter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1237166]
+name = "Incise"
+map_id = 2859
+boss = "Ikuzz the Light Hunter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1237073]
+name = "Lightcrazed Frenzy"
+map_id = 2859
+boss = "Ikuzz the Light Hunter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1236709]
+name = "Thorncaller Roar"
+map_id = 2859
+boss = "Ikuzz the Light Hunter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1236746]
+name = "Verdant Stomp"
+map_id = 2859
+boss = "Ikuzz the Light Hunter"
+sources = ["journal"]
+
+[[spell]]
+ids = [1241058]
+name = "Grievous Thrash"
+map_id = 2859
+boss = "Lightwarden Ruia"
+sources = ["journal"]
+
+[[spell]]
+ids = [1240098]
+name = "Lightfall"
+map_id = 2859
+boss = "Lightwarden Ruia"
+sources = ["journal"]
+
+[[spell]]
+ids = [1239824]
+name = "Lightfire"
+map_id = 2859
+boss = "Lightwarden Ruia"
+sources = ["journal"]
+
+[[spell]]
+ids = [1239830]
+name = "Lightfire Beams"
+map_id = 2859
+boss = "Lightwarden Ruia"
+sources = ["journal"]
+
+[[spell]]
+ids = [1272265]
+name = "Mangling Claws"
+map_id = 2859
+boss = "Lightwarden Ruia"
+sources = ["journal"]
+
+[[spell]]
+ids = [1257094]
+name = "Pulverized"
+map_id = 2859
+boss = "Lightwarden Ruia"
+sources = ["journal"]
+
+[[spell]]
+ids = [1240210]
+name = "Pulverizing Strikes"
+map_id = 2859
+boss = "Lightwarden Ruia"
+sources = ["journal"]
+
+[[spell]]
+ids = [1241067]
+name = "Spirits of the Vale"
+map_id = 2859
+boss = "Lightwarden Ruia"
+sources = ["journal"]
+
+[[spell]]
+ids = [1239821]
+name = "Warden's Wrath"
+map_id = 2859
+boss = "Lightwarden Ruia"
+sources = ["journal"]
+
+[[spell]]
+ids = [1246372]
+name = "Awaken the Lightbloom"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1246607]
+name = "Concentrated Lightbeam"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1246379]
+name = "Dormant"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1247039]
+name = "Fluorescent Outburst"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1247050]
+name = "Fluorescent Shield"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1246858]
+name = "Lightbloom's Essence"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1247052]
+name = "Lightbloom's Might"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1246660]
+name = "Lightsap"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1247669]
+name = "Lightspore Shot"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1247377]
+name = "Oozing Xylem"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1247685]
+name = "Thornspike"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1253320]
+name = "Vicious Regrowth"
+map_id = 2859
+boss = "Ziekket"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300259]
+name = "Dark Bloom"
+map_id = 2923
+boss = "Taz'Rah"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296889]
+name = "Ethereal Shades"
+map_id = 2923
+boss = "Taz'Rah"
+sources = ["journal"]
+
+[[spell]]
+ids = [1222098]
+name = "Nether Dash"
+map_id = 2923
+boss = "Taz'Rah"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296963]
+name = "Umbral Rupture"
+map_id = 2923
+boss = "Taz'Rah"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297017]
+name = "Void Blast"
+map_id = 2923
+boss = "Taz'Rah"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296967]
+name = "Void Fissure"
+map_id = 2923
+boss = "Taz'Rah"
+sources = ["journal"]
+
+[[spell]]
+ids = [1283506]
+name = "Fixate"
+map_id = 2923
+boss = "Atroxus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1222642]
+name = "Hulking Claw"
+map_id = 2923
+boss = "Atroxus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1263971]
+name = "Mind-Numbing Poison"
+map_id = 2923
+boss = "Atroxus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1262497]
+name = "Monstrous Roar"
+map_id = 2923
+boss = "Atroxus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1222724]
+name = "Noxious Breath"
+map_id = 2923
+boss = "Atroxus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1222484]
+name = "Poison Pool"
+map_id = 2923
+boss = "Atroxus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1226031]
+name = "Poison Splash"
+map_id = 2923
+boss = "Atroxus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1282892]
+name = "Sickening Bite"
+map_id = 2923
+boss = "Atroxus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1222692]
+name = "Toxic Aura"
+map_id = 2923
+boss = "Atroxus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310026]
+name = "Atomized"
+map_id = 2923
+boss = "Charonus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1263983]
+name = "Condensed Mass"
+map_id = 2923
+boss = "Charonus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1227197]
+name = "Cosmic Crash"
+map_id = 2923
+boss = "Charonus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1311923]
+name = "Dark Waves"
+map_id = 2923
+boss = "Charonus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1223298]
+name = "Gravitic Orbs"
+map_id = 2923
+boss = "Charonus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1264191]
+name = "Unstable Singularity"
+map_id = 2923
+boss = "Charonus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1222755]
+name = "Void Cascade"
+map_id = 2923
+boss = "Charonus"
+sources = ["journal"]
+
+[[spell]]
+ids = [1260837]
+name = "Abyssal Rain"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1257717]
+name = "Alluring Bubble"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1313393]
+name = "Chilling Frost"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1313450]
+name = "Frost Burst"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1313402]
+name = "Frost Orb"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1282937]
+name = "Iceblade Flurry"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1257654]
+name = "Lingering Frost"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1258150]
+name = "Pop!"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1258894]
+name = "Pulsing Tides"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1313456]
+name = "Shatter"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1258668]
+name = "Swirling Whirlpools"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1294867]
+name = "Unending Tides"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1258901]
+name = "Water Jet"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1273091]
+name = "Waterfog Shield"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1277386]
+name = "Wavecaller's Might"
+map_id = 2987
+boss = "Nymrissa Wavecaller"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303406]
+name = "Abyssal Grasp"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305008]
+name = "Commanding Presence"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304930]
+name = "Dark Devastation"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303260]
+name = "Dark Frenzy"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304948]
+name = "Devastated"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302319]
+name = "Digestive Juices"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303169]
+name = "Divine Radiance"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308674]
+name = "Eclipse Fragment"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301479]
+name = "Eightfold Eclipse"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1307662]
+name = "Exhausted"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1318472]
+name = "Explosive Restabilization"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304424]
+name = "Extinguish"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302295]
+name = "Fixate"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302117]
+name = "Gut Reaction"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1307407]
+name = "Incubation"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305427]
+name = "Last Light"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304508]
+name = "Light's Embrace"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308675]
+name = "Lost Refulgence"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305428]
+name = "Luminous Grace"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304040]
+name = "Mindsting"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1318467]
+name = "Negation"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302705]
+name = "Nightfall"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308873]
+name = "Null Gate"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308875]
+name = "Nullify"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308881]
+name = "Nullshards"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304046]
+name = "Overwhelming Fear"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302952]
+name = "Refulgent Bulwark"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301110]
+name = "Stygian Howl"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302951]
+name = "Suffocating Darkness"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303257]
+name = "Suffocation"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303681]
+name = "Twisted Appendage"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304045]
+name = "Unspeakable Horrors"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302884]
+name = "Venom Roar"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304950]
+name = "Voidscar"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301511]
+name = "Voidswarm"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302333]
+name = "Voidweave"
+map_id = 3095
+boss = "Kith'ix"
+sources = ["journal"]
+
+[[spell]]
+ids = [1294846]
+name = "Anguished Echoes"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1294729]
+name = "Corpse Blight"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1289875]
+name = "Cremation"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1293497]
+name = "Entwined Step"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1287426]
+name = "Essence Rend"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1293212]
+name = "Grasping Depths"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1287533]
+name = "Gravebound Advance"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284110]
+name = "Hollowing Strikes"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1289855]
+name = "Hungering Pyre"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299988]
+name = "Immortal Coil"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299673]
+name = "Invoke"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1287198]
+name = "Latent Cultist"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284103]
+name = "Possession Barrage"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297624]
+name = "Ritual Burn"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1294933]
+name = "Slithering Flame"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300235]
+name = "Soul Exhaustion"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1292248]
+name = "Soul Transfer"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1285681]
+name = "Soulcoil Ignition"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284033]
+name = "Soulcoil Rite"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284032]
+name = "Soulcoil Well"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1290361]
+name = "Soulcoiled"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300238]
+name = "Soulcoiler's Curse"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300239]
+name = "Swirling Spirit"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1289696]
+name = "Tether of Awakening"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284034]
+name = "Uncoiled Rage"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1290003]
+name = "Uncoiling"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295263]
+name = "Vessel of Awakening"
+map_id = 3004
+boss = "Nek'zali the Soulcoiler"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284471]
+name = "Blighted Blood"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284208]
+name = "Blood Venom"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284487]
+name = "Bloodvenom Injection"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1288297]
+name = "Clinging Murk"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284257]
+name = "Contaminate"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284941]
+name = "Cultivated Burst"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284458]
+name = "Empowering Slam"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284590]
+name = "Helical Toxins"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284207]
+name = "Living Venom"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284494]
+name = "Mark of Acid"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284503]
+name = "Mark of Blood"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284452]
+name = "Noxious Blast"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296962]
+name = "Protovenom Eruption"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296878]
+name = "Shifting Protovenom"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284434]
+name = "Toxic Droplets"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1290193]
+name = "Ula'tek's Dominance"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1288232]
+name = "Unstable Miasma"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284251]
+name = "Venom Coagulation"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284588]
+name = "Vitriolic Stasis"
+map_id = 3004
+boss = "Entombed Sentinels"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310500, 1313690]
+name = "Aftershock"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305844]
+name = "Blast Wave"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296025]
+name = "Blink Nova"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299855]
+name = "Bounce"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295928]
+name = "Burning Flames"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1291390]
+name = "Cataclysmic Invocation"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296247]
+name = "Concussive Blast"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1313126]
+name = "Dark Unity"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295451]
+name = "Dark Whispers"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295952]
+name = "Elemental Explosion"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1292388]
+name = "Evil Eyes"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297625]
+name = "Explosive Surprise"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1292780]
+name = "Final Ascension"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297649]
+name = "Fire Patch"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1313303]
+name = "Fishy Feedback"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297648]
+name = "Frost Patch"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295893]
+name = "Frostfire Volley"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305618]
+name = "Fungal Burst"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286921]
+name = "Icebound Flames"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295449]
+name = "Malevolent Presence"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296092]
+name = "Mighty Thud"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297022]
+name = "Mor'zahi's Command"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1292104]
+name = "Mushroom Toss"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295954]
+name = "Piercing Frost"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296227]
+name = "Relentless Escalation"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310027]
+name = "Relic Rupture"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296061]
+name = "Shell Spin"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295854]
+name = "Shredding Shards"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296252]
+name = "Smashing Shovel"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308853, 1312868]
+name = "Splinters"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297650]
+name = "Spreading Flames"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1291930]
+name = "Steady Strikes"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1291933]
+name = "Throw Junk"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297646]
+name = "United Defense"
+map_id = 3004
+boss = "The Lost Explorers"
+sources = ["journal"]
+
+[[spell]]
+ids = [1282117]
+name = "Adaptive Infection"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1293969]
+name = "Blood Infusion"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305902]
+name = "Burning Presence"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1282601]
+name = "Catalytic Bile"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295209]
+name = "Caustic Explosion"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1285979]
+name = "Caustic Surge"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1298587]
+name = "Conflagrating Expulsion"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1280935]
+name = "Dripping Fangs"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295173]
+name = "Exploding Infection"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1293971]
+name = "Flame Infusion"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1298583]
+name = "Gloom Expulsion"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1314837]
+name = "Hardened Venom"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1298582]
+name = "Hemo Expulsion"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1283164]
+name = "Imbibe"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304459]
+name = "Malignance"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1280189]
+name = "Malignant Burst"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1282525]
+name = "Malignant Catalyst"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1312366]
+name = "Miasmic Coating"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1281907]
+name = "Plague Froth"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295798]
+name = "Plague Wave"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1291530]
+name = "Sanguineous Fortitude"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1293968]
+name = "Shadow Infusion"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295229]
+name = "Siphon Blood"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299941]
+name = "Siphoning Infection"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286631]
+name = "Splitting Clot"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302489]
+name = "Stygian Burst"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1294994]
+name = "Stygian Infection"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1314273]
+name = "Thinned Blood"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1284561]
+name = "Toxic Vapor"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286737]
+name = "Umbral Ejection"
+map_id = 3004
+boss = "Vashnik the Malignant"
+sources = ["journal"]
+
+[[spell]]
+ids = [1277025]
+name = "Apex Predator"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305998]
+name = "Caustic Claws"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296602]
+name = "Caustic Residue"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1282869]
+name = "Corroding Venom"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286033]
+name = "Dig In"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1285732]
+name = "Howling Maelstrom"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1277027]
+name = "Mutilate"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1277051]
+name = "Mutilated Gash"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1285419]
+name = "Raging Crosswinds"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1277002]
+name = "Ravage"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297367]
+name = "Serpent's Fury"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1287072]
+name = "Tempest"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297414]
+name = "To the Slaughter"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1285447]
+name = "Turbulent Gusts"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1285961]
+name = "Ula'tek's Presence"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296898]
+name = "Unbound Ferocity"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305959]
+name = "Venomous Surge"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1297707]
+name = "Virulence"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1287008]
+name = "Viscous Cyst"
+map_id = 3004
+boss = "Sszorak"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303378]
+name = "Barbed Bulwark"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303230]
+name = "Blood Torrent"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1289192]
+name = "Caustic Deluge"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1289993]
+name = "Caustic Globule"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295115]
+name = "Clotted Bolt"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1290809]
+name = "Coiling Ichor"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295107]
+name = "Concentrated Spittle"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1292505, 1306922]
+name = "Congealed Gore"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1291478]
+name = "Corrosive Spit"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310360]
+name = "Envenomed"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1290336]
+name = "Eternal Venom"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310096]
+name = "Feasted"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1309471]
+name = "Noxious Slick"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1290516]
+name = "Ravenous Feast"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308356]
+name = "Rouse the Brood"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1306872]
+name = "Sanguine Storm"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1290956]
+name = "Stir the Depths"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1288538]
+name = "Stone Breaker"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308556]
+name = "Submerge"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310099]
+name = "Tainted Blood"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310105]
+name = "Tainted Burst"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295049]
+name = "Toxic Fumes"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308583]
+name = "Uncoiled Wrath"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1291404]
+name = "Venomous Emergence"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1294293]
+name = "Vile Flood"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308385]
+name = "Visceral Burst"
+map_id = 3004
+boss = "The Twin Fangs"
+sources = ["journal"]
+
+[[spell]]
+ids = [1283832]
+name = "Axegrinder"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1307279]
+name = "Blighted Sever"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1309174]
+name = "Caustic Secretion"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1282403]
+name = "Coalesced Venom"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1315202]
+name = "Consumed by Resentment"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1298795]
+name = "Corrupted Toxin"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299396]
+name = "Death's Embrace"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299401]
+name = "Death's Whisper"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304028]
+name = "Deathguard"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1298591]
+name = "Defiled Ground"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1298381]
+name = "Defilement of the Coiled Altar"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1307009]
+name = "Despair"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1307184]
+name = "Dread Bolt"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1288624]
+name = "Dreadful Presence"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1285643]
+name = "Dreadmarch"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286918]
+name = "Eternal Nightfall"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1283606]
+name = "Execution"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1282487]
+name = "Fangs of the Coiled Altar"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304033]
+name = "Ghastly Regeneration"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286895, 1310882]
+name = "Gloombomb"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286837]
+name = "Gravebound"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299301]
+name = "Grim Execution"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299267]
+name = "Grim Guillotine"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1283489]
+name = "Guillotine"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1309940, 1309944]
+name = "Guillotined"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310732]
+name = "Malevolent Resonance"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310498]
+name = "Mutagenic Venom"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1283290]
+name = "Noxious Ground"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1287718]
+name = "Reclaim Essence"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308323]
+name = "Retaliatory Malice"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299680]
+name = "Sever"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286620]
+name = "Soul Sever"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1304032]
+name = "Soulbinding"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1309987, 1313196]
+name = "Soulbound"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1287722]
+name = "Spirit Erasure"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1309105]
+name = "Spirit Shield"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286441]
+name = "Spiritcackle"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286947]
+name = "Suffocating Darkness"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310013]
+name = "Tainted Blood"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299960]
+name = "Toxic Deluge"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300322]
+name = "Twinfang Toxin"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1285911]
+name = "Unnerving Fixation"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286912]
+name = "Veil of Twilight"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299838]
+name = "Venom Rupture"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1282287]
+name = "Venomfang"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310544]
+name = "Virulent Mutation"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1282419]
+name = "Volatile Venom"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286399]
+name = "Wail of Terror"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1283623]
+name = "Widow's Kiss"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1283631]
+name = "Widow's Touch"
+map_id = 3004
+boss = "The Coiled Altar"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301800]
+name = "Acidic Burst"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1313531]
+name = "Acidic Expulsion"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305650]
+name = "Anguished Cry"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1311600, 1311609]
+name = "Blight Vein"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1289962]
+name = "Blightscale Clutch"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1313757, 1315342]
+name = "Boiling Venom"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1306119, 1318329]
+name = "Calcified Corpse"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300751, 1304012]
+name = "Call of the Serpent"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1292403]
+name = "Caustic Waves"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301510]
+name = "Circling Prey"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303410]
+name = "Defect: Weakened"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305709]
+name = "Desperate Thrash"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1313355]
+name = "Doomscale Cauldron"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300312]
+name = "Doomscale Shell"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1305775]
+name = "Dread Roar"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286885]
+name = "Falling Debris"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310763]
+name = "Fester Burst"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286905]
+name = "Fury Unleashed"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301117]
+name = "Grasping Fangs"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299650]
+name = "Hardened"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1306862]
+name = "Hatching Doom"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300938]
+name = "Hobbled"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1290779]
+name = "Malice"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295360]
+name = "Malignant Shell"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1308038]
+name = "Mass Gestation"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1296301]
+name = "Mephitic Thrash"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299764]
+name = "Mother's Boon"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1298367]
+name = "Mother's Wrath"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286834]
+name = "Necrotic Vapors"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1307612]
+name = "Noxious Shell"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1307635]
+name = "Noxious Splash"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1303414]
+name = "Petrifying Sting"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1287036]
+name = "Poisonous Bite"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301268]
+name = "Putrid Membrane"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286860]
+name = "Rage of the Shackled"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1312150]
+name = "Rancid Yolk"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299206]
+name = "Rattler Slam"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1307941]
+name = "Revenge"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1295905]
+name = "Serpent's Bite"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1301213]
+name = "Shadow Molt"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1300685]
+name = "Soul Constrictor"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1287265]
+name = "Spectral Coils"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1298417]
+name = "Stone Venom"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302842]
+name = "Toxic Burn"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299757]
+name = "Toxic Incubation"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310738]
+name = "Toxic Womb"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302505]
+name = "Ula'tek's Bond"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1286945]
+name = "Unchecked Rage"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1299526]
+name = "Venomous Heart"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1310764]
+name = "Vicious Echoes"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1302982]
+name = "Virulent Spit"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1306086]
+name = "Volatile Purge"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1306858]
+name = "Warden's Protection"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]
+
+[[spell]]
+ids = [1290990]
+name = "Writhing Gestation"
+map_id = 3004
+boss = "Ula'tek"
+sources = ["journal"]

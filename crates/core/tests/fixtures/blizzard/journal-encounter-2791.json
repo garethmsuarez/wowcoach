@@ -1,0 +1,252 @@
+{
+ "_links": {
+  "self": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-encounter/2791?namespace=static-12.1.5_70077-us"
+  }
+ },
+ "category": {
+  "type": "DUNGEON"
+ },
+ "creatures": [
+  {
+   "creature_display": {
+    "id": 124085,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/media/creature-display/124085?namespace=static-12.1.5_70077-us"
+    }
+   },
+   "id": 5960,
+   "name": "Taz'Rah"
+  }
+ ],
+ "description": "The domanaar's prized champion, Taz'Rah, is forced to fight against his will. Taz'Rah demands his own death from every opponent, hoping each battle will finally end his suffering.",
+ "id": 2791,
+ "instance": {
+  "id": 1313,
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-instance/1313?namespace=static-12.1.5_70077-us"
+  },
+  "name": "Voidscar Arena"
+ },
+ "items": [
+  {
+   "id": 45877,
+   "item": {
+    "id": 250225,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/250225?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Void Execution Mandate"
+   }
+  },
+  {
+   "id": 45878,
+   "item": {
+    "id": 251219,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251219?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Riftworn Stompers"
+   }
+  },
+  {
+   "id": 45879,
+   "item": {
+    "id": 251222,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251222?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Ethereal Netherwrap"
+   }
+  },
+  {
+   "id": 45880,
+   "item": {
+    "id": 251223,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251223?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Somber Spaulders"
+   }
+  },
+  {
+   "id": 45881,
+   "item": {
+    "id": 251220,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251220?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Voidscarred Crown"
+   }
+  },
+  {
+   "id": 45882,
+   "item": {
+    "id": 251221,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251221?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Despondent's Gauntlets"
+   }
+  },
+  {
+   "id": 45883,
+   "item": {
+    "id": 251218,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251218?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Taz'Rah's Cosmic Edge"
+   }
+  }
+ ],
+ "modes": [
+  {
+   "name": "Normal",
+   "type": "NORMAL"
+  },
+  {
+   "name": "Heroic",
+   "type": "HEROIC"
+  },
+  {
+   "name": "Mythic",
+   "type": "MYTHIC"
+  },
+  {
+   "name": "Mythic+ Dungeons",
+   "type": "MYTHIC_KEYSTONE"
+  }
+ ],
+ "name": "Taz'Rah",
+ "sections": [
+  {
+   "body_text": "Taz'Rah summons Ethereal Shades that perform [Nether Dash], damaging targets in a line in front of them.\r\n\r\nTaz'rah's [Dark Bloom] causes [Void Fissures] to erupt.",
+   "id": 32963,
+   "sections": [
+    {
+     "body_text": "$bullet;Ethereal Shades periodically cast [Nether Dash] on a random player, damaging targets in a line in front of them.\r\n$bullet;[Dark Bloom] causes [Void Fissures] to erupt.",
+     "id": 32964,
+     "title": "Damage Dealers"
+    },
+    {
+     "body_text": "$bullet;[Nether Dash] strikes all players in a line and inflicts Shadow damage over a long duration.\r\n$bullet;[Dark Bloom] inflicts heavy Shadow damage on all players and causes [Void Fissures] to erupt.",
+     "id": 32965,
+     "title": "Healers"
+    },
+    {
+     "body_text": "$bullet;[Void Blast] inflicts heavy Shadowstrike damage.\r\n$bullet;[Dark Bloom] causes [Void Fissures] to erupt.",
+     "id": 32966,
+     "title": "Tanks"
+    }
+   ],
+   "title": "Overview"
+  },
+  {
+   "id": 32967,
+   "spell": {
+    "id": 1300259,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1300259?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Dark Bloom"
+   },
+   "title": "Dark Bloom"
+  },
+  {
+   "id": 35891,
+   "sections": [
+    {
+     "id": 36150,
+     "spell": {
+      "id": 1296967,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1296967?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Void Fissure"
+     },
+     "title": "Void Fissure"
+    }
+   ],
+   "spell": {
+    "id": 1296963,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1296963?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Umbral Rupture"
+   },
+   "title": "Umbral Rupture"
+  },
+  {
+   "id": 32970,
+   "sections": [
+    {
+     "id": 35892,
+     "spell": {
+      "id": 1296967,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1296967?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Void Fissure"
+     },
+     "title": "Void Fissure"
+    }
+   ],
+   "spell": {
+    "id": 1296963,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1296963?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Umbral Rupture"
+   },
+   "title": "Umbral Rupture"
+  },
+  {
+   "id": 34337,
+   "sections": [
+    {
+     "creature_display": {
+      "id": 124083,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/media/creature-display/124083?namespace=static-12.1.5_70077-us"
+      }
+     },
+     "id": 34339,
+     "sections": [
+      {
+       "id": 32968,
+       "spell": {
+        "id": 1222098,
+        "key": {
+         "href": "https://us.api.blizzard.com/data/wow/spell/1222098?namespace=static-12.1.5_70077-us"
+        },
+        "name": "Nether Dash"
+       },
+       "title": "Nether Dash"
+      }
+     ],
+     "title": "Ethereal Shade"
+    }
+   ],
+   "spell": {
+    "id": 1296889,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1296889?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Ethereal Shades"
+   },
+   "title": "Ethereal Shades"
+  },
+  {
+   "id": 32969,
+   "spell": {
+    "id": 1297017,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1297017?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Void Blast"
+   },
+   "title": "Void Blast"
+  }
+ ]
+}

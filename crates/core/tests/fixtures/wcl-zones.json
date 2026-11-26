@@ -1,0 +1,803 @@
+{
+ "data": {
+  "worldData": {
+   "expansions": [
+    {
+     "id": 7,
+     "name": "Midnight",
+     "zones": [
+      {
+       "difficulties": [
+        {
+         "id": 10,
+         "name": "Dungeon"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 62993,
+         "journalID": 0,
+         "name": "Altar of Fangs"
+        },
+        {
+         "id": 62825,
+         "journalID": 0,
+         "name": "Den of Nalorakk"
+        },
+        {
+         "id": 111762,
+         "journalID": 0,
+         "name": "Kings' Rest"
+        },
+        {
+         "id": 62813,
+         "journalID": 0,
+         "name": "Murder Row"
+        },
+        {
+         "id": 162521,
+         "journalID": 0,
+         "name": "Ruby Life Pools"
+        },
+        {
+         "id": 111877,
+         "journalID": 0,
+         "name": "Temple of Sethraliss"
+        },
+        {
+         "id": 62859,
+         "journalID": 0,
+         "name": "The Blinding Vale"
+        },
+        {
+         "id": 62923,
+         "journalID": 0,
+         "name": "Voidscar Arena"
+        }
+       ],
+       "frozen": true,
+       "id": 56,
+       "name": "Mythic+ Season 2 (PTR)"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 10,
+         "name": "Dungeon"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 12993,
+         "journalID": 0,
+         "name": "Altar of Fangs"
+        },
+        {
+         "id": 12825,
+         "journalID": 0,
+         "name": "Den of Nalorakk"
+        },
+        {
+         "id": 61762,
+         "journalID": 0,
+         "name": "Kings' Rest"
+        },
+        {
+         "id": 12813,
+         "journalID": 0,
+         "name": "Murder Row"
+        },
+        {
+         "id": 112521,
+         "journalID": 0,
+         "name": "Ruby Life Pools"
+        },
+        {
+         "id": 61877,
+         "journalID": 0,
+         "name": "Temple of Sethraliss"
+        },
+        {
+         "id": 12859,
+         "journalID": 0,
+         "name": "The Blinding Vale"
+        },
+        {
+         "id": 12923,
+         "journalID": 0,
+         "name": "Voidscar Arena"
+        }
+       ],
+       "frozen": false,
+       "id": 55,
+       "name": "Mythic+ Season 2"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 10,
+         "name": "Dungeon"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 162526,
+         "journalID": 0,
+         "name": "Algeth'ar Academy"
+        },
+        {
+         "id": 62811,
+         "journalID": 0,
+         "name": "Magister's Terrace"
+        },
+        {
+         "id": 62874,
+         "journalID": 0,
+         "name": "Maisara Caverns"
+        },
+        {
+         "id": 62915,
+         "journalID": 0,
+         "name": "Nexus-Point Xenas"
+        },
+        {
+         "id": 60658,
+         "journalID": 0,
+         "name": "Pit of Saron"
+        },
+        {
+         "id": 411753,
+         "journalID": 0,
+         "name": "Seat of the Triumvirate"
+        },
+        {
+         "id": 111209,
+         "journalID": 0,
+         "name": "Skyreach"
+        },
+        {
+         "id": 62805,
+         "journalID": 0,
+         "name": "Windrunner Spire"
+        }
+       ],
+       "frozen": true,
+       "id": 49,
+       "name": "Mythic+ Beta"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 10,
+         "name": "Dungeon"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 112526,
+         "journalID": 0,
+         "name": "Algeth'ar Academy"
+        },
+        {
+         "id": 12811,
+         "journalID": 0,
+         "name": "Magisters' Terrace"
+        },
+        {
+         "id": 12874,
+         "journalID": 0,
+         "name": "Maisara Caverns"
+        },
+        {
+         "id": 12915,
+         "journalID": 0,
+         "name": "Nexus-Point Xenas"
+        },
+        {
+         "id": 10658,
+         "journalID": 0,
+         "name": "Pit of Saron"
+        },
+        {
+         "id": 361753,
+         "journalID": 0,
+         "name": "Seat of the Triumvirate"
+        },
+        {
+         "id": 61209,
+         "journalID": 0,
+         "name": "Skyreach"
+        },
+        {
+         "id": 12805,
+         "journalID": 0,
+         "name": "Windrunner Spire"
+        }
+       ],
+       "frozen": true,
+       "id": 47,
+       "name": "Mythic+ Season 1"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 5,
+         "name": "Mythic"
+        },
+        {
+         "id": 4,
+         "name": "Heroic"
+        },
+        {
+         "id": 3,
+         "name": "Normal"
+        },
+        {
+         "id": 1,
+         "name": "LFR"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 3191,
+         "journalID": 0,
+         "name": "The Venomous Abyss"
+        }
+       ],
+       "frozen": false,
+       "id": 510,
+       "name": "The Venomous Abyss Complete Raid"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 5,
+         "name": "Mythic"
+        },
+        {
+         "id": 4,
+         "name": "Heroic"
+        },
+        {
+         "id": 3,
+         "name": "Normal"
+        },
+        {
+         "id": 1,
+         "name": "LFR"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 3175,
+         "journalID": 0,
+         "name": "The Voidspire"
+        },
+        {
+         "id": 3198,
+         "journalID": 0,
+         "name": "March on Quel'Danas"
+        }
+       ],
+       "frozen": true,
+       "id": 509,
+       "name": "Complete Raids (VS / DR / MQD)"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 31,
+         "name": "Solo Shuffle"
+        },
+        {
+         "id": 32,
+         "name": "2v2"
+        },
+        {
+         "id": 33,
+         "name": "3v3"
+        },
+        {
+         "id": 34,
+         "name": "Skirmish"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 20572,
+         "journalID": 0,
+         "name": "Ruins of Lordaeron"
+        },
+        {
+         "id": 20617,
+         "journalID": 0,
+         "name": "Dalaran Sewers"
+        },
+        {
+         "id": 20980,
+         "journalID": 0,
+         "name": "Tol'viron Arena"
+        },
+        {
+         "id": 21134,
+         "journalID": 0,
+         "name": "Tiger's Peak"
+        },
+        {
+         "id": 21504,
+         "journalID": 0,
+         "name": "Black Rook Hold Arena"
+        },
+        {
+         "id": 21505,
+         "journalID": 0,
+         "name": "Nagrand Arena"
+        },
+        {
+         "id": 21552,
+         "journalID": 0,
+         "name": "Ashamane's Fall"
+        },
+        {
+         "id": 21672,
+         "journalID": 0,
+         "name": "Blade's Edge Arena"
+        },
+        {
+         "id": 21825,
+         "journalID": 0,
+         "name": "Hook Point"
+        },
+        {
+         "id": 21911,
+         "journalID": 0,
+         "name": "Mugambala"
+        },
+        {
+         "id": 22167,
+         "journalID": 0,
+         "name": "The Robodrome"
+        },
+        {
+         "id": 22373,
+         "journalID": 0,
+         "name": "Empyrean Domain"
+        },
+        {
+         "id": 22509,
+         "journalID": 0,
+         "name": "Maldraxxus Coliseum"
+        },
+        {
+         "id": 22547,
+         "journalID": 0,
+         "name": "Enigma Crucible"
+        },
+        {
+         "id": 22563,
+         "journalID": 0,
+         "name": "Nokhudon Proving Grounds"
+        },
+        {
+         "id": 22759,
+         "journalID": 0,
+         "name": "Cage of Carnage"
+        }
+       ],
+       "frozen": true,
+       "id": 58,
+       "name": "Arena"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 5,
+         "name": "Mythic"
+        },
+        {
+         "id": 4,
+         "name": "Heroic"
+        },
+        {
+         "id": 3,
+         "name": "Normal"
+        },
+        {
+         "id": 1,
+         "name": "LFR"
+        }
+       ],
+       "encounters": [],
+       "frozen": true,
+       "id": 57,
+       "name": "The Tidebound Grotto"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 5,
+         "name": "Mythic"
+        },
+        {
+         "id": 4,
+         "name": "Heroic"
+        },
+        {
+         "id": 3,
+         "name": "Normal"
+        },
+        {
+         "id": 1,
+         "name": "LFR"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 53470,
+         "journalID": 0,
+         "name": "Nek'zali the Soulcoiler"
+        },
+        {
+         "id": 53445,
+         "journalID": 0,
+         "name": "Entombed Sentinels"
+        },
+        {
+         "id": 53455,
+         "journalID": 0,
+         "name": "Vashnik the Malignant"
+        },
+        {
+         "id": 53497,
+         "journalID": 0,
+         "name": "The Lost Explorers"
+        },
+        {
+         "id": 53420,
+         "journalID": 0,
+         "name": "Sszorak"
+        },
+        {
+         "id": 53421,
+         "journalID": 0,
+         "name": "The Twin Fangs"
+        },
+        {
+         "id": 53429,
+         "journalID": 0,
+         "name": "The Coiled Altar"
+        },
+        {
+         "id": 53492,
+         "journalID": 0,
+         "name": "Ula'tek"
+        },
+        {
+         "id": 53513,
+         "journalID": 0,
+         "name": "Kith'ix"
+        }
+       ],
+       "frozen": true,
+       "id": 54,
+       "name": "The Venomous Abyss (PTR)"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 5,
+         "name": "Mythic"
+        },
+        {
+         "id": 4,
+         "name": "Heroic"
+        },
+        {
+         "id": 3,
+         "name": "Normal"
+        },
+        {
+         "id": 1,
+         "name": "LFR"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 3470,
+         "journalID": 0,
+         "name": "Nek'zali the Soulcoiler"
+        },
+        {
+         "id": 3445,
+         "journalID": 0,
+         "name": "Entombed Sentinels"
+        },
+        {
+         "id": 3455,
+         "journalID": 0,
+         "name": "Vashnik the Malignant"
+        },
+        {
+         "id": 3497,
+         "journalID": 0,
+         "name": "The Lost Explorers"
+        },
+        {
+         "id": 3420,
+         "journalID": 0,
+         "name": "Sszorak"
+        },
+        {
+         "id": 3421,
+         "journalID": 0,
+         "name": "The Twin Fangs"
+        },
+        {
+         "id": 3429,
+         "journalID": 0,
+         "name": "The Coiled Altar"
+        },
+        {
+         "id": 3492,
+         "journalID": 0,
+         "name": "Ula'tek"
+        },
+        {
+         "id": 3379,
+         "journalID": 0,
+         "name": "Nymrissa Wavecaller"
+        },
+        {
+         "id": 3513,
+         "journalID": 0,
+         "name": "Kith'ix"
+        }
+       ],
+       "frozen": false,
+       "id": 53,
+       "name": "The Venomous Abyss"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 3,
+         "name": "Normal"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 3591,
+         "journalID": 0,
+         "name": "Sinister Single"
+        },
+        {
+         "id": 3590,
+         "journalID": 0,
+         "name": "Diabolical Duo"
+        },
+        {
+         "id": 3592,
+         "journalID": 0,
+         "name": "Terrible Trio"
+        },
+        {
+         "id": 3593,
+         "journalID": 0,
+         "name": "Fearsome Five"
+        },
+        {
+         "id": 3594,
+         "journalID": 0,
+         "name": "Hazardous Healer"
+        }
+       ],
+       "frozen": false,
+       "id": 52,
+       "name": "Dummy Dome"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 5,
+         "name": "Mythic"
+        },
+        {
+         "id": 4,
+         "name": "Heroic"
+        },
+        {
+         "id": 3,
+         "name": "Normal"
+        },
+        {
+         "id": 1,
+         "name": "LFR"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 53159,
+         "journalID": 0,
+         "name": "Rotmire"
+        }
+       ],
+       "frozen": false,
+       "id": 51,
+       "name": "Sporefall (PTR)"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 5,
+         "name": "Mythic"
+        },
+        {
+         "id": 4,
+         "name": "Heroic"
+        },
+        {
+         "id": 3,
+         "name": "Normal"
+        },
+        {
+         "id": 1,
+         "name": "LFR"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 3159,
+         "journalID": 0,
+         "name": "Rotmire"
+        }
+       ],
+       "frozen": true,
+       "id": 50,
+       "name": "Sporefall"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 5,
+         "name": "Mythic"
+        },
+        {
+         "id": 4,
+         "name": "Heroic"
+        },
+        {
+         "id": 3,
+         "name": "Normal"
+        },
+        {
+         "id": 1,
+         "name": "LFR"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 53176,
+         "journalID": 0,
+         "name": "Imperator Averzian"
+        },
+        {
+         "id": 53177,
+         "journalID": 0,
+         "name": "Vorasius"
+        },
+        {
+         "id": 53179,
+         "journalID": 0,
+         "name": "Fallen-King Salhadaar"
+        },
+        {
+         "id": 53178,
+         "journalID": 0,
+         "name": "Vaelgor & Ezzorak"
+        },
+        {
+         "id": 53180,
+         "journalID": 0,
+         "name": "Lightblinded Vanguard"
+        },
+        {
+         "id": 53181,
+         "journalID": 0,
+         "name": "Crown of the Cosmos"
+        },
+        {
+         "id": 53306,
+         "journalID": 0,
+         "name": "Chimaerus, the Undreamt God"
+        },
+        {
+         "id": 53182,
+         "journalID": 0,
+         "name": "Belo'ren, Child of Al'ar"
+        },
+        {
+         "id": 53183,
+         "journalID": 0,
+         "name": "Midnight Falls"
+        }
+       ],
+       "frozen": true,
+       "id": 48,
+       "name": "VS / DR / MQD (Beta)"
+      },
+      {
+       "difficulties": [
+        {
+         "id": 5,
+         "name": "Mythic"
+        },
+        {
+         "id": 4,
+         "name": "Heroic"
+        },
+        {
+         "id": 3,
+         "name": "Normal"
+        },
+        {
+         "id": 1,
+         "name": "LFR"
+        }
+       ],
+       "encounters": [
+        {
+         "id": 3176,
+         "journalID": 0,
+         "name": "Imperator Averzian"
+        },
+        {
+         "id": 3177,
+         "journalID": 0,
+         "name": "Vorasius"
+        },
+        {
+         "id": 3179,
+         "journalID": 0,
+         "name": "Fallen-King Salhadaar"
+        },
+        {
+         "id": 3178,
+         "journalID": 0,
+         "name": "Vaelgor & Ezzorak"
+        },
+        {
+         "id": 3180,
+         "journalID": 0,
+         "name": "Lightblinded Vanguard"
+        },
+        {
+         "id": 3181,
+         "journalID": 0,
+         "name": "Crown of the Cosmos"
+        },
+        {
+         "id": 3306,
+         "journalID": 0,
+         "name": "Chimaerus, the Undreamt God"
+        },
+        {
+         "id": 3182,
+         "journalID": 0,
+         "name": "Belo'ren, Child of Al'ar"
+        },
+        {
+         "id": 3183,
+         "journalID": 0,
+         "name": "Midnight Falls"
+        }
+       ],
+       "frozen": true,
+       "id": 46,
+       "name": "VS / DR / MQD"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}
