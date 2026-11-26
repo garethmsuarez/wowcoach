@@ -23,6 +23,7 @@ Gaps found in the code that shape the order:
 ---
 
 ## M0: Foundations (workspace + safety net)
+**Status: done.** Also fixed: report output was not deterministic (sort ties broken by HashMap order). The real-log smoke run covered 12 logs (~1.5 GB, Midnight 12.1.5, log version 22): no crashes, and every player's spec was detected.
 - Split into a workspace:
   - `crates/core`: model, combatlog, wcl mapping, analysis, rules, config, specs, report.
   - `crates/cli`: `main.rs`.

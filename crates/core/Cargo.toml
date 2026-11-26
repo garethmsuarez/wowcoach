@@ -1,0 +1,26 @@
+[package]
+name = "wowcoach-core"
+description = "Combat log parsing, analysis and coaching rules behind wowcoach"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "wowcoach_core"
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json = { workspace = true, optional = true }
+toml.workspace = true
+ureq = { workspace = true, optional = true }
+
+[features]
+default = ["wcl"]
+# Warcraft Logs v2 API adapter (network). Build with --no-default-features for an offline-only build.
+wcl = ["dep:ureq", "dep:serde_json"]
+
+[dev-dependencies]
+serde_json.workspace = true

@@ -629,3 +629,6 @@ pub fn apply_progression(p: &mut ProgressionReport) {
     }
     p.suggestions = out;
 }
+
+#[cfg(test)]
+mod tests;
