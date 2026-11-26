@@ -86,6 +86,76 @@ fn one(x: &Suggestion, out: &mut String, _player: bool) {
     );
 }
 
+/// Every priority cast of a key and how it ended, grouped by pull.
+fn priority_casts_html(f: &FightReport, o: &mut String) {
+    let casts: Vec<&CastRecord> = f.casts.iter().filter(|c| c.priority).collect();
+    if casts.is_empty() {
+        return;
+    }
+    let off = casts
+        .iter()
+        .filter(|c| c.outcome == CastOutcome::Completed)
+        .count();
+    let _ = write!(
+        o,
+        "<h3>Priority casts</h3><div class=sub>{} cast · {} went off</div><table><tr><th>Time</th><th>Pull</th><th>Spell</th><th>Caster</th><th>Outcome</th></tr>",
+        casts.len(),
+        off
+    );
+    for c in casts {
+        let outcome = match &c.outcome {
+            CastOutcome::Completed => {
+                let ready: Vec<String> = c
+                    .ready_kickers
+                    .iter()
+                    .map(|k| {
+                        let d = k
+                            .distance_yd
+                            .map(|d| format!("{d:.0} yd"))
+                            .unwrap_or_else(|| "distance unknown".into());
+                        let range = if k.in_range == Some(false) {
+                            ", out of range"
+                        } else {
+                            ""
+                        };
+                        format!("{} ({}, {d}{range})", esc(&k.player), esc(&k.ability))
+                    })
+                    .collect();
+                format!(
+                    "<b class=bad>went off</b>{}",
+                    if ready.is_empty() {
+                        " · no kick ready".to_string()
+                    } else {
+                        format!(" · ready: {}", ready.join(", "))
+                    }
+                )
+            }
+            CastOutcome::Kicked {
+                by,
+                spell,
+                latency_s,
+            } => {
+                format!("kicked by {} ({}, {latency_s:.1}s in)", esc(by), esc(spell))
+            }
+            CastOutcome::Stopped { by, ability, .. } => {
+                format!("stopped by {} ({})", esc(by), esc(ability))
+            }
+            CastOutcome::CasterDied => "caster killed".into(),
+            CastOutcome::Cancelled => "<span class=sub>cancelled</span>".into(),
+        };
+        let _ = write!(
+            o,
+            "<tr><td>{}</td><td class=n>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>",
+            mmss(c.end_s),
+            c.pull.map(|p| p.to_string()).unwrap_or_default(),
+            esc(&c.name),
+            esc(&c.caster),
+            outcome
+        );
+    }
+    o.push_str("</table>");
+}
+
 pub fn html(r: &Report) -> String {
     let mut o = String::new();
     let _ = write!(
@@ -199,19 +269,28 @@ pub fn html(r: &Report) -> String {
         }
 
         suggestions_html(&f.suggestions, &mut o);
+        if matches!(f.kind, FightKind::MythicPlus { .. }) {
+            priority_casts_html(f, &mut o);
+        }
 
         // players
         let max_dps = f.players.iter().map(|p| p.dps).fold(0.0, f64::max).max(1.0);
+        let is_mplus = matches!(f.kind, FightKind::MythicPlus { .. });
         let has_rank = f.players.iter().any(|p| p.wcl_rank_percent.is_some());
         let _ = write!(
             o,
-            "<h3>Players</h3><table><tr><th>Player</th><th>Spec</th><th>DPS</th><th></th><th>HPS</th><th>Shields</th><th>Taken</th><th>Avoidable</th><th>Kicks</th><th>Dispels</th><th>Deaths</th><th>Activity</th>{}</tr>",
+            "<h3>Players</h3><table><tr><th>Player</th><th>Spec</th><th>DPS</th><th></th><th>HPS</th><th>Shields</th><th>Taken</th><th>Avoidable</th><th>Kicks</th>{}<th>Dispels</th><th>Deaths</th><th>Activity</th>{}</tr>",
+            if is_mplus {
+                "<th title='median time into the cast bar'>Kick time</th><th title='priority casts that went off with your kick ready in range'>Missed ★</th><th title='filler kicked while a priority cast was casting'>Wasted</th>"
+            } else {
+                ""
+            },
             if has_rank { "<th>WCL %</th>" } else { "" }
         );
         for p in &f.players {
             let _ = write!(
                 o,
-                "<tr><td>{}</td><td>{} {}{}</td><td class=n>{}</td><td><div class=bar><i style='width:{:.0}%'></i></div></td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{:.0}%</td>{}</tr>",
+                "<tr><td>{}</td><td>{} {}{}</td><td class=n>{}</td><td><div class=bar><i style='width:{:.0}%'></i></div></td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td>{}<td class=n>{}</td><td class=n>{}</td><td class=n>{:.0}%</td>{}</tr>",
                 esc(&p.name),
                 esc(&p.spec),
                 esc(&p.class),
@@ -231,6 +310,26 @@ pub fn html(r: &Report) -> String {
                 human(p.damage_taken),
                 human(p.avoidable_taken + p.likely_avoidable_taken),
                 p.interrupts,
+                if is_mplus {
+                    format!(
+                        "<td class=n>{}</td><td class=n>{}</td><td class=n>{}</td>",
+                        p.kick_latency_s
+                            .map(|l| format!("{l:.1}s"))
+                            .unwrap_or_default(),
+                        if p.priority_missed > 0 {
+                            p.priority_missed.to_string()
+                        } else {
+                            String::new()
+                        },
+                        if p.wasted_kicks > 0 {
+                            p.wasted_kicks.to_string()
+                        } else {
+                            String::new()
+                        }
+                    )
+                } else {
+                    String::new()
+                },
                 p.dispels,
                 p.deaths,
                 p.activity_pct * 100.0,

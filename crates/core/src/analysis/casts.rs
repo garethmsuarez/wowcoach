@@ -376,3 +376,56 @@ impl Tracker {
         }
     }
 }
+
+/// A kick counts as wasted when a priority cast was already casting (or began
+/// within this long after it) and then went off.
+pub const WASTED_LEAD_S: f64 = 1.0;
+/// ...and went off within this long of the kick.
+pub const WASTED_WINDOW_S: f64 = 6.0;
+
+/// Priority casts that went off while `player` had an interrupt ready and was
+/// in range of the caster.
+pub fn missed_priority<'a>(
+    casts: &'a [CastRecord],
+    player: &str,
+) -> Vec<(&'a CastRecord, &'a ReadyKicker)> {
+    casts
+        .iter()
+        .filter(|c| c.priority && c.outcome == CastOutcome::Completed)
+        .filter_map(|c| {
+            c.ready_kickers
+                .iter()
+                .find(|k| k.player == player && k.in_range == Some(true))
+                .map(|k| (c, k))
+        })
+        .collect()
+}
+
+/// `player`'s kicks on non-priority casts while a priority cast was already
+/// casting (or began within [`WASTED_LEAD_S`]) and then went off within
+/// [`WASTED_WINDOW_S`]: (the kicked cast, the priority cast).
+pub fn wasted_kicks<'a>(
+    casts: &'a [CastRecord],
+    player: &str,
+) -> Vec<(&'a CastRecord, &'a CastRecord)> {
+    let mut out = vec![];
+    for k in casts.iter().filter(|c| !c.priority) {
+        let CastOutcome::Kicked { by, .. } = &k.outcome else {
+            continue;
+        };
+        if by != player {
+            continue;
+        }
+        let at = k.end_s;
+        if let Some(p) = casts.iter().find(|p| {
+            p.priority
+                && p.outcome == CastOutcome::Completed
+                && p.start_s <= at + WASTED_LEAD_S
+                && p.end_s > at
+                && p.end_s - at <= WASTED_WINDOW_S
+        }) {
+            out.push((k, p));
+        }
+    }
+    out
+}

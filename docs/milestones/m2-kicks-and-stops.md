@@ -60,7 +60,9 @@ From that it proposes an assignment ("Bravo and Charlie: Lightning Bolt casters;
    - Records as above, `#[serde(skip)]` on the full list.
    - A per-pull summary table goes into the JSON.
    - Tests use synthetic event streams: kick, stun, kill, silent cancel, cooldown with observed CDR, out-of-range kicker.
-3. **Rules + report.**
+3. **Rules + report.** *(done. Two departures from the plan:
+   - A "kicks used / kicks possible" ratio was built and then dropped. Possible kicks per cooldown window (~95 in a +13) doesn't account for there being nothing to kick most of the time, so it judged harshly without evidence.
+   - "Stoppable casts that went off with a stop available" moved to PR 5, which brings the `stoppable` tags and stop availability)*
    - Group: priority casts that went off, **listed first** (fixes the M1 follow-up), each with "could have kicked: …".
    - Player: missed chances, wasted kicks, kick latency (median, and late kicks), kicks used vs kicks available.
    - Group: stoppable casts that went off while a stop was available (needs `stoppable` tags, PR 5).
