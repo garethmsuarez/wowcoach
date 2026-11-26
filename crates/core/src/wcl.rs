@@ -521,14 +521,6 @@ pub mod net {
     pub struct Client {
         agent: ureq::Agent,
         token: String,
-        cache: Option<std::path::PathBuf>,
-    }
-
-    /// FNV-1a: a stable cache key without pulling in a hashing crate.
-    fn fnv(s: &str) -> u64 {
-        s.bytes().fold(0xcbf29ce484222325, |h, b| {
-            (h ^ b as u64).wrapping_mul(0x100000001b3)
-        })
     }
 
     impl Client {
@@ -536,37 +528,7 @@ pub mod net {
             let agent = crate::net::agent();
             let token =
                 crate::net::client_credentials(&agent, TOKEN_URL, id, secret, "Warcraft Logs")?;
-            Ok(Client {
-                agent,
-                token,
-                cache: None,
-            })
-        }
-
-        /// Cache report metadata and events under `dir`. Only for reports that
-        /// won't change (finished public runs); a live-logged report would go stale.
-        pub fn with_cache(mut self, dir: std::path::PathBuf) -> Self {
-            self.cache = Some(dir);
-            self
-        }
-
-        /// `query`, served from / saved to the cache when one is set.
-        fn query_report(&self, q: &str, vars: Value) -> anyhow::Result<Value> {
-            let Some(dir) = &self.cache else {
-                return self.query(q, vars);
-            };
-            let path = dir.join(format!("{:016x}.json", fnv(&format!("{q}\n{vars}"))));
-            if let Ok(text) = std::fs::read_to_string(&path)
-                && let Ok(v) = serde_json::from_str(&text)
-            {
-                return Ok(v);
-            }
-            let v = self.query(q, vars)?;
-            std::fs::create_dir_all(dir)?;
-            let tmp = path.with_extension("tmp");
-            std::fs::write(&tmp, v.to_string())?;
-            std::fs::rename(&tmp, &path)?;
-            Ok(v)
+            Ok(Client { agent, token })
         }
 
         /// (points spent this hour, hourly limit, seconds until reset).
@@ -581,13 +543,22 @@ pub mod net {
         }
 
         /// One page of public ranked runs for a WCL encounter (for M+, the
-        /// whole-dungeon encounter, e.g. 12923).
+        /// whole-dungeon encounter, e.g. 12923), optionally at one key level.
+        /// M+ brackets start at +2 with one level each, so +L is bracket L-1;
+        /// callers should still check `RankedKey::level`.
         pub fn top_keys(
             &self,
             encounter_id: u32,
+            level: Option<u32>,
             page: u32,
         ) -> anyhow::Result<(Vec<super::RankedKey>, bool)> {
-            let d = self.query(TOP_Q, json!({ "id": encounter_id, "page": page }))?;
+            let d = match level {
+                Some(l) => self.query(
+                    TOP_BRACKET_Q,
+                    json!({ "id": encounter_id, "page": page, "bracket": l.saturating_sub(1) }),
+                )?,
+                None => self.query(TOP_Q, json!({ "id": encounter_id, "page": page }))?,
+            };
             Ok(super::parse_fight_rankings(
                 &d["worldData"]["encounter"]["fightRankings"],
             ))
@@ -624,6 +595,8 @@ pub mod net {
 
     const TOP_Q: &str = r#"query($id:Int!,$page:Int!){ worldData{ encounter(id:$id){ fightRankings(page:$page) } } }"#;
 
+    const TOP_BRACKET_Q: &str = r#"query($id:Int!,$page:Int!,$bracket:Int!){ worldData{ encounter(id:$id){ fightRankings(page:$page, bracket:$bracket) } } }"#;
+
     const ZONES_Q: &str =
         r#"{ worldData{ expansions{ id name zones{ id name frozen encounters{ id name } } } } }"#;
 
@@ -648,7 +621,7 @@ pub mod net {
         only: &[i64],
         with_rankings: bool,
     ) -> anyhow::Result<Fetched> {
-        let meta = c.query_report(META_Q, json!({ "code": code }))?;
+        let meta = c.query(META_Q, json!({ "code": code }))?;
         let report = &meta["reportData"]["report"];
         if report.is_null() {
             bail!("report {code} not found (private reports need the user OAuth flow)");
@@ -679,7 +652,7 @@ pub mod net {
             let mut fight_events = vec![];
             let mut s = f.start as f64;
             loop {
-                let d = c.query_report(
+                let d = c.query(
                     EVENTS_Q,
                     json!({ "code": code, "fid": [f.id], "s": s, "e": f.end as f64 }),
                 )?;

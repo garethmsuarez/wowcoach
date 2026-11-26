@@ -113,9 +113,10 @@ wowcoach season suggest LOGS... --wcl-top 5 --level 12..16 --write          # + 
 Proposals land in each spell's `suggested` list with an `evidence` line, for
 example `top keys (5 fights): kicked 30/30`. They never affect coaching until a
 reviewer moves them to `tags`. Move a rejected one to `dismissed` and it won't
-be proposed again. Public reports are cached (`~/.cache/wowcoach/wcl`), and a
-run stops before using more than `--max-points` (default 3000) of the hourly
-Warcraft Logs limit.
+be proposed again. Public runs cost about 26 Warcraft Logs points each. Their
+analysed evidence (a few KB per run, no events) is cached in
+`~/.cache/wowcoach/suggest`, so re-runs are nearly free. A run stops before it
+uses more than `--max-points` (default 3000) of the hourly limit.
 
 The older `[[avoidable]]` and `[[priority_interrupt]]` lists still work. How
 packs are built from the Blizzard API, your logs and Warcraft Logs is described

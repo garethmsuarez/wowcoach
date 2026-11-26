@@ -352,3 +352,24 @@ fn near_identical_boss_names_match() {
     assert_eq!(match_boss(&bosses, "Ziekett", 0).unwrap().name, "Ziekket");
     assert!(match_boss(&bosses, "Zekk", 0).is_none());
 }
+
+#[test]
+fn cached_evidence_gives_the_same_result() {
+    // `suggest --wcl-top` caches FightEvidence as JSON instead of event streams.
+    let f = run(4, MAP);
+    let json = serde_json::to_string(&vec![FightEvidence::from(&f)]).unwrap();
+    let back: Vec<FightEvidence> = serde_json::from_str(&json).unwrap();
+
+    let (mut p1, mut p2) = (pack(), pack());
+    let (mut c1, mut c2) = (Collected::default(), Collected::default());
+    for _ in 0..2 {
+        c1.add(&p1, &f, Origin::Top);
+        c2.add_evidence(&p2, &back[0], Origin::Top);
+    }
+    apply(&mut p1, &c1);
+    apply(&mut p2, &c2);
+    assert_eq!(
+        crate::season::render(&p1, "").unwrap(),
+        crate::season::render(&p2, "").unwrap()
+    );
+}

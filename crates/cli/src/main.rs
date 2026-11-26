@@ -112,7 +112,7 @@ struct SuggestArgs {
     #[cfg(feature = "wcl")]
     #[arg(long, default_value_t = 3000.0)]
     max_points: f64,
-    /// Where fetched public reports are cached (default: ~/.cache/wowcoach/wcl)
+    /// Where analysed public runs are cached (default: ~/.cache/wowcoach/suggest)
     #[cfg(feature = "wcl")]
     #[arg(long)]
     cache_dir: Option<PathBuf>,
@@ -192,7 +192,7 @@ fn suggest_from_wcl(
     pack: &SeasonPack,
     c: &mut wowcoach_core::suggest::Collected,
 ) -> anyhow::Result<()> {
-    use wowcoach_core::suggest::Origin;
+    use wowcoach_core::suggest::{self, Origin};
     if a.wcl.is_empty() && a.wcl_top == 0 {
         return Ok(());
     }
@@ -207,13 +207,13 @@ fn suggest_from_wcl(
             .map(PathBuf::from)
             .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))
             .unwrap_or_else(std::env::temp_dir)
-            .join("wowcoach/wcl")
+            .join("wowcoach/suggest")
     });
     eprintln!(
-        "Connecting to Warcraft Logs (report cache: {})...",
+        "Connecting to Warcraft Logs (evidence cache: {})...",
         cache.display()
     );
-    let client = wcl::net::Client::connect(&id, &secret)?.with_cache(cache);
+    let client = wcl::net::Client::connect(&id, &secret)?;
     let (spent0, limit, _) = client.rate_limit()?;
     // Stop at the run budget, and always leave 10% of the hourly limit.
     let ceiling = (spent0 + a.max_points).min(limit * 0.9);
@@ -254,12 +254,23 @@ fn suggest_from_wcl(
                 eprintln!("  {}: not found on Warcraft Logs, skipped", d.name);
                 continue;
             };
+            // Highest level first. Without --level: the overall top runs.
+            let levels: Vec<Option<u32>> = if a.level.is_none() {
+                vec![None]
+            } else {
+                (lo.max(2)..=hi.min(40)).rev().map(Some).collect()
+            };
             let mut keys = vec![];
-            for page in 1..=10 {
-                let (ranked, more) = client.top_keys(*enc, page)?;
-                keys.extend(ranked.into_iter().filter(|k| (lo..=hi).contains(&k.level)));
-                if keys.len() >= a.wcl_top || !more {
-                    break;
+            'levels: for level in levels {
+                for page in 1..=3 {
+                    let (ranked, more) = client.top_keys(*enc, level, page)?;
+                    keys.extend(ranked.into_iter().filter(|k| (lo..=hi).contains(&k.level)));
+                    if keys.len() >= a.wcl_top {
+                        break 'levels;
+                    }
+                    if !more {
+                        break;
+                    }
                 }
             }
             keys.truncate(a.wcl_top);
@@ -273,10 +284,26 @@ fn suggest_from_wcl(
                     .join(" ")
             );
             for k in &keys {
+                // Public runs don't change: reuse their analysed evidence.
+                let cached = cache.join(format!(
+                    "v{}-{}-{}.json",
+                    suggest::EVIDENCE_VERSION,
+                    k.code,
+                    k.fight_id
+                ));
+                if let Some(fights) = std::fs::read_to_string(&cached)
+                    .ok()
+                    .and_then(|t| serde_json::from_str::<Vec<suggest::FightEvidence>>(&t).ok())
+                {
+                    for f in &fights {
+                        c.add_evidence(pack, f, Origin::Top);
+                    }
+                    continue;
+                }
                 let (spent, _, reset) = client.rate_limit()?;
                 if spent + 60.0 > ceiling {
                     eprintln!(
-                        "  Stopping: {spent:.0} of {limit:.0} Warcraft Logs points used this hour (budget {:.0}); resets in {} min. Re-run later: fetched reports are cached.",
+                        "  Stopping: {spent:.0} of {limit:.0} Warcraft Logs points used this hour (budget {:.0}); resets in {} min. Re-run later: analysed runs are cached.",
                         ceiling,
                         reset / 60
                     );
@@ -284,9 +311,13 @@ fn suggest_from_wcl(
                 }
                 match analyse(&k.code, &[k.fight_id]) {
                     Ok(fights) => {
-                        for f in &fights {
-                            c.add(pack, f, Origin::Top);
+                        let ev: Vec<suggest::FightEvidence> =
+                            fights.iter().map(Into::into).collect();
+                        for f in &ev {
+                            c.add_evidence(pack, f, Origin::Top);
                         }
+                        std::fs::create_dir_all(&cache)?;
+                        std::fs::write(&cached, serde_json::to_string(&ev)?)?;
                     }
                     Err(e) => eprintln!("    skipped {}:{}: {e:#}", k.code, k.fight_id),
                 }

@@ -4,12 +4,12 @@
 use crate::config::Config;
 use crate::model::*;
 use crate::specs::{Role, spec_info};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 
 // ---------------------------------------------------------------- reports
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum FightKind {
     Raid {
@@ -31,7 +31,7 @@ pub enum FightKind {
     },
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BossMarker {
     pub name: String,
     /// `ENCOUNTER_START` ID as logged.
@@ -149,7 +149,7 @@ pub enum Severity {
 
 /// Everything seen about one hostile spell in a fight, for `season suggest`.
 /// Raw counts only; judging them is the suggester's job.
-#[derive(Serialize, Clone, Debug, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct SpellEvidence {
     pub spell_id: u32,
     pub name: String,
@@ -1090,9 +1090,11 @@ impl FightBuilder {
             .filter(|p| p.role == Role::Tank)
             .map(|p| p.name.as_str())
             .collect();
+        // Melee is 1 in raw logs and can be 0 from Warcraft Logs: not a spell.
         let mut spell_evidence: Vec<SpellEvidence> = self
             .enemy_extra
             .iter()
+            .filter(|(id, _)| **id > 1)
             .map(|(id, x)| {
                 let ec = self.enemy_casts.get(id);
                 let dmg = enemy_damage.iter().find(|d| d.spell_id == *id);
