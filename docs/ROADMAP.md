@@ -45,16 +45,11 @@ Detailed plan: [`docs/milestones/m1-season-data.md`](milestones/m1-season-data.m
 - Delivered in 5 PRs: schema → sync → suggest → class tables → S2 content.
 
 ## M2: M+ kicks & stops
-- **Analysis:**
-  - Per-cast outcome: kicked by player X with spell Y, stopped by CC (stun, incapacitate, or knockback aura on the caster during its cast bar), or went off.
-  - Kick latency into the cast bar.
-  - Kicks wasted on non-priority casts while a priority cast went off within N seconds.
-  - Per-pull kick and stop table.
-- **Rules:**
-  - Priority casts that went off, per pull and per pack.
-  - Each player's share of kicks against their kick availability (from the `[class]` cooldowns).
-  - Stoppable casts that nobody stopped.
-- **Report:** a per-pull kick timeline in the HTML.
+Detailed plan: [`docs/milestones/m2-kicks-and-stops.md`](milestones/m2-kicks-and-stops.md).
+- Record how each enemy cast bar ended: completed, kicked, stopped by CC, or the caster was killed.
+- Name who could have kicked a priority cast that went off: interrupt off cooldown, alive, and in range from logged positions.
+- Flag wasted kicks, and suggest a kick rotation per dangerous pack.
+- M+ only. Delivered in 5 PRs: data (positions, ranges, stop auras) → cast timeline → rules + report → kick plan → `stoppable` tags.
 
 ## M3: Defensives on dangerous pulls
 - Consume aura events. Track personal and group defensive uptime and casts, and each defensive's availability (last use + cooldown from the `[class]` data).
