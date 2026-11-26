@@ -2,7 +2,7 @@
 //! then aggregates group- and player-level metrics for each.
 
 use crate::config::Config;
-pub use casts::{CastOutcome, CastRecord, ReadyKicker};
+pub use casts::{CastOutcome, CastRecord, ReadyKicker, missed_priority, wasted_kicks};
 
 mod casts;
 use crate::model::*;
@@ -137,6 +137,12 @@ pub struct PlayerReport {
     pub potions: u32,
     pub top_damage_taken: Vec<(String, u64, u32)>,
     pub wcl_rank_percent: Option<f64>,
+    /// Median time from a cast bar starting to this player's kick.
+    pub kick_latency_s: Option<f64>,
+    /// Priority casts that went off while this player had a kick ready in range.
+    pub priority_missed: u32,
+    /// Kicks on filler while a priority cast was already casting and then went off.
+    pub wasted_kicks: u32,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -903,6 +909,9 @@ impl FightBuilder {
                 potions: p.potions.len() as u32,
                 top_damage_taken: top,
                 wcl_rank_percent: None,
+                kick_latency_s: None,
+                priority_missed: 0,
+                wasted_kicks: 0,
             });
         }
         players.sort_by(|a, b| {
@@ -1022,6 +1031,19 @@ impl FightBuilder {
         let mut cast_records = std::mem::take(&mut self.casts.records);
         for c in cast_records.iter_mut() {
             c.pull = c.pull.map(|i| i + 1);
+        }
+        // Kick metrics per player, from the cast records.
+        for p in players.iter_mut() {
+            let mut lat: Vec<f64> = cast_records
+                .iter()
+                .filter_map(|c| match &c.outcome {
+                    CastOutcome::Kicked { by, latency_s, .. } if *by == p.name => Some(*latency_s),
+                    _ => None,
+                })
+                .collect();
+            p.kick_latency_s = (!lat.is_empty()).then(|| median(&mut lat));
+            p.priority_missed = missed_priority(&cast_records, &p.name).len() as u32;
+            p.wasted_kicks = wasted_kicks(&cast_records, &p.name).len() as u32;
         }
         let count = |i: usize, f: &dyn Fn(&CastRecord) -> bool| {
             cast_records

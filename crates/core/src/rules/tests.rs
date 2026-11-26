@@ -30,6 +30,9 @@ fn player(name: &str, role: Role) -> PlayerReport {
         potions: 0,
         top_damage_taken: vec![],
         wcl_rank_percent: None,
+        kick_latency_s: None,
+        priority_missed: 0,
+        wasted_kicks: 0,
     }
 }
 
@@ -444,4 +447,171 @@ fn progression_advice() {
     p.kills = 1;
     apply_progression(&mut p);
     assert!(p.suggestions.is_empty());
+}
+
+// ------------------------------------------------------------ kick rules
+
+fn cast(name: &str, start: f64, end: f64, priority: bool, outcome: CastOutcome) -> CastRecord {
+    CastRecord {
+        spell_id: 1,
+        name: name.into(),
+        caster: "Caster".into(),
+        caster_npc: 1,
+        start_s: start,
+        end_s: end,
+        pull: Some(1),
+        priority,
+        outcome,
+        ready_kickers: vec![],
+    }
+}
+
+fn ready(player: &str, ability: &str, d: f32, in_range: bool) -> ReadyKicker {
+    ReadyKicker {
+        player: player.into(),
+        ability: ability.into(),
+        distance_yd: Some(d),
+        in_range: Some(in_range),
+    }
+}
+
+fn kick_fight() -> FightReport {
+    let mut f = mplus(true, 1200.0);
+    let mut a = cast("Healing Breeze", 10.0, 12.5, true, CastOutcome::Completed);
+    a.ready_kickers = vec![
+        ready("Alpha", "Pummel", 4.0, true),
+        ready("Bravo", "Counterspell", 60.0, false),
+    ];
+    let b = cast("Arc Lightning", 30.0, 32.0, true, CastOutcome::Completed);
+    let filler = cast(
+        "Earth Bolt",
+        9.8,
+        10.6,
+        false,
+        CastOutcome::Kicked {
+            by: "Charlie".into(),
+            spell: "Kick".into(),
+            latency_s: 0.8,
+        },
+    );
+    f.casts = vec![filler, a, b];
+    f
+}
+
+#[test]
+fn group_priority_kicks_name_who_was_ready() {
+    let s = run(kick_fight(), &Config::default());
+    let g = s
+        .iter()
+        .find(|x| x.scope == "group" && x.category == "Priority kicks")
+        .unwrap();
+    assert_eq!(g.severity, Severity::High);
+    assert_eq!(
+        g.message,
+        "2 priority cast(s) went off. For 1 of them someone had a kick ready and in range. Most often ready: Alpha ×1. First: Healing Breeze at 0:12 (pull 1), with Alpha (Pummel, 4 yd) ready. For 1, nobody's kick was ready: those packs need more kickers or a stun."
+    );
+}
+
+#[test]
+fn players_get_missed_and_wasted_kicks() {
+    let s = run(kick_fight(), &Config::default());
+    let alpha = get(&s, "Alpha", "Priority kicks").unwrap();
+    assert_eq!(
+        alpha.message,
+        "Pummel ready and in range for 1 priority cast(s) that went off: Healing Breeze at 0:12."
+    );
+    assert_eq!(alpha.evidence, "Distances when the casts finished: 4 yd.");
+    assert!(get(&s, "Bravo", "Priority kicks").is_none(), "out of range");
+    let charlie = get(&s, "Charlie", "Wasted kicks").unwrap();
+    assert_eq!(
+        charlie.message,
+        "Kicked Earth Bolt at 0:10 while Healing Breeze was already casting; it went off at 0:12 with your kick on cooldown. Save the kick for the priority cast."
+    );
+}
+
+#[test]
+fn simultaneous_casts_are_merged_and_generic_advice_deduplicated() {
+    let mut f = kick_fight();
+    let mut twin = f.casts[1].clone();
+    twin.caster = "Other Caster".into();
+    f.casts.push(twin);
+    // Alpha never kicked, but the specific advice already covers that.
+    f.enemy_casts = vec![EnemyCastReport {
+        spell_id: 1,
+        name: "Healing Breeze".into(),
+        started: 3,
+        succeeded: 3,
+        interrupted: 1,
+        priority: true,
+    }];
+    for p in f.players.iter_mut() {
+        p.interrupts = 0;
+    }
+    let s = run(f, &Config::default());
+    assert!(
+        get(&s, "Alpha", "Priority kicks")
+            .unwrap()
+            .message
+            .contains("Healing Breeze at 0:12 (×2)")
+    );
+    assert!(
+        get(&s, "Alpha", "Interrupts").is_none(),
+        "no generic 'no interrupts' on top"
+    );
+    assert!(get(&s, "Bravo", "Interrupts").is_some());
+}
+
+#[test]
+fn no_priority_kick_advice_in_raids_or_without_ready_kickers() {
+    let mut r = raid(true, 300.0, Some(0.0));
+    r.casts = kick_fight().casts;
+    assert!(
+        run(r, &Config::default())
+            .iter()
+            .all(|s| s.category != "Priority kicks")
+    );
+
+    let mut f = mplus(true, 1200.0);
+    f.casts = vec![cast(
+        "Arc Lightning",
+        30.0,
+        32.0,
+        true,
+        CastOutcome::Completed,
+    )];
+    let s = run(f, &Config::default());
+    let g = get(&s, "group", "Priority kicks").unwrap();
+    assert_eq!(g.severity, Severity::Medium);
+    assert!(g.message.starts_with(
+        "1 priority cast(s) went off. For 0 of them someone had a kick ready and in range."
+    ));
+}
+
+#[test]
+fn interrupt_list_puts_priority_casts_first() {
+    let mut f = mplus(true, 1200.0);
+    f.enemy_casts = vec![
+        EnemyCastReport {
+            spell_id: 1,
+            name: "Earth Bolt".into(),
+            started: 40,
+            succeeded: 29,
+            interrupted: 11,
+            priority: false,
+        },
+        EnemyCastReport {
+            spell_id: 2,
+            name: "Healing Breeze".into(),
+            started: 3,
+            succeeded: 1,
+            interrupted: 2,
+            priority: true,
+        },
+    ];
+    let s = run(f, &Config::default());
+    let m = &get(&s, "group", "Interrupts").unwrap().message;
+    assert!(
+        m.find("Healing Breeze").unwrap() < m.find("Earth Bolt").unwrap(),
+        "{m}"
+    );
 }

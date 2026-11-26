@@ -52,7 +52,7 @@
           "damage_taken": 102180000,
           "avoidable_taken": 0,
           "likely_avoidable_taken": 0,
-          "interrupts": 6,
+          "interrupts": 7,
           "dispels": 0,
           "deaths": 0,
           "casts": 430,
@@ -71,7 +71,10 @@
               19
             ]
           ],
-          "wcl_rank_percent": null
+          "wcl_rank_percent": null,
+          "kick_latency_s": 1.0,
+          "priority_missed": 13,
+          "wasted_kicks": 1
         },
         {
           "name": "Leafy-Realm",
@@ -113,7 +116,10 @@
               1
             ]
           ],
-          "wcl_rank_percent": null
+          "wcl_rank_percent": null,
+          "kick_latency_s": null,
+          "priority_missed": 0,
+          "wasted_kicks": 0
         },
         {
           "name": "Glaive-Realm",
@@ -155,7 +161,10 @@
               5
             ]
           ],
-          "wcl_rank_percent": null
+          "wcl_rank_percent": null,
+          "kick_latency_s": 1.0,
+          "priority_missed": 17,
+          "wasted_kicks": 0
         },
         {
           "name": "Slacky-Realm",
@@ -197,7 +206,10 @@
               6
             ]
           ],
-          "wcl_rank_percent": null
+          "wcl_rank_percent": null,
+          "kick_latency_s": null,
+          "priority_missed": 17,
+          "wasted_kicks": 0
         },
         {
           "name": "Pyro-Realm",
@@ -234,7 +246,10 @@
               12
             ]
           ],
-          "wcl_rank_percent": null
+          "wcl_rank_percent": null,
+          "kick_latency_s": null,
+          "priority_missed": 12,
+          "wasted_kicks": 0
         }
       ],
       "deaths": [
@@ -640,10 +655,10 @@
           "deaths": 1,
           "enemies_killed": 4,
           "boss": null,
-          "casts_kicked": 0,
+          "casts_kicked": 1,
           "casts_stopped": 0,
           "casters_killed": 0,
-          "priority_completed": 5
+          "priority_completed": 6
         },
         {
           "index": 3,
@@ -653,7 +668,7 @@
           "enemies_killed": 4,
           "boss": null,
           "casts_kicked": 2,
-          "casts_stopped": 0,
+          "casts_stopped": 1,
           "casters_killed": 0,
           "priority_completed": 3
         },
@@ -723,10 +738,18 @@
         {
           "spell_id": 77777,
           "name": "Shadow Volley",
-          "started": 30,
-          "succeeded": 19,
+          "started": 32,
+          "succeeded": 20,
           "interrupted": 11,
           "priority": true
+        },
+        {
+          "spell_id": 77001,
+          "name": "Shadow Bolt",
+          "started": 2,
+          "succeeded": 1,
+          "interrupted": 1,
+          "priority": false
         }
       ],
       "enemy_damage": [
@@ -857,6 +880,13 @@
       ],
       "suggestions": [
         {
+          "scope": "Glaive-Realm",
+          "severity": "High",
+          "category": "Priority kicks",
+          "message": "Disrupt ready and in range for 17 priority cast(s) that went off: Shadow Volley at 0:14, Shadow Volley at 0:22, Shadow Volley at 0:30, Shadow Volley at 1:01, ….",
+          "evidence": "Distances when the casts finished: 2 yd, 2 yd, 2 yd, 2 yd."
+        },
+        {
           "scope": "Pyro-Realm",
           "severity": "High",
           "category": "Death",
@@ -871,6 +901,27 @@
           "evidence": "Void Pool 5.60M (40 hits), Shadow Volley 1.44M (12 hits)"
         },
         {
+          "scope": "Pyro-Realm",
+          "severity": "High",
+          "category": "Priority kicks",
+          "message": "Counterspell ready and in range for 12 priority cast(s) that went off: Shadow Volley at 0:14, Shadow Volley at 0:22, Shadow Volley at 1:01, Shadow Volley at 1:09, ….",
+          "evidence": "Distances when the casts finished: 29 yd, 29 yd, 29 yd, 29 yd."
+        },
+        {
+          "scope": "Shieldy-Realm",
+          "severity": "High",
+          "category": "Priority kicks",
+          "message": "Rebuke ready and in range for 13 priority cast(s) that went off: Shadow Volley at 0:22, Shadow Volley at 0:30, Shadow Volley at 1:01, Shadow Volley at 1:09, ….",
+          "evidence": "Distances when the casts finished: 1 yd, 1 yd, 1 yd, 1 yd."
+        },
+        {
+          "scope": "Slacky-Realm",
+          "severity": "High",
+          "category": "Priority kicks",
+          "message": "Rebuke ready and in range for 17 priority cast(s) that went off: Shadow Volley at 0:14, Shadow Volley at 0:22, Shadow Volley at 0:30, Shadow Volley at 1:01, ….",
+          "evidence": "Distances when the casts finished: 3 yd, 3 yd, 3 yd, 3 yd."
+        },
+        {
           "scope": "group",
           "severity": "High",
           "category": "Deaths",
@@ -881,8 +932,15 @@
           "scope": "group",
           "severity": "High",
           "category": "Interrupts",
-          "message": "19 interruptible enemy casts went through. Assign a kick rotation for these: Shadow Volley (19 went off, 11 kicked, PRIORITY).",
+          "message": "21 interruptible enemy casts went through. Assign a kick rotation for these: Shadow Volley (20 went off, 11 kicked, PRIORITY); Shadow Bolt (1 went off, 1 kicked).",
           "evidence": "A spell is treated as interruptible if anyone interrupted it at least once in this log, or if it's in the priority_interrupt config."
+        },
+        {
+          "scope": "group",
+          "severity": "High",
+          "category": "Priority kicks",
+          "message": "20 priority cast(s) went off. For 19 of them someone had a kick ready and in range. Most often ready: Glaive-Realm ×17, Slacky-Realm ×17, Shieldy-Realm ×13, Pyro-Realm ×12. First: Shadow Volley at 0:14 (pull 1), with Pyro-Realm (Counterspell, 29 yd), Glaive-Realm (Disrupt, 2 yd), Slacky-Realm (Rebuke, 3 yd) ready. For 1, nobody's kick was ready: those packs need more kickers or a stun.",
+          "evidence": "Ready = alive, with an interrupt off cooldown before the cast finished, and within its range by logged positions. The spec's main interrupt always counts; others once used this run."
         },
         {
           "scope": "group",
@@ -920,25 +978,11 @@
           "evidence": "Last death, final hits: 6:04 Shadow Volley 120.0K → 6:14 Cataclysmic Slam 900.0K. Damage taken in the final 5s: 900.0K."
         },
         {
-          "scope": "Pyro-Realm",
-          "severity": "Medium",
-          "category": "Interrupts",
-          "message": "No interrupts this run, even though casts were getting through. Put your kick on your rotation.",
-          "evidence": ""
-        },
-        {
           "scope": "Slacky-Realm",
           "severity": "Medium",
           "category": "Death",
           "message": "Died at 6:14 to Cataclysmic Slam (Shade Caster). No healthstone or potion was used before dying. Use a defensive or healthstone earlier in the damage window.",
           "evidence": "Last death, final hits: 6:04 Shadow Volley 120.0K → 6:14 Cataclysmic Slam 900.0K. Damage taken in the final 5s: 900.0K."
-        },
-        {
-          "scope": "Slacky-Realm",
-          "severity": "Medium",
-          "category": "Interrupts",
-          "message": "No interrupts this run, even though casts were getting through. Put your kick on your rotation.",
-          "evidence": ""
         },
         {
           "scope": "group",
@@ -953,6 +997,13 @@
           "category": "Timer",
           "message": "Key not timed (9:14).",
           "evidence": "Biggest levers, in order: deaths, downtime, then damage output."
+        },
+        {
+          "scope": "Shieldy-Realm",
+          "severity": "Low",
+          "category": "Wasted kicks",
+          "message": "Kicked Shadow Bolt at 1:29 while Shadow Volley was already casting; it went off at 1:31 with your kick on cooldown. Save the kick for the priority cast.",
+          "evidence": ""
         },
         {
           "scope": "Slacky-Realm",

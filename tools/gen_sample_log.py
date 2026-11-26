@@ -28,7 +28,8 @@ def unit(u):
 def adv(u, hp=None, maxhp=None):
     hp = hp if hp is not None else u.get("hp", 500000)
     maxhp = maxhp or u.get("maxhp", 500000)
-    return f'{u["guid"]},{u.get("owner", "0000000000000000")},{hp},{maxhp},0,0,0,0,0,0,0,0,0,0,0,0,2000,0,90'
+    x, y = u.get("x", 0.0), u.get("y", 0.0)
+    return f'{u["guid"]},{u.get("owner", "0000000000000000")},{hp},{maxhp},0,0,0,0,0,0,0,0,0,0,{x:.2f},{y:.2f},2000,0,90'
 
 
 def line(t, ev, rest):
@@ -88,6 +89,9 @@ def mplus():
     ret = player(5, "Slacky", 70, F)
     group = [tank, heal_, mage, dh, ret]
     dps = [mage, dh, ret]
+    # Positions (yards): melee on the pack, the mage and the healer at range.
+    for u, (x, y) in zip(group, [(0.0, 0.0), (25.0, 0.0), (30.0, 5.0), (2.0, 2.0), (3.0, -2.0)]):
+        u["x"], u["y"] = x, y
     line(0, "COMBAT_LOG_VERSION", "22,ADVANCED_LOG_ENABLED,1,BUILD_VERSION,12.0.5,PROJECT_ID,1")
     line(1, "CHALLENGE_MODE_START", '"Test Spire",2649,525,12,[10,9,147]')
     for p in group:
@@ -98,6 +102,8 @@ def mplus():
     for pull in range(8):
         is_boss = pull in (3, 7)
         mobs = [npc(mob_id + k, "Spire Guardian" if is_boss else "Shade Caster", 30_000_000 if is_boss else 4_000_000) for k in range(1 if is_boss else 4)]
+        for k, m in enumerate(mobs):
+            m["x"], m["y"] = 1.0 + k, 0.0
         mob_id += 5
         if is_boss:
             line(t, "ENCOUNTER_START", f'{3000 + pull},"Spire Boss {pull}",8,5,2649')
@@ -129,7 +135,8 @@ def mplus():
                 line(now, "SPELL_CAST_START", f'{unit(caster)},{unit(None)},77777,"Shadow Volley",0x20')
                 if random.random() < 0.45:
                     kicker = random.choice([tank, dh])  # mage and ret never kick
-                    kick(now + 1.0, kicker, caster, 96231, "Rebuke", 77777, "Shadow Volley")
+                    sid, sname = (96231, "Rebuke") if kicker is tank else (183752, "Disrupt")
+                    kick(now + 1.0, kicker, caster, sid, sname, 77777, "Shadow Volley")
                 else:
                     line(now + 2.0, "SPELL_CAST_SUCCESS", f'{unit(caster)},{unit(None)},77777,"Shadow Volley",0x20,{adv(caster)}')
                     for p in group:
@@ -148,6 +155,19 @@ def mplus():
                             dead.add(p["name"])
                     else:
                         p["hp"] = min(p["maxhp"], p["hp"] + 100000)
+            # pull 2: the tank kicks a filler Shadow Bolt while a Shadow Volley
+            # is already casting; the Volley goes off (a wasted kick).
+            if pull == 1 and abs(s - 30.0) < 1e-6:
+                line(now, "SPELL_CAST_START", f'{unit(mobs[0])},{unit(None)},77777,"Shadow Volley",0x20')
+                line(now + 0.3, "SPELL_CAST_START", f'{unit(mobs[1])},{unit(None)},77001,"Shadow Bolt",0x20')
+                kick(now + 0.8, tank, mobs[1], 96231, "Rebuke", 77001, "Shadow Bolt")
+                line(now + 2.0, "SPELL_CAST_SUCCESS", f'{unit(mobs[0])},{unit(None)},77777,"Shadow Volley",0x20,{adv(mobs[0])}')
+            # pull 3: the demon hunter's Chaos Nova stops a Shadow Volley.
+            if pull == 2 and abs(s - 30.0) < 1e-6:
+                line(now, "SPELL_CAST_START", f'{unit(mobs[0])},{unit(None)},77777,"Shadow Volley",0x20')
+                line(now + 0.5, "SPELL_AURA_APPLIED", f'{unit(dh)},{unit(mobs[0])},179057,"Chaos Nova",0x40,DEBUFF')
+                line(now + 3.0, "SPELL_CAST_START", f'{unit(mobs[0])},{unit(None)},77001,"Shadow Bolt",0x20')
+                line(now + 5.0, "SPELL_CAST_SUCCESS", f'{unit(mobs[0])},{unit(None)},77001,"Shadow Bolt",0x20,{adv(mobs[0])}')
             # pull 5: overpull, three people die to a big hit
             if pull == 5 and abs(s - 20.0) < 1e-6:
                 for p in (heal_, dh, ret):

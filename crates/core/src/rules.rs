@@ -136,7 +136,10 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
     }
 
     // --- Interrupts
-    let missed: Vec<&EnemyCastReport> = f.enemy_casts.iter().filter(|c| c.succeeded > 0).collect();
+    let mut missed: Vec<&EnemyCastReport> =
+        f.enemy_casts.iter().filter(|c| c.succeeded > 0).collect();
+    // Priority casts first, so they aren't buried behind filler.
+    missed.sort_by_key(|c| !c.priority);
     if !missed.is_empty() {
         let total_missed: u32 = missed.iter().map(|c| c.succeeded).sum();
         let pri = missed.iter().any(|c| c.priority);
@@ -179,6 +182,11 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
                 String::new(),
             ));
         }
+    }
+
+    // --- Priority kicks (M+): who could have kicked what went off
+    if is_mplus {
+        priority_kicks(f, out);
     }
 
     // --- Avoidable damage
@@ -338,6 +346,86 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
             ));
         }
     }
+}
+
+/// How many events a message lists before summarising.
+const LIST_MAX: usize = 4;
+
+fn priority_kicks(f: &FightReport, out: &mut Vec<Suggestion>) {
+    let went_off: Vec<&CastRecord> = f
+        .casts
+        .iter()
+        .filter(|c| c.priority && c.outcome == CastOutcome::Completed)
+        .collect();
+    if went_off.is_empty() {
+        return;
+    }
+    let ready_in_range = |c: &CastRecord| -> Vec<String> {
+        c.ready_kickers
+            .iter()
+            .filter(|k| k.in_range == Some(true))
+            .map(|k| {
+                format!(
+                    "{} ({}, {:.0} yd)",
+                    k.player,
+                    k.ability,
+                    k.distance_yd.unwrap_or_default()
+                )
+            })
+            .collect()
+    };
+    let covered: Vec<(&CastRecord, Vec<String>)> = went_off
+        .iter()
+        .map(|c| (*c, ready_in_range(c)))
+        .filter(|(_, r)| !r.is_empty())
+        .collect();
+    let uncovered = went_off.len() - covered.len();
+    let mut msg = format!(
+        "{} priority cast(s) went off. For {} of them someone had a kick ready and in range",
+        went_off.len(),
+        covered.len()
+    );
+    if covered.is_empty() {
+        msg.push('.');
+    } else {
+        // Who was most often ready, then one example; per-event detail is in
+        // each player's section and the priority casts table.
+        let mut times: Vec<(String, usize)> = vec![];
+        for c in &went_off {
+            for k in c.ready_kickers.iter().filter(|k| k.in_range == Some(true)) {
+                match times.iter_mut().find(|t| t.0 == k.player) {
+                    Some(t) => t.1 += 1,
+                    None => times.push((k.player.clone(), 1)),
+                }
+            }
+        }
+        times.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        let (c, who) = &covered[0];
+        msg.push_str(&format!(
+            ". Most often ready: {}. First: {} at {}{}, with {} ready.",
+            times
+                .iter()
+                .map(|(p, n)| format!("{p} ×{n}"))
+                .collect::<Vec<_>>()
+                .join(", "),
+            c.name,
+            mmss(c.end_s),
+            c.pull.map(|p| format!(" (pull {p})")).unwrap_or_default(),
+            who.join(", ")
+        ));
+    }
+    if uncovered > 0 {
+        msg.push_str(&format!(
+            " For {uncovered}, nobody's kick was ready: those packs need more kickers or a stun."
+        ));
+    }
+    out.push(sugg(
+        "group",
+        if covered.is_empty() { Severity::Medium } else { Severity::High },
+        "Priority kicks",
+        msg,
+        "Ready = alive, with an interrupt off cooldown before the cast finished, and within its range by logged positions. The spec's main interrupt always counts; others once used this run.".into(),
+    ));
 }
 
 fn player_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
@@ -563,10 +651,81 @@ fn player_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
                 String::new(),
             ));
         }
-        // interrupts in M+
+        // priority kicks missed and kicks wasted (M+)
+        if matches!(f.kind, FightKind::MythicPlus { .. }) {
+            let missed = missed_priority(&f.casts, &p.name);
+            if !missed.is_empty() {
+                // Casts of the same spell finishing together (several mobs) read as one.
+                let mut events: Vec<(String, String, usize)> = vec![];
+                for (c, _) in &missed {
+                    let at = mmss(c.end_s);
+                    match events.iter_mut().find(|e| e.0 == c.name && e.1 == at) {
+                        Some(e) => e.2 += 1,
+                        None => events.push((c.name.clone(), at, 1)),
+                    }
+                }
+                let list = events
+                    .iter()
+                    .take(LIST_MAX)
+                    .map(|(n, at, k)| {
+                        if *k > 1 {
+                            format!("{n} at {at} (×{k})")
+                        } else {
+                            format!("{n} at {at}")
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                let ability = &missed[0].1.ability;
+                out.push(sugg(
+                    me,
+                    if missed.len() >= 3 {
+                        Severity::High
+                    } else {
+                        Severity::Medium
+                    },
+                    "Priority kicks",
+                    format!(
+                        "{} ready and in range for {} priority cast(s) that went off: {list}{}.",
+                        ability,
+                        missed.len(),
+                        if events.len() > LIST_MAX { ", …" } else { "" }
+                    ),
+                    format!(
+                        "Distances when the casts finished: {}.",
+                        missed
+                            .iter()
+                            .take(LIST_MAX)
+                            .map(|(_, k)| format!("{:.0} yd", k.distance_yd.unwrap_or_default()))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    ),
+                ));
+            }
+            let wasted = wasted_kicks(&f.casts, &p.name);
+            if !wasted.is_empty() {
+                let (k, pc) = wasted[0];
+                out.push(sugg(
+                    me,
+                    if wasted.len() >= 2 { Severity::Medium } else { Severity::Low },
+                    "Wasted kicks",
+                    format!(
+                        "Kicked {} at {} while {} was already casting; it went off at {} with your kick on cooldown{}. Save the kick for the priority cast.",
+                        k.name,
+                        mmss(k.end_s),
+                        pc.name,
+                        mmss(pc.end_s),
+                        if wasted.len() > 1 { format!(" ({} times this run)", wasted.len()) } else { String::new() }
+                    ),
+                    String::new(),
+                ));
+            }
+        }
+        // interrupts in M+ (unless the specific "Priority kicks" advice covers it)
         if matches!(f.kind, FightKind::MythicPlus { .. })
             && p.role != Role::Healer
             && p.interrupts == 0
+            && missed_priority(&f.casts, &p.name).is_empty()
             && f.enemy_casts.iter().any(|c| c.succeeded > 0)
         {
             out.push(sugg(me, Severity::Medium, "Interrupts", "No interrupts this run, even though casts were getting through. Put your kick on your rotation.".into(), String::new()));

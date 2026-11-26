@@ -47,6 +47,7 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 | Deaths and most common killing blows (+ M+ timer cost) | Death recap (last hits, HP%), avoidable vs not, healthstone/potion used |
 | Raid wipe: early first death that snowballed | Avoidable damage vs group median (config-listed) |
 | Missed interrupts: a cast counts as interruptible if it was kicked at least once, or is listed in config | "Possibly avoidable": took far more of a spell than peers (heuristic) |
+| M+ priority kicks: each priority cast that went off, and who had a kick ready and in range | Priority casts you could have kicked; kicks wasted on filler while a priority cast went off |
 | Avoidable damage (config) + uneven-hit heuristic | Estimated casting activity (GCD coverage while alive) |
 | Bloodlust missing / late | DPS vs group DPS median with likely causes |
 | M+ pacing: downtime %, longest gaps, near-wipe pulls | Healer overheal %, zero interrupts in M+ |
