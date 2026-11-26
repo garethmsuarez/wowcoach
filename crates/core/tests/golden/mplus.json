@@ -19,12 +19,14 @@
         "bosses": [
           {
             "name": "Spire Boss 3",
+            "encounter_id": 3003,
             "start_s": 169.0,
             "end_s": 244.0,
             "success": true
           },
           {
             "name": "Spire Boss 7",
+            "encounter_id": 3007,
             "start_s": 464.0,
             "end_s": 539.0,
             "success": true

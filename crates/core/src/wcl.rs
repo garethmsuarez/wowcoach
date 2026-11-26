@@ -35,6 +35,20 @@ pub struct FightMeta {
     pub keystone_time: Option<i64>,
     pub keystone_bonus: Option<i64>,
     pub affixes: Vec<u32>,
+    /// Instance map ID (`gameZone.id`), = `CHALLENGE_MODE_START` instanceID.
+    pub game_zone: u32,
+    /// Boss pulls inside a keystone run (`dungeonPulls` with an encounter ID).
+    pub boss_pulls: Vec<BossPull>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct BossPull {
+    /// Logged `ENCOUNTER_START` ID.
+    pub encounter_id: u32,
+    pub name: String,
+    pub start: i64,
+    pub end: i64,
+    pub kill: bool,
 }
 
 #[derive(Default)]
@@ -287,7 +301,71 @@ impl FightMeta {
                 .filter_map(Value::as_u64)
                 .map(|x| x as u32)
                 .collect(),
+            game_zone: f["gameZone"]["id"].as_u64().unwrap_or(0) as u32,
+            boss_pulls: f["dungeonPulls"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(|p| {
+                    Some(BossPull {
+                        encounter_id: i(p, "encounterID").filter(|id| *id > 0)? as u32,
+                        name: p["name"].as_str().unwrap_or("?").to_string(),
+                        start: i(p, "startTime")?,
+                        end: i(p, "endTime")?,
+                        kill: p["kill"].as_bool().unwrap_or(false),
+                    })
+                })
+                .collect(),
         })
+    }
+
+    /// Instance map ID: `gameZone`, else decoded from a keystone fight's
+    /// encounter ID (WCL uses prefix * 10000 + map ID, e.g. 12923 -> 2923).
+    pub fn map_id(&self) -> u32 {
+        if self.game_zone > 0 {
+            self.game_zone
+        } else if self.keystone_level.is_some() {
+            self.encounter_id % 10_000
+        } else {
+            0
+        }
+    }
+
+    /// `EncounterStart/End` for each boss inside a keystone run, so M+ boss
+    /// markers (and their encounter IDs) match the raw-log path.
+    pub fn boss_events(&self) -> Vec<Event> {
+        if self.keystone_level.is_none() {
+            return vec![];
+        }
+        let mut out = vec![];
+        for b in &self.boss_pulls {
+            let ev = |ts, kind| Event {
+                ts,
+                src: None,
+                dst: None,
+                kind,
+            };
+            out.push(ev(
+                b.start,
+                Kind::EncounterStart {
+                    id: b.encounter_id,
+                    name: b.name.clone(),
+                    difficulty: 8,
+                    group_size: self.size,
+                },
+            ));
+            out.push(ev(
+                b.end,
+                Kind::EncounterEnd {
+                    id: b.encounter_id,
+                    name: b.name.clone(),
+                    difficulty: 8,
+                    success: b.kill,
+                    duration_ms: b.end - b.start,
+                },
+            ));
+        }
+        out
     }
 
     pub fn is_interesting(&self) -> bool {
@@ -298,7 +376,7 @@ impl FightMeta {
         let kind = match self.keystone_level {
             Some(level) => Kind::ChallengeStart {
                 zone: self.name.clone(),
-                map_id: 0,
+                map_id: self.map_id(),
                 level,
                 affixes: self.affixes.clone(),
             },
@@ -320,7 +398,7 @@ impl FightMeta {
     pub fn end_event(&self) -> Event {
         let kind = match self.keystone_level {
             Some(level) => Kind::ChallengeEnd {
-                map_id: 0,
+                map_id: self.map_id(),
                 success: self.keystone_bonus.map(|b| b > 0).unwrap_or(self.kill),
                 level,
                 time_ms: self.keystone_time.unwrap_or(self.end - self.start),
@@ -370,6 +448,49 @@ pub fn zone_encounters(v: &Value) -> Vec<(String, u32)> {
     out
 }
 
+/// A ranked keystone run with a public report.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RankedKey {
+    pub code: String,
+    pub fight_id: i64,
+    pub level: u32,
+}
+
+/// Public runs from an `encounter.fightRankings` blob (anonymous runs have an
+/// empty report code and are skipped), and whether more pages exist.
+pub fn parse_fight_rankings(v: &Value) -> (Vec<RankedKey>, bool) {
+    let keys = v["rankings"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|r| {
+            let code = r["report"]["code"].as_str().filter(|c| !c.is_empty())?;
+            Some(RankedKey {
+                code: code.to_string(),
+                fight_id: r["report"]["fightID"].as_i64()?,
+                level: r["bracketData"].as_u64().unwrap_or(0) as u32,
+            })
+        })
+        .collect();
+    (keys, v["hasMorePages"].as_bool().unwrap_or(false))
+}
+
+/// Order for events sharing a timestamp: boss start first, boss end last.
+fn boss_order(e: &Event) -> u8 {
+    match e.kind {
+        Kind::EncounterStart { .. } => 0,
+        Kind::EncounterEnd { .. } => 2,
+        _ => 1,
+    }
+}
+
+/// Merge boss markers into a fight's events in timestamp order (stable).
+pub fn with_boss_events(mut events: Vec<Event>, boss: Vec<Event>) -> Vec<Event> {
+    events.extend(boss);
+    events.sort_by_key(|e| (e.ts, boss_order(e)));
+    events
+}
+
 /// name -> rankPercent from a `report.rankings` JSON blob.
 pub fn parse_rankings(v: &Value) -> HashMap<String, f64> {
     let mut out = HashMap::new();
@@ -400,6 +521,14 @@ pub mod net {
     pub struct Client {
         agent: ureq::Agent,
         token: String,
+        cache: Option<std::path::PathBuf>,
+    }
+
+    /// FNV-1a: a stable cache key without pulling in a hashing crate.
+    fn fnv(s: &str) -> u64 {
+        s.bytes().fold(0xcbf29ce484222325, |h, b| {
+            (h ^ b as u64).wrapping_mul(0x100000001b3)
+        })
     }
 
     impl Client {
@@ -407,7 +536,61 @@ pub mod net {
             let agent = crate::net::agent();
             let token =
                 crate::net::client_credentials(&agent, TOKEN_URL, id, secret, "Warcraft Logs")?;
-            Ok(Client { agent, token })
+            Ok(Client {
+                agent,
+                token,
+                cache: None,
+            })
+        }
+
+        /// Cache report metadata and events under `dir`. Only for reports that
+        /// won't change (finished public runs); a live-logged report would go stale.
+        pub fn with_cache(mut self, dir: std::path::PathBuf) -> Self {
+            self.cache = Some(dir);
+            self
+        }
+
+        /// `query`, served from / saved to the cache when one is set.
+        fn query_report(&self, q: &str, vars: Value) -> anyhow::Result<Value> {
+            let Some(dir) = &self.cache else {
+                return self.query(q, vars);
+            };
+            let path = dir.join(format!("{:016x}.json", fnv(&format!("{q}\n{vars}"))));
+            if let Ok(text) = std::fs::read_to_string(&path)
+                && let Ok(v) = serde_json::from_str(&text)
+            {
+                return Ok(v);
+            }
+            let v = self.query(q, vars)?;
+            std::fs::create_dir_all(dir)?;
+            let tmp = path.with_extension("tmp");
+            std::fs::write(&tmp, v.to_string())?;
+            std::fs::rename(&tmp, &path)?;
+            Ok(v)
+        }
+
+        /// (points spent this hour, hourly limit, seconds until reset).
+        pub fn rate_limit(&self) -> anyhow::Result<(f64, f64, i64)> {
+            let d = self.query(RATE_Q, json!({}))?;
+            let r = &d["rateLimitData"];
+            Ok((
+                r["pointsSpentThisHour"].as_f64().unwrap_or(0.0),
+                r["limitPerHour"].as_f64().unwrap_or(0.0),
+                r["pointsResetIn"].as_i64().unwrap_or(0),
+            ))
+        }
+
+        /// One page of public ranked runs for a WCL encounter (for M+, the
+        /// whole-dungeon encounter, e.g. 12923).
+        pub fn top_keys(
+            &self,
+            encounter_id: u32,
+            page: u32,
+        ) -> anyhow::Result<(Vec<super::RankedKey>, bool)> {
+            let d = self.query(TOP_Q, json!({ "id": encounter_id, "page": page }))?;
+            Ok(super::parse_fight_rankings(
+                &d["worldData"]["encounter"]["fightRankings"],
+            ))
         }
 
         pub fn query(&self, q: &str, vars: Value) -> anyhow::Result<Value> {
@@ -427,7 +610,8 @@ pub mod net {
     const META_Q: &str = r#"query($code:String!){ reportData{ report(code:$code){
         title startTime
         masterData{ actors{ id name type subType petOwner } abilities{ gameID name } }
-        fights{ id encounterID name startTime endTime kill bossPercentage difficulty size keystoneLevel keystoneTime keystoneBonus keystoneAffixes }
+        fights{ id encounterID name startTime endTime kill bossPercentage difficulty size keystoneLevel keystoneTime keystoneBonus keystoneAffixes
+                gameZone{ id } dungeonPulls{ encounterID name startTime endTime kill } }
     }}}"#;
 
     const EVENTS_Q: &str = r#"query($code:String!,$fid:[Int]!,$s:Float!,$e:Float!){ reportData{ report(code:$code){
@@ -435,6 +619,10 @@ pub mod net {
     }}}"#;
 
     const RANK_Q: &str = r#"query($code:String!,$fid:[Int]!){ reportData{ report(code:$code){ rankings(fightIDs:$fid) } } }"#;
+
+    const RATE_Q: &str = r#"{ rateLimitData{ limitPerHour pointsSpentThisHour pointsResetIn } }"#;
+
+    const TOP_Q: &str = r#"query($id:Int!,$page:Int!){ worldData{ encounter(id:$id){ fightRankings(page:$page) } } }"#;
 
     const ZONES_Q: &str =
         r#"{ worldData{ expansions{ id name zones{ id name frozen encounters{ id name } } } } }"#;
@@ -460,7 +648,7 @@ pub mod net {
         only: &[i64],
         with_rankings: bool,
     ) -> anyhow::Result<Fetched> {
-        let meta = c.query(META_Q, json!({ "code": code }))?;
+        let meta = c.query_report(META_Q, json!({ "code": code }))?;
         let report = &meta["reportData"]["report"];
         if report.is_null() {
             bail!("report {code} not found (private reports need the user OAuth flow)");
@@ -488,14 +676,15 @@ pub mod net {
         for f in &fights {
             eprintln!("  fetching fight {} ({})...", f.id, f.name);
             events.push(f.start_event());
+            let mut fight_events = vec![];
             let mut s = f.start as f64;
             loop {
-                let d = c.query(
+                let d = c.query_report(
                     EVENTS_Q,
                     json!({ "code": code, "fid": [f.id], "s": s, "e": f.end as f64 }),
                 )?;
                 let page = &d["reportData"]["report"]["events"];
-                events.extend(
+                fight_events.extend(
                     page["data"]
                         .as_array()
                         .into_iter()
@@ -507,6 +696,7 @@ pub mod net {
                     _ => break,
                 }
             }
+            events.extend(super::with_boss_events(fight_events, f.boss_events()));
             events.push(f.end_event());
             if let Some(p) = f.boss_pct.filter(|_| f.keystone_level.is_none()) {
                 boss_pct.insert(f.start, if f.kill { 0.0 } else { p });
@@ -578,6 +768,115 @@ mod tests {
             }
         ));
         assert_eq!(m.ownership_events(0).len(), 1);
+    }
+
+    #[test]
+    fn keystone_fight_gets_map_id_and_boss_markers() {
+        let v: Value =
+            serde_json::from_str(include_str!("../tests/fixtures/wcl-keystone-fight.json"))
+                .unwrap();
+        let f = FightMeta::from_json(&v["fights"][0]).unwrap();
+        assert_eq!((f.game_zone, f.map_id()), (2923, 2923));
+        // Trash pulls (encounterID 0) are not bosses.
+        let bosses: Vec<(u32, &str)> = f
+            .boss_pulls
+            .iter()
+            .map(|b| (b.encounter_id, b.name.as_str()))
+            .collect();
+        assert_eq!(
+            bosses,
+            [(3285, "Taz'Rah"), (3286, "Atroxus"), (3287, "Charonus")]
+        );
+        assert!(matches!(
+            f.start_event().kind,
+            Kind::ChallengeStart {
+                map_id: 2923,
+                level: 24,
+                ..
+            }
+        ));
+        assert!(matches!(
+            f.end_event().kind,
+            Kind::ChallengeEnd {
+                map_id: 2923,
+                success: true,
+                ..
+            }
+        ));
+
+        // Without gameZone, the map ID is decoded from the keystone encounter ID.
+        let mut g = f.clone();
+        g.game_zone = 0;
+        assert_eq!(g.map_id(), 2923);
+
+        // End to end: the analyzer sees a run with boss markers and their encounter IDs.
+        let mut evs = vec![f.start_event()];
+        let p = Unit {
+            guid: "Player-1-1".into(),
+            name: "P".into(),
+            flags: TYPE_PLAYER | AFFILIATION_PARTY | REACTION_FRIENDLY,
+        };
+        let mob = Unit {
+            guid: "Creature-0-1-1-1-1-1".into(),
+            name: "M".into(),
+            flags: TYPE_NPC | REACTION_HOSTILE,
+        };
+        let hits: Vec<Event> = (f.start..f.end)
+            .step_by(60_000)
+            .map(|ts| Event {
+                ts,
+                src: Some(p.clone()),
+                dst: Some(mob.clone()),
+                kind: Kind::Damage {
+                    spell: Spell::melee(),
+                    amount: 1,
+                    overkill: 0,
+                    absorbed: 0,
+                    periodic: false,
+                    info: None,
+                },
+            })
+            .collect();
+        evs.extend(with_boss_events(hits, f.boss_events()));
+        evs.push(f.end_event());
+        assert!(evs.windows(2).all(|w| w[0].ts <= w[1].ts), "time-ordered");
+        let mut an = crate::analysis::Analyzer::new(crate::config::Config::default());
+        for e in evs {
+            an.feed(e);
+        }
+        let (fights, _) = an.finish();
+        let crate::analysis::FightKind::MythicPlus { map_id, bosses, .. } = &fights[0].kind else {
+            panic!("not M+")
+        };
+        assert_eq!(*map_id, 2923);
+        let got: Vec<(u32, bool)> = bosses.iter().map(|b| (b.encounter_id, b.success)).collect();
+        assert_eq!(got, [(3285, true), (3286, true), (3287, true)]);
+    }
+
+    #[test]
+    fn fight_rankings_skip_anonymous_runs() {
+        let v = json!({"hasMorePages": true, "rankings": [
+            {"report": {"code": "", "fightID": null}, "bracketData": 24},
+            {"report": {"code": "AbC", "fightID": 9}, "bracketData": 24},
+            {"report": {"code": "XyZ", "fightID": 3}, "bracketData": 15}
+        ]});
+        let (keys, more) = parse_fight_rankings(&v);
+        assert!(more);
+        assert_eq!(
+            keys,
+            [
+                RankedKey {
+                    code: "AbC".into(),
+                    fight_id: 9,
+                    level: 24
+                },
+                RankedKey {
+                    code: "XyZ".into(),
+                    fight_id: 3,
+                    level: 15
+                },
+            ]
+        );
     }
 
     #[test]

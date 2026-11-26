@@ -500,3 +500,74 @@ fn progression_groups_pulls_of_the_same_boss() {
     assert_eq!(p.first_death_causes[0], ("Cleave".to_string(), 2));
     assert_eq!(p.frequent_deaths[0], (party.dps[0].name.clone(), 3));
 }
+
+// ------------------------------------------------------- spell evidence
+
+#[test]
+fn spell_evidence_for_season_suggest() {
+    let party = Party::new();
+    let caster = enemy("Caster", 1);
+    let boss = enemy("Big Boss", 2);
+    let mut log = Log::default();
+    party.log_specs(&mut log, 0);
+    log.key_start(0, "Spire", 2000, 10);
+    // Trash: a kicked cast, a completed one, and an instant one.
+    log.cast_start(1000, &caster, 500, "Bolt")
+        .interrupt(1500, &party.dps[0], &caster, 500, "Bolt")
+        .cast_start(2000, &caster, 500, "Bolt")
+        .cast(3500, &caster, 500, "Bolt")
+        .cast(4000, &caster, 500, "Bolt")
+        // A debuff, dispelled once out of two.
+        .debuff(4500, &caster, &party.dps[1], 600, "Curse")
+        .debuff(4600, &caster, &party.dps[2], 600, "Curse")
+        .dispel(5000, &party.healer, &party.dps[1], 600, "Curse")
+        // A buff on an enemy is not evidence.
+        .push(
+            5100,
+            Some(&caster),
+            Some(&caster),
+            Kind::AuraApplied {
+                spell: spell(601, "Enrage"),
+                is_buff: true,
+            },
+        );
+    // Boss fight: tank-only hits.
+    log.encounter_start(10_000, 3010, "Big Boss", 8, 5);
+    for t in [11_000, 12_000, 13_000] {
+        log.damage(t, &boss, &party.tank, 700, "Crush", 50_000);
+    }
+    log.damage(13_500, &boss, &party.dps[0], 700, "Crush", 10_000);
+    log.encounter_end(20_000, 3010, "Big Boss", 8, true);
+    log.key_end(30_000, 2000, true, 30_000);
+
+    let f = &analyze(&log, Config::default())[0];
+    let FightKind::MythicPlus { bosses, .. } = &f.kind else {
+        panic!()
+    };
+    assert_eq!(bosses[0].encounter_id, 3010);
+
+    let ids: Vec<u32> = f.spell_evidence.iter().map(|e| e.spell_id).collect();
+    assert_eq!(ids, [500, 600, 700], "sorted, enemy buffs excluded");
+    let get = |id| f.spell_evidence.iter().find(|e| e.spell_id == id).unwrap();
+
+    let bolt = get(500);
+    assert_eq!(bolt.boss, None, "trash");
+    assert_eq!(
+        (
+            bolt.casts_started,
+            bolt.casts_succeeded,
+            bolt.interrupted,
+            bolt.instant_casts
+        ),
+        (2, 1, 1, 1)
+    );
+    let curse = get(600);
+    assert_eq!((curse.applied, curse.dispelled), (2, 1));
+    let crush = get(700);
+    assert_eq!(crush.boss.as_deref(), Some("Big Boss"));
+    assert_eq!(
+        (crush.hits, crush.damage, crush.tank_damage),
+        (4, 160_000, 150_000)
+    );
+    assert_eq!(crush.players_hit, 2);
+}

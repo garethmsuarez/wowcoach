@@ -34,6 +34,8 @@ pub enum FightKind {
 #[derive(Serialize, Clone, Debug)]
 pub struct BossMarker {
     pub name: String,
+    /// `ENCOUNTER_START` ID as logged.
+    pub encounter_id: u32,
     pub start_s: f64,
     pub end_s: f64,
     pub success: bool,
@@ -145,6 +147,32 @@ pub enum Severity {
     Low,
 }
 
+/// Everything seen about one hostile spell in a fight, for `season suggest`.
+/// Raw counts only; judging them is the suggester's job.
+#[derive(Serialize, Clone, Debug, Default, PartialEq)]
+pub struct SpellEvidence {
+    pub spell_id: u32,
+    pub name: String,
+    /// Boss fight it was mostly seen in (log name); None = trash.
+    pub boss: Option<String>,
+    /// Cast bars started / completed / interrupted.
+    pub casts_started: u32,
+    pub casts_succeeded: u32,
+    pub interrupted: u32,
+    /// Casts without a cast bar.
+    pub instant_casts: u32,
+    /// Damage to group players.
+    pub hits: u32,
+    pub damage: u64,
+    pub players_hit: u32,
+    pub tank_damage: u64,
+    pub non_tank_hit_frac: f64,
+    pub likely_avoidable: bool,
+    /// Harmful auras applied to group players, and how many were dispelled.
+    pub applied: u32,
+    pub dispelled: u32,
+}
+
 #[derive(Serialize, Clone, Debug)]
 pub struct FightReport {
     #[serde(skip)]
@@ -162,6 +190,9 @@ pub struct FightReport {
     pub enemy_damage: Vec<EnemySpellReport>,
     pub lust_at_s: Vec<f64>,
     pub suggestions: Vec<Suggestion>,
+    /// Per hostile spell, for `season suggest`. Not part of the report output.
+    #[serde(skip)]
+    pub spell_evidence: Vec<SpellEvidence>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -222,6 +253,17 @@ struct EC {
     interrupted: u32,
 }
 
+/// Evidence counters not covered by EC/ES, plus where the spell was seen.
+#[derive(Default)]
+struct EX {
+    name: String,
+    instant: u32,
+    applied: u32,
+    dispelled: u32,
+    /// Boss context (None = trash) -> times seen.
+    ctx: HashMap<Option<String>, u32>,
+}
+
 #[derive(Default)]
 struct ES {
     name: String,
@@ -265,7 +307,9 @@ struct FightBuilder {
     pulls: Vec<Pull>,
     cur_pull: Option<Pull>,
     bosses: Vec<BossMarker>,
-    open_boss: Option<(String, i64)>,
+    /// M+ boss fight in progress: (name, start ts, encounter ID).
+    open_boss: Option<(String, i64, u32)>,
+    enemy_extra: HashMap<u32, EX>,
     deaths: Vec<DeathReport>,
     /// hostile cast bars in progress: (caster guid, spell id) -> start ts
     enemy_pending: HashMap<(String, u32), i64>,
@@ -369,6 +413,7 @@ impl FightBuilder {
             cur_pull: None,
             bosses: vec![],
             open_boss: None,
+            enemy_extra: HashMap::new(),
             deaths: vec![],
             enemy_pending: HashMap::new(),
         }
@@ -422,6 +467,21 @@ impl FightBuilder {
                 });
             }
         }
+    }
+
+    /// Note a hostile spell for the evidence table, with the boss context.
+    fn seen(&mut self, id: u32, name: &str) -> &mut EX {
+        let ctx = match (&self.seed, &self.open_boss) {
+            (Seed::Raid { name, .. }, _) => Some(name.clone()),
+            (Seed::MPlus { .. }, Some(b)) => Some(b.0.clone()),
+            (Seed::MPlus { .. }, None) => None,
+        };
+        let x = self.enemy_extra.entry(id).or_default();
+        if x.name.is_empty() {
+            x.name = name.to_string();
+        }
+        *x.ctx.entry(ctx).or_default() += 1;
+        x
     }
 
     fn ingest(&mut self, e: &Event, owners: &HashMap<String, String>, cfg: &Config) {
@@ -501,6 +561,9 @@ impl FightBuilder {
                     while p.recent.front().is_some_and(|h| ts - h.ts > 10_000) {
                         p.recent.pop_front();
                     }
+                    if src_hostile && spell.id > 1 {
+                        self.seen(spell.id, &spell.name);
+                    }
                     if src_hostile || e.src.is_none() {
                         let es = self.enemy_dmg.entry(spell.id).or_default();
                         es.name.clone_from(&spell.name);
@@ -555,6 +618,7 @@ impl FightBuilder {
                         ec.name.clone_from(&spell.name);
                         ec.started += 1;
                         self.enemy_pending.insert((s.guid.clone(), spell.id), ts);
+                        self.seen(spell.id, &spell.name);
                     }
                 }
             }
@@ -597,6 +661,8 @@ impl FightBuilder {
                             let ec = self.enemy_casts.entry(spell.id).or_default();
                             ec.name.clone_from(&spell.name);
                             ec.success += 1;
+                        } else {
+                            self.seen(spell.id, &spell.name).instant += 1;
                         }
                     }
                 }
@@ -618,13 +684,27 @@ impl FightBuilder {
                     let ec = self.enemy_casts.entry(extra.id).or_default();
                     ec.name.clone_from(&extra.name);
                     ec.interrupted += 1;
+                    self.seen(extra.id, &extra.name);
                 }
             }
-            Kind::Dispel { .. } => {
+            Kind::Dispel { extra, .. } => {
                 if let Some((pg, pn)) = Self::attrib(&e.src, owners)
                     && e.dst.as_ref().is_some_and(|d| !d.is_hostile())
                 {
                     self.ps(&pg, pn.as_deref()).dispels += 1;
+                    if e.dst.as_ref().is_some_and(|d| d.is_group_player()) {
+                        self.seen(extra.id, &extra.name).dispelled += 1;
+                    }
+                }
+            }
+            Kind::AuraApplied {
+                spell,
+                is_buff: false,
+            } => {
+                if e.src.as_ref().is_some_and(|s| s.is_hostile_npc())
+                    && e.dst.as_ref().is_some_and(|d| d.is_group_player())
+                {
+                    self.seen(spell.id, &spell.name).applied += 1;
                 }
             }
             Kind::Death => {
@@ -1005,6 +1085,45 @@ impl FightBuilder {
             }
         };
         let lust_at_s = self.lust.iter().map(|t| secs(t - start)).collect();
+        let tanks: Vec<&str> = players
+            .iter()
+            .filter(|p| p.role == Role::Tank)
+            .map(|p| p.name.as_str())
+            .collect();
+        let mut spell_evidence: Vec<SpellEvidence> = self
+            .enemy_extra
+            .iter()
+            .map(|(id, x)| {
+                let ec = self.enemy_casts.get(id);
+                let dmg = enemy_damage.iter().find(|d| d.spell_id == *id);
+                let mut ctx: Vec<(&Option<String>, &u32)> = x.ctx.iter().collect();
+                ctx.sort_by(|a, b| b.1.cmp(a.1).then_with(|| a.0.cmp(b.0)));
+                SpellEvidence {
+                    spell_id: *id,
+                    name: x.name.clone(),
+                    boss: ctx.first().and_then(|c| c.0.clone()),
+                    casts_started: ec.map_or(0, |c| c.started),
+                    casts_succeeded: ec.map_or(0, |c| c.success),
+                    interrupted: ec.map_or(0, |c| c.interrupted),
+                    instant_casts: x.instant,
+                    hits: dmg.map_or(0, |d| d.hits),
+                    damage: dmg.map_or(0, |d| d.total),
+                    players_hit: dmg.map_or(0, |d| d.players_hit),
+                    tank_damage: dmg.map_or(0, |d| {
+                        d.per_player
+                            .iter()
+                            .filter(|p| tanks.contains(&p.0.as_str()))
+                            .map(|p| p.1)
+                            .sum()
+                    }),
+                    non_tank_hit_frac: dmg.map_or(0.0, |d| d.non_tank_hit_frac),
+                    likely_avoidable: dmg.is_some_and(|d| d.likely_avoidable),
+                    applied: x.applied,
+                    dispelled: x.dispelled,
+                }
+            })
+            .collect();
+        spell_evidence.sort_by_key(|e| e.spell_id);
         FightReport {
             start_ts: start,
             title,
@@ -1019,6 +1138,7 @@ impl FightBuilder {
             enemy_damage,
             lust_at_s,
             suggestions: vec![],
+            spell_evidence,
         }
     }
 }
@@ -1144,7 +1264,7 @@ impl Analyzer {
                 if let Some(c) = &mut self.cur
                     && matches!(c.seed, Seed::MPlus { .. })
                 {
-                    c.open_boss = Some((name.clone(), ts));
+                    c.open_boss = Some((name.clone(), ts, *id));
                     return;
                 }
                 self.close(
@@ -1167,10 +1287,11 @@ impl Analyzer {
             Kind::EncounterEnd { success, .. } => {
                 if let Some(c) = &mut self.cur {
                     if matches!(c.seed, Seed::MPlus { .. }) {
-                        if let Some((n, st)) = c.open_boss.take() {
+                        if let Some((n, st, enc)) = c.open_boss.take() {
                             let start = c.start;
                             c.bosses.push(BossMarker {
                                 name: n,
+                                encounter_id: enc,
                                 start_s: secs(st - start),
                                 end_s: secs(ts - start),
                                 success: *success,

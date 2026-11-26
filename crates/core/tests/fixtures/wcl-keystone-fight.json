@@ -1,0 +1,92 @@
+{
+ "fights": [
+  {
+   "bossPercentage": 0,
+   "difficulty": 10,
+   "dungeonPulls": [
+    {
+     "encounterID": 0,
+     "endTime": 1810373,
+     "kill": false,
+     "name": "Aegyra the Unyielding",
+     "startTime": 1643109
+    },
+    {
+     "encounterID": 0,
+     "endTime": 2050559,
+     "kill": false,
+     "name": "Brutok",
+     "startTime": 1819726
+    },
+    {
+     "encounterID": 3285,
+     "endTime": 2285022,
+     "kill": true,
+     "name": "Taz'Rah",
+     "startTime": 2050619
+    },
+    {
+     "encounterID": 0,
+     "endTime": 2383691,
+     "kill": false,
+     "name": "Watchful Harrower",
+     "startTime": 2295104
+    },
+    {
+     "encounterID": 0,
+     "endTime": 2413374,
+     "kill": false,
+     "name": "Watchful Harrower",
+     "startTime": 2402580
+    },
+    {
+     "encounterID": 3286,
+     "endTime": 2654914,
+     "kill": true,
+     "name": "Atroxus",
+     "startTime": 2421484
+    },
+    {
+     "encounterID": 0,
+     "endTime": 2977198,
+     "kill": false,
+     "name": "Watchful Harrower",
+     "startTime": 2670882
+    },
+    {
+     "encounterID": 0,
+     "endTime": 3117781,
+     "kill": false,
+     "name": "Devouring Brutalizer",
+     "startTime": 2981204
+    },
+    {
+     "encounterID": 3287,
+     "endTime": 3371439,
+     "kill": true,
+     "name": "Charonus",
+     "startTime": 3118096
+    }
+   ],
+   "encounterID": 12923,
+   "endTime": 3371599,
+   "gameZone": {
+    "id": 2923,
+    "name": "Voidscar Arena"
+   },
+   "id": 9,
+   "keystoneAffixes": [
+    9,
+    10,
+    147
+   ],
+   "keystoneBonus": 1,
+   "keystoneLevel": 24,
+   "keystoneTime": 1736298,
+   "kill": true,
+   "name": "Voidscar Arena",
+   "size": 5,
+   "startTime": 1627271
+  }
+ ]
+}

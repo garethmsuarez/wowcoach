@@ -58,6 +58,7 @@ fn fight(kind: FightKind, duration_s: f64) -> FightReport {
         enemy_damage: vec![],
         lust_at_s: vec![0.0],
         suggestions: vec![],
+        spell_evidence: vec![],
     }
 }
 

@@ -179,6 +179,37 @@ impl Log {
             },
         )
     }
+    /// Harmful aura (debuff) from `src` on `dst`.
+    pub fn debuff(&mut self, ts: i64, src: &Unit, dst: &Unit, id: u32, name: &str) -> &mut Self {
+        self.push(
+            ts,
+            Some(src),
+            Some(dst),
+            Kind::AuraApplied {
+                spell: spell(id, name),
+                is_buff: false,
+            },
+        )
+    }
+    /// `src` dispels aura `removed_id` from `dst`.
+    pub fn dispel(
+        &mut self,
+        ts: i64,
+        src: &Unit,
+        dst: &Unit,
+        removed_id: u32,
+        removed: &str,
+    ) -> &mut Self {
+        self.push(
+            ts,
+            Some(src),
+            Some(dst),
+            Kind::Dispel {
+                spell: spell(527, "Purify"),
+                extra: spell(removed_id, removed),
+            },
+        )
+    }
     pub fn death(&mut self, ts: i64, u: &Unit) -> &mut Self {
         self.push(ts, None, Some(u), Kind::Death)
     }

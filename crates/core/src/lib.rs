@@ -15,6 +15,7 @@ pub mod report;
 pub mod rules;
 pub mod season;
 pub mod specs;
+pub mod suggest;
 #[cfg(test)]
 mod testutil;
 #[cfg(feature = "wcl")]
