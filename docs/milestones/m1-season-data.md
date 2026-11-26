@@ -158,10 +158,17 @@ Lookups are global by spell ID across the whole pack, not scoped to the current 
    - `wowcoach classes check` confirms every ID exists and its name matches via `spell/{id}`, which works for player spells.
    - A log check: every `SPELL_INTERRUPT` source spell seen in `test logs/` (run locally) and in the anonymised fixtures must be in the table.
    - Fill in the Midnight healing potion IDs in `potion_spell_ids` from the logs.
-5. **S2 content.**
+5. **S2 content.** *(done: the 12 local logs plus 64 public WCL keys (5 at +16 and 3 at +24 per dungeon; 1,698 points). All 38 bosses have encounter IDs, the pack has 872 spells, and there were 124 proposals. `tools/promote_suggestions.py` drafted 71 tags by explicit criteria (32 priority_kick, 11 dispel_priority, 28 tank_buster, 0 avoidable); 59 proposals stay in `suggested` for review. A real-key fixture (`tests/fixtures/den-of-nalorakk-excerpt.txt`, anonymised) checks that the embedded pack drives priority kicks)*
    - Run `suggest --write` over the 12 local logs plus top public keys per dungeon (e.g. `--wcl-top 5`, at your key range and at the top bracket).
    - Claude drafts `tags` from the evidence, with one line of reasoning per spell in the PR description. The user approves or edits in review.
    - Update the golden test or add a fixture so the pack is exercised on an anonymised real key.
+
+## Follow-ups found while building M1
+
+- **Kick advice ordering (M2):** the group "Interrupts" suggestion lists casts by how many went off, so priority kicks sit behind filler (Earth Bolt, Lightning Bolt). Priority casts should come first, or get their own suggestion.
+- **Void Blast** (Taz'Rah) is a known tank buster per the journal, but its logged damage is mostly under another ID (8 hits from 38 casts), so the criteria left it in `suggested`.
+- **Avoidable:** no tags yet. The uneven-hit heuristic needs support (e.g. no damage to a player standing still, or journal "avoid" text) before it's trusted. Until then, tag by hand.
+- **Raid tags** come from your own logs only (WCL top raid reports weren't fetched); revisit in M7.
 
 ## Out of scope for M1
 

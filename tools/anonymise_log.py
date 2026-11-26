@@ -17,6 +17,8 @@ Examples:
     tools/anonymise_log.py LOG --segment 2 > crates/core/tests/fixtures/boss.txt
     # List segments to pick from
     tools/anonymise_log.py LOG --list
+    # Several ranges, e.g. a key's first lines (start + specs) and a later pull
+    tools/anonymise_log.py LOG --lines 630362:630370 --lines 795822:796622
 
 The output is checked for leftover original names and GUIDs before it's
 written; the script exits non-zero if any remain.
@@ -64,14 +66,19 @@ def segments(path):
     return out
 
 
-def build_mapping(path, lo, hi):
+def in_ranges(n, ranges):
+    return any(lo <= n <= hi for lo, hi in ranges)
+
+
+def build_mapping(path, ranges):
     guids, names, pets = {}, {}, {}
+    last = max(hi for _, hi in ranges)
     with open(path, encoding="utf-8", errors="replace") as f:
         for n, line in enumerate(f, 1):
-            if n < lo:
-                continue
-            if n > hi:
+            if n > last:
                 break
+            if not in_ranges(n, ranges):
+                continue
             for g in PLAYER_GUID.findall(line):
                 guids.setdefault(g, f"Player-1-{len(guids) + 1:08X}")
             for g, name in UNIT.findall(line):
@@ -87,7 +94,7 @@ def main():
     ap.add_argument("log")
     ap.add_argument("--list", action="store_true", help="list encounter/key segments and exit")
     ap.add_argument("--segment", type=int, help="only the Nth segment from --list")
-    ap.add_argument("--lines", help="only lines A:B (1-based, inclusive)")
+    ap.add_argument("--lines", action="append", help="only lines A:B (1-based, inclusive); repeatable")
     a = ap.parse_args()
 
     if a.list:
@@ -96,17 +103,20 @@ def main():
             print(f"{i:3}  {kind}  lines {s}-{e} ({e - s + 1} lines)  {desc}")
         return 0
 
-    lo, hi = 1, float("inf")
+    ranges = [(1, float("inf"))]
     if a.segment:
         segs = segments(a.log)
         if not 1 <= a.segment <= len(segs):
             sys.exit(f"segment {a.segment} not found ({len(segs)} segments)")
-        lo, hi = segs[a.segment - 1][:2]
+        ranges = [segs[a.segment - 1][:2]]
     elif a.lines:
-        x, y = a.lines.split(":")
-        lo, hi = int(x or 1), int(y) if y else float("inf")
+        ranges = []
+        for spec in a.lines:
+            x, y = spec.split(":")
+            ranges.append((int(x or 1), int(y) if y else float("inf")))
+    last = max(hi for _, hi in ranges)
 
-    guids, names, pets = build_mapping(a.log, lo, hi)
+    guids, names, pets = build_mapping(a.log, ranges)
     # Longest first so "Name-Realm-US" is replaced before any shorter overlap.
     subs = sorted({**guids, **names}.items(), key=lambda kv: -len(kv[0]))
     pattern = re.compile("|".join(re.escape(k) for k, _ in subs)) if subs else None
@@ -121,9 +131,9 @@ def main():
     out = []
     with open(a.log, encoding="utf-8", errors="replace") as f:
         for n, line in enumerate(f, 1):
-            if n > hi:
+            if n > last:
                 break
-            keep = n >= lo or (n == 1 and "COMBAT_LOG_VERSION" in line)
+            keep = in_ranges(n, ranges) or (n == 1 and "COMBAT_LOG_VERSION" in line)
             if not keep:
                 continue
             if pattern:

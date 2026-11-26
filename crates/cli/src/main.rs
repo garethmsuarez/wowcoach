@@ -200,10 +200,12 @@ struct SuggestArgs {
     #[cfg(feature = "wcl")]
     #[arg(long, default_value_t = 0, value_name = "N")]
     wcl_top: usize,
-    /// Key levels for --wcl-top, e.g. 12..15 or 20 (default: any)
+    /// Key levels for --wcl-top: MIN..MAX, a single level, or "top" (the
+    /// overall best runs). Repeatable; ":N" takes N runs from that range
+    /// instead of --wcl-top, e.g. --level 12..16 --level top:3
     #[cfg(feature = "wcl")]
-    #[arg(long, value_name = "MIN..MAX")]
-    level: Option<String>,
+    #[arg(long = "level", value_name = "RANGE[:N]")]
+    levels: Vec<String>,
     /// Most Warcraft Logs API points to spend in this run (the hourly limit is 9000)
     #[cfg(feature = "wcl")]
     #[arg(long, default_value_t = 3000.0)]
@@ -214,21 +216,80 @@ struct SuggestArgs {
     cache_dir: Option<PathBuf>,
 }
 
-/// "12..15" -> (12, 15), "20" -> (20, 20), none -> any level.
+/// One --level: Some((min, max)) or None for "top", and how many runs to take.
 #[cfg(feature = "wcl")]
-fn level_range(s: Option<&str>) -> anyhow::Result<(u32, u32)> {
-    let Some(s) = s else {
-        return Ok((0, u32::MAX));
+#[derive(Debug, PartialEq)]
+struct LevelSpec {
+    range: Option<(u32, u32)>,
+    count: usize,
+}
+
+/// "12..16" -> 12..=16, "20" -> 20..=20, "top" -> overall top runs; ":N"
+/// overrides the default count.
+#[cfg(feature = "wcl")]
+fn level_spec(s: &str, default_count: usize) -> anyhow::Result<LevelSpec> {
+    let (range, count) = match s.rsplit_once(':') {
+        Some((r, n)) => (
+            r,
+            n.trim()
+                .parse::<usize>()
+                .with_context(|| format!("bad run count in --level {s:?}"))?,
+        ),
+        None => (s, default_count),
     };
     let parse = |x: &str| {
         x.trim()
             .parse::<u32>()
-            .with_context(|| format!("bad key level {x:?} in --level"))
+            .with_context(|| format!("bad key level {x:?} in --level {s:?}"))
     };
-    Ok(match s.split_once("..") {
-        Some((a, b)) => (parse(a)?, parse(b)?),
-        None => (parse(s)?, parse(s)?),
-    })
+    let range = match range.trim() {
+        "top" => None,
+        r => Some(match r.split_once("..") {
+            Some((a, b)) => (parse(a)?, parse(b)?),
+            None => (parse(r)?, parse(r)?),
+        }),
+    };
+    Ok(LevelSpec { range, count })
+}
+
+#[cfg(all(test, feature = "wcl"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn level_specs() {
+        let s = |x| level_spec(x, 5).unwrap();
+        assert_eq!(
+            s("12..16"),
+            LevelSpec {
+                range: Some((12, 16)),
+                count: 5
+            }
+        );
+        assert_eq!(
+            s("20"),
+            LevelSpec {
+                range: Some((20, 20)),
+                count: 5
+            }
+        );
+        assert_eq!(
+            s("top:3"),
+            LevelSpec {
+                range: None,
+                count: 3
+            }
+        );
+        assert_eq!(
+            s("12..16:2"),
+            LevelSpec {
+                range: Some((12, 16)),
+                count: 2
+            }
+        );
+        assert!(level_spec("x..y", 5).is_err());
+        assert!(level_spec("top:many", 5).is_err());
+    }
 }
 
 fn season_suggest(a: SuggestArgs) -> anyhow::Result<()> {
@@ -289,7 +350,7 @@ fn suggest_from_wcl(
     c: &mut wowcoach_core::suggest::Collected,
 ) -> anyhow::Result<()> {
     use wowcoach_core::suggest::{self, Origin};
-    if a.wcl.is_empty() && a.wcl_top == 0 {
+    if a.wcl.is_empty() && a.wcl_top == 0 && a.levels.iter().all(|l| !l.contains(':')) {
         return Ok(());
     }
     let (Ok(id), Ok(secret)) = (
@@ -339,8 +400,18 @@ fn suggest_from_wcl(
         }
     }
 
-    if a.wcl_top > 0 {
-        let (lo, hi) = level_range(a.level.as_deref())?;
+    let specs: Vec<LevelSpec> = if a.levels.is_empty() {
+        vec![LevelSpec {
+            range: None,
+            count: a.wcl_top,
+        }]
+    } else {
+        a.levels
+            .iter()
+            .map(|l| level_spec(l, a.wcl_top))
+            .collect::<anyhow::Result<_>>()?
+    };
+    if specs.iter().any(|s| s.count > 0) {
         let encounters = client.zone_encounters()?;
         'dungeons: for d in &pack.dungeons {
             let Some((_, enc)) = encounters
@@ -350,26 +421,38 @@ fn suggest_from_wcl(
                 eprintln!("  {}: not found on Warcraft Logs, skipped", d.name);
                 continue;
             };
-            // Highest level first. Without --level: the overall top runs.
-            let levels: Vec<Option<u32>> = if a.level.is_none() {
-                vec![None]
-            } else {
-                (lo.max(2)..=hi.min(40)).rev().map(Some).collect()
-            };
-            let mut keys = vec![];
-            'levels: for level in levels {
-                for page in 1..=3 {
-                    let (ranked, more) = client.top_keys(*enc, level, page)?;
-                    keys.extend(ranked.into_iter().filter(|k| (lo..=hi).contains(&k.level)));
-                    if keys.len() >= a.wcl_top {
-                        break 'levels;
-                    }
-                    if !more {
-                        break;
+            let mut keys: Vec<wcl::RankedKey> = vec![];
+            for spec in &specs {
+                // Highest level first; "top" = the overall best runs.
+                let (lo, hi) = spec.range.unwrap_or((0, u32::MAX));
+                let levels: Vec<Option<u32>> = match spec.range {
+                    None => vec![None],
+                    Some(_) => (lo.max(2)..=hi.min(40)).rev().map(Some).collect(),
+                };
+                let mut got = 0;
+                'levels: for level in levels {
+                    for page in 1..=3 {
+                        let (ranked, more) = client.top_keys(*enc, level, page)?;
+                        for k in ranked {
+                            if got < spec.count
+                                && (lo..=hi).contains(&k.level)
+                                && !keys
+                                    .iter()
+                                    .any(|x| x.code == k.code && x.fight_id == k.fight_id)
+                            {
+                                keys.push(k);
+                                got += 1;
+                            }
+                        }
+                        if got >= spec.count {
+                            break 'levels;
+                        }
+                        if !more {
+                            break;
+                        }
                     }
                 }
             }
-            keys.truncate(a.wcl_top);
             eprintln!(
                 "  {}: {} public run(s) at levels {}",
                 d.name,

@@ -36,6 +36,7 @@ Gaps found in the code that shape the order:
 - Add `report.json` and `*.json` reports to `.gitignore`. Update CLAUDE.md and the README for the new layout.
 
 ## M1: Season data pack + Blizzard API
+**Status: done.**
 Detailed plan: [`docs/milestones/m1-season-data.md`](milestones/m1-season-data.md). In short:
 - An embedded `data/seasons/midnight-s2.toml` pack, which can be overridden, covering the 8 tracked M+ dungeons and 3 raids. Plus a hand-curated `data/classes.toml`.
 - `season sync` pulls dungeons, timers, journal encounters and spells from the Blizzard API.
