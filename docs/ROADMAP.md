@@ -36,27 +36,12 @@ Gaps found in the code that shape the order:
 - Add `report.json` and `*.json` reports to `.gitignore`. Update CLAUDE.md and the README for the new layout.
 
 ## M1: Season data pack + Blizzard API
-- **Schema** (`data/seasons/<season>.toml`, checked in):
-  - season id and the affix list
-  - `[[instance]]` entries with `map_id` / `journal_id` / `encounter_ids`
-  - `[[spell]]` entries with `id`, `name`, `instance`, `npc_id?`, and `tags`.
-  - Tags: `priority_kick`, `stoppable` (CC works), `avoidable`, `dispel_priority`, `tank_buster`, `dangerous_cast`, `affix`, plus `note`.
-  - Also a `[class]` section for interrupt, CC, defensive, and dispel spell IDs with cooldowns. These change per expansion, so they belong in data, not code.
-- **Config layering:** built-in defaults, then the season pack (auto-selected from `ChallengeStart.map_id` / `EncounterStart.id`), then the user's `wowcoach.toml`. Existing `[[avoidable]]` / `[[priority_interrupt]]` entries keep working as overrides. Rules keep reading through `Config` helpers like `is_priority_kick`, so they stay generic.
-- **`blizzard` feature:** a ureq client using the OAuth client-credentials flow on the region host. Hand-roll it like `wcl::net`.
-  - `mythic-keystone/season` and `/dungeon` give the current dungeon pool and map IDs.
-  - `journal-instance` and `journal-encounter` give bosses, sections, and spell IDs/names.
-  - `spell/{id}` resolves names.
-  - Pure JSON → pack mapping, unit-tested offline with `json!`, the same pattern as `wcl.rs`.
-- **`wowcoach season sync`:** writes or merges the skeleton and never overwrites tags you've added.
-- **`wowcoach season suggest <logs…>`:** proposes tags from evidence in the logs, as a diff for review:
-  - kicked at least once → kick candidate
-  - uneven hits → avoidable candidate
-  - dispelled by players → dispel candidate
-  - big damage on the tank only → tank buster
-
-  This is how trash spells get covered. The journal mostly lists boss abilities.
-- You'll need a Battle.net developer client (`BLIZZARD_CLIENT_ID/SECRET`).
+Detailed plan: [`docs/milestones/m1-season-data.md`](milestones/m1-season-data.md). In short:
+- An embedded `data/seasons/midnight-s2.toml` pack, which can be overridden, covering the 8 tracked M+ dungeons and 3 raids. Plus a hand-curated `data/classes.toml`.
+- `season sync` pulls dungeons, timers, journal encounters and spells from the Blizzard API.
+- `season suggest` gets the real spell and encounter IDs from your logs and from top public keys on Warcraft Logs, and proposes tags. Journal IDs often differ from logged IDs, and trash isn't in the journal at all. WCL zone data and `dungeonPulls` supply the logged boss encounter IDs.
+- Claude drafts tags from log evidence, and the user approves them in review.
+- Delivered in 5 PRs: schema → sync → suggest → class tables → S2 content.
 
 ## M2: M+ kicks & stops
 - **Analysis:**
