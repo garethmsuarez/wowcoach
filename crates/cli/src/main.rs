@@ -1,19 +1,13 @@
-mod analysis;
-mod combatlog;
-mod config;
-mod model;
-mod report;
-mod rules;
-mod specs;
-#[cfg(feature = "wcl")]
-mod wcl;
-
-use analysis::{Analyzer, FightKind, Severity};
 use anyhow::Context;
 use clap::{Parser, Subcommand};
-use config::Config;
-use report::Report;
 use std::path::PathBuf;
+#[cfg(feature = "wcl")]
+use wowcoach_core::analysis::Analyzer;
+use wowcoach_core::analysis::{self, FightKind, Severity};
+use wowcoach_core::config::{self, Config};
+use wowcoach_core::report::{self, Report};
+#[cfg(feature = "wcl")]
+use wowcoach_core::wcl;
 
 #[derive(Parser)]
 #[command(
@@ -78,19 +72,7 @@ fn finish(
     cfg: &Config,
     o: &OutOpts,
 ) -> anyhow::Result<()> {
-    let mut fights = fights;
-    for f in fights.iter_mut() {
-        rules::apply(f, cfg);
-    }
-    let mut progression = analysis::progression(&fights);
-    for p in progression.iter_mut() {
-        rules::apply_progression(p);
-    }
-    let rep = Report {
-        source,
-        fights,
-        progression,
-    };
+    let rep = wowcoach_core::build_report(source, fights, cfg);
     std::fs::write(&o.out, report::html(&rep))
         .with_context(|| format!("writing {}", o.out.display()))?;
     if let Some(j) = &o.json {
@@ -151,11 +133,9 @@ fn main() -> anyhow::Result<()> {
             let cfg = Config::load(o.config.as_deref())?;
             let file =
                 std::fs::File::open(&log).with_context(|| format!("opening {}", log.display()))?;
-            let mut an = Analyzer::new(cfg);
             let t0 = std::time::Instant::now();
-            let p = combatlog::stream(std::io::BufReader::with_capacity(1 << 20, file), |e| {
-                an.feed(e)
-            })?;
+            let (p, fights, cfg) =
+                wowcoach_core::analyze_log(std::io::BufReader::with_capacity(1 << 20, file), cfg)?;
             eprintln!(
                 "Parsed {} lines in {:.1}s (log version {}, advanced logging {}, {} advanced fields)",
                 p.lines,
@@ -168,7 +148,6 @@ fn main() -> anyhow::Result<()> {
                 },
                 p.adv_fields
             );
-            let (fights, cfg) = an.finish();
             finish(log.display().to_string(), fights, &cfg, &o)?;
         }
         #[cfg(feature = "wcl")]

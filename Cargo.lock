@@ -807,6 +807,15 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "serde_json",
+ "wowcoach-core",
+]
+
+[[package]]
+name = "wowcoach-core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "serde",
  "serde_json",
  "toml",

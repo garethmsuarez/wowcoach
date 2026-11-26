@@ -33,3 +33,6 @@ jobs:
       - name: Offline build (no Warcraft Logs feature)
         if: matrix.os == 'ubuntu-latest'
         run: cargo build --no-default-features
+      - name: Offline clippy (no Warcraft Logs feature)
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo clippy --no-default-features --all-targets -- -D warnings

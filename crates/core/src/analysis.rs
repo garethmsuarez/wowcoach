@@ -759,7 +759,7 @@ impl FightBuilder {
                 .map(|(_, v)| v.1)
                 .sum();
             let mut top: Vec<(String, u64, u32)> = p.taken_by_spell.values().cloned().collect();
-            top.sort_by_key(|x| std::cmp::Reverse(x.1));
+            top.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
             top.truncate(5);
             let total_heal = p.healing + p.overheal;
             players.push(PlayerReport {
@@ -797,6 +797,7 @@ impl FightBuilder {
             (a.role as u8)
                 .cmp(&(b.role as u8))
                 .then(b.damage_done.cmp(&a.damage_done))
+                .then_with(|| a.name.cmp(&b.name))
         });
 
         // enemy damage + avoidable heuristic
@@ -846,7 +847,7 @@ impl FightBuilder {
                         )
                     })
                     .collect();
-                pp.sort_by_key(|x| std::cmp::Reverse(x.1));
+                pp.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
                 EnemySpellReport {
                     spell_id: *id,
                     name: es.name.clone(),
@@ -862,7 +863,7 @@ impl FightBuilder {
                 }
             })
             .collect();
-        enemy_damage.sort_by_key(|x| std::cmp::Reverse(x.total));
+        enemy_damage.sort_by(|a, b| b.total.cmp(&a.total).then(a.spell_id.cmp(&b.spell_id)));
         for p in players.iter_mut() {
             p.likely_avoidable_taken = enemy_damage
                 .iter()
@@ -872,10 +873,17 @@ impl FightBuilder {
         }
 
         // Different mobs often share a spell name with different IDs: merge by name.
+        // Merge in spell-ID order so the reported ID doesn't depend on HashMap order.
+        let mut cast_ids: Vec<(&u32, &EC)> = self
+            .enemy_casts
+            .iter()
+            .filter(|(id, ec)| {
+                ec.interrupted > 0 || (cfg.is_priority_kick(**id) && ec.started + ec.success > 0)
+            })
+            .collect();
+        cast_ids.sort_by_key(|(id, _)| **id);
         let mut enemy_casts: Vec<EnemyCastReport> = vec![];
-        for (id, ec) in self.enemy_casts.iter().filter(|(id, ec)| {
-            ec.interrupted > 0 || (cfg.is_priority_kick(**id) && ec.started + ec.success > 0)
-        }) {
+        for (id, ec) in cast_ids {
             match enemy_casts.iter_mut().find(|c| c.name == ec.name) {
                 Some(c) => {
                     c.started += ec.started;
@@ -893,7 +901,11 @@ impl FightBuilder {
                 }),
             }
         }
-        enemy_casts.sort_by_key(|x| std::cmp::Reverse(x.succeeded));
+        enemy_casts.sort_by(|a, b| {
+            b.succeeded
+                .cmp(&a.succeeded)
+                .then_with(|| a.name.cmp(&b.name))
+        });
 
         let pulls: Vec<PullReport> = self
             .pulls
@@ -1310,3 +1322,6 @@ pub fn progression(fights: &[FightReport]) -> Vec<ProgressionReport> {
 fn strip_src(kb: &str) -> String {
     kb.split(" (").next().unwrap_or(kb).to_string()
 }
+
+#[cfg(test)]
+mod tests;

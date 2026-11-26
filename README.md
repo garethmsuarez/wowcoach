@@ -88,15 +88,26 @@ name = "Shadow Volley"
 
 ## Development
 
+The repo is a Cargo workspace: `crates/core` holds the parser, analysis, rules
+and report; `crates/cli` is the `wowcoach` binary.
+
 ```bash
 cargo test
 python3 tools/gen_sample_log.py mplus > samples/mplus.txt   # synthetic logs with known problems
 python3 tools/gen_sample_log.py raid  > samples/raid.txt
 cargo run -- analyze samples/mplus.txt -c samples/wowcoach.toml
+
+# After an intended change to analyzer output, refresh the golden snapshot and review the diff
+WOWCOACH_BLESS=1 cargo test -p wowcoach-core --test golden
+
+# Turn part of a real log into an anonymised test fixture
+python3 tools/anonymise_log.py "test logs/WoWCombatLog-....txt" --list
+python3 tools/anonymise_log.py "test logs/WoWCombatLog-....txt" --segment 2 > crates/core/tests/fixtures/boss.txt
 ```
 
-Adding a rule means writing a small function over `FightReport` in `rules.rs`
-that pushes a `Suggestion`.
+Adding a rule means writing a small function over `FightReport` in
+`crates/core/src/rules.rs` that pushes a `Suggestion`, plus a test in
+`crates/core/src/rules/tests.rs`. Planned work is in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Contributing
 
@@ -104,8 +115,8 @@ Changes go through pull requests against `main`; CI runs `cargo fmt --check`,
 `cargo clippy -D warnings` and `cargo test` on Linux, macOS and Windows.
 
 Please don't commit real combat logs or reports. They contain other players'
-names and GUIDs. Use `tools/gen_sample_log.py`, or anonymise lines when adding
-regression tests. `.gitignore` excludes `test logs/` and `WoWCombatLog*.txt`.
+names and GUIDs. Use `tools/gen_sample_log.py`, or `tools/anonymise_log.py` when adding
+regression tests from real logs. `.gitignore` excludes `test logs/` and `WoWCombatLog*.txt`.
 
 ## License
 

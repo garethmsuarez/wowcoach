@@ -1,5 +1,7 @@
 /target
 *.html
+# Reports written to the repo root (e.g. --json report.json)
+/*.json
 .DS_Store
 .idea/
 .vscode/

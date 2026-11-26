@@ -1,0 +1,933 @@
+{
+  "source": "samples/mplus.txt",
+  "fights": [
+    {
+      "title": "+12 Test Spire — Depleted / abandoned",
+      "kind": {
+        "type": "MythicPlus",
+        "zone": "Test Spire",
+        "map_id": 2649,
+        "level": 12,
+        "affixes": [
+          10,
+          9,
+          147
+        ],
+        "success": false,
+        "time_s": 554.0,
+        "bosses": [
+          {
+            "name": "Spire Boss 3",
+            "start_s": 169.0,
+            "end_s": 244.0,
+            "success": true
+          },
+          {
+            "name": "Spire Boss 7",
+            "start_s": 464.0,
+            "end_s": 539.0,
+            "success": true
+          }
+        ]
+      },
+      "duration_s": 554.0,
+      "complete": true,
+      "players": [
+        {
+          "name": "Shieldy-Realm",
+          "guid": "Player-1305-00000001",
+          "class": "Paladin",
+          "spec": "Protection",
+          "role": "Tank",
+          "role_inferred": false,
+          "damage_done": 30049281,
+          "dps": 54240.579422382674,
+          "healing_done": 0,
+          "absorbs_done": 0,
+          "hps": 0.0,
+          "overheal_pct": 0.0,
+          "damage_taken": 102180000,
+          "avoidable_taken": 0,
+          "likely_avoidable_taken": 0,
+          "interrupts": 6,
+          "dispels": 0,
+          "deaths": 0,
+          "casts": 430,
+          "activity_pct": 0.8591229838709677,
+          "healthstones": 0,
+          "potions": 0,
+          "top_damage_taken": [
+            [
+              "Melee",
+              99900000,
+              2220
+            ],
+            [
+              "Shadow Volley",
+              2280000,
+              19
+            ]
+          ],
+          "wcl_rank_percent": null
+        },
+        {
+          "name": "Leafy-Realm",
+          "guid": "Player-1305-00000002",
+          "class": "Druid",
+          "spec": "Restoration",
+          "role": "Healer",
+          "role_inferred": false,
+          "damage_done": 0,
+          "dps": 0.0,
+          "healing_done": 23380000,
+          "absorbs_done": 0,
+          "hps": 42202.166064981946,
+          "overheal_pct": 0.355390129583678,
+          "damage_taken": 4320000,
+          "avoidable_taken": 1260000,
+          "likely_avoidable_taken": 0,
+          "interrupts": 0,
+          "dispels": 0,
+          "deaths": 1,
+          "casts": 404,
+          "activity_pct": 0.8643617021276596,
+          "healthstones": 0,
+          "potions": 0,
+          "top_damage_taken": [
+            [
+              "Shadow Volley",
+              2160000,
+              18
+            ],
+            [
+              "Void Pool",
+              1260000,
+              9
+            ],
+            [
+              "Cataclysmic Slam",
+              900000,
+              1
+            ]
+          ],
+          "wcl_rank_percent": null
+        },
+        {
+          "name": "Glaive-Realm",
+          "guid": "Player-1305-00000004",
+          "class": "Demon Hunter",
+          "spec": "Havoc",
+          "role": "Dps",
+          "role_inferred": false,
+          "damage_done": 60235458,
+          "dps": 108728.26353790614,
+          "healing_done": 0,
+          "absorbs_done": 0,
+          "hps": 0.0,
+          "overheal_pct": 0.0,
+          "damage_taken": 3760000,
+          "avoidable_taken": 700000,
+          "likely_avoidable_taken": 0,
+          "interrupts": 5,
+          "dispels": 0,
+          "deaths": 1,
+          "casts": 402,
+          "activity_pct": 0.8590425531914894,
+          "healthstones": 0,
+          "potions": 0,
+          "top_damage_taken": [
+            [
+              "Shadow Volley",
+              2160000,
+              18
+            ],
+            [
+              "Cataclysmic Slam",
+              900000,
+              1
+            ],
+            [
+              "Void Pool",
+              700000,
+              5
+            ]
+          ],
+          "wcl_rank_percent": null
+        },
+        {
+          "name": "Slacky-Realm",
+          "guid": "Player-1305-00000005",
+          "class": "Paladin",
+          "spec": "Retribution",
+          "role": "Dps",
+          "role_inferred": false,
+          "damage_done": 34239118,
+          "dps": 61803.462093862814,
+          "healing_done": 0,
+          "absorbs_done": 0,
+          "hps": 0.0,
+          "overheal_pct": 0.0,
+          "damage_taken": 3900000,
+          "avoidable_taken": 840000,
+          "likely_avoidable_taken": 0,
+          "interrupts": 0,
+          "dispels": 0,
+          "deaths": 1,
+          "casts": 312,
+          "activity_pct": 0.7422872340425531,
+          "healthstones": 0,
+          "potions": 0,
+          "top_damage_taken": [
+            [
+              "Shadow Volley",
+              2160000,
+              18
+            ],
+            [
+              "Cataclysmic Slam",
+              900000,
+              1
+            ],
+            [
+              "Void Pool",
+              840000,
+              6
+            ]
+          ],
+          "wcl_rank_percent": null
+        },
+        {
+          "name": "Pyro-Realm",
+          "guid": "Player-1305-00000003",
+          "class": "Mage",
+          "spec": "Fire",
+          "role": "Dps",
+          "role_inferred": false,
+          "damage_done": 31403188,
+          "dps": 56684.45487364621,
+          "healing_done": 0,
+          "absorbs_done": 0,
+          "hps": 0.0,
+          "overheal_pct": 0.0,
+          "damage_taken": 7040000,
+          "avoidable_taken": 5600000,
+          "likely_avoidable_taken": 0,
+          "interrupts": 0,
+          "dispels": 0,
+          "deaths": 8,
+          "casts": 206,
+          "activity_pct": 0.8863636363636364,
+          "healthstones": 0,
+          "potions": 0,
+          "top_damage_taken": [
+            [
+              "Void Pool",
+              5600000,
+              40
+            ],
+            [
+              "Shadow Volley",
+              1440000,
+              12
+            ]
+          ],
+          "wcl_rank_percent": null
+        }
+      ],
+      "deaths": [
+        {
+          "player": "Pyro-Realm",
+          "at_s": 24.4,
+          "killing_blow": "Void Pool (Shade Caster)",
+          "killing_spell_id": 88888,
+          "recap": [
+            {
+              "at_s": 14.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 30.0
+            },
+            {
+              "at_s": 19.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 22.1,
+              "spell": "Shadow Volley",
+              "source": "Shade Caster",
+              "amount": 120000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 24.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 260000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 1,
+          "wipe_cascade": false
+        },
+        {
+          "player": "Pyro-Realm",
+          "at_s": 79.4,
+          "killing_blow": "Void Pool (Shade Caster)",
+          "killing_spell_id": 88888,
+          "recap": [
+            {
+              "at_s": 69.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 30.0
+            },
+            {
+              "at_s": 74.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 77.1,
+              "spell": "Shadow Volley",
+              "source": "Shade Caster",
+              "amount": 120000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 79.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 260000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 2,
+          "wipe_cascade": false
+        },
+        {
+          "player": "Pyro-Realm",
+          "at_s": 134.4,
+          "killing_blow": "Void Pool (Shade Caster)",
+          "killing_spell_id": 88888,
+          "recap": [
+            {
+              "at_s": 124.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 30.0
+            },
+            {
+              "at_s": 129.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 132.1,
+              "spell": "Shadow Volley",
+              "source": "Shade Caster",
+              "amount": 120000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 134.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 260000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 3,
+          "wipe_cascade": false
+        },
+        {
+          "player": "Pyro-Realm",
+          "at_s": 189.4,
+          "killing_blow": "Void Pool (Spire Guardian)",
+          "killing_spell_id": 88888,
+          "recap": [
+            {
+              "at_s": 179.3,
+              "spell": "Void Pool",
+              "source": "Spire Guardian",
+              "amount": 140000,
+              "hp_pct_after": 30.0
+            },
+            {
+              "at_s": 184.3,
+              "spell": "Void Pool",
+              "source": "Spire Guardian",
+              "amount": 140000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 189.3,
+              "spell": "Void Pool",
+              "source": "Spire Guardian",
+              "amount": 140000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 140000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 4,
+          "wipe_cascade": false
+        },
+        {
+          "player": "Pyro-Realm",
+          "at_s": 279.4,
+          "killing_blow": "Void Pool (Shade Caster)",
+          "killing_spell_id": 88888,
+          "recap": [
+            {
+              "at_s": 269.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 30.0
+            },
+            {
+              "at_s": 274.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 279.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 140000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 5,
+          "wipe_cascade": false
+        },
+        {
+          "player": "Pyro-Realm",
+          "at_s": 374.4,
+          "killing_blow": "Void Pool (Shade Caster)",
+          "killing_spell_id": 88888,
+          "recap": [
+            {
+              "at_s": 364.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 30.0
+            },
+            {
+              "at_s": 369.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 374.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 140000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 6,
+          "wipe_cascade": false
+        },
+        {
+          "player": "Leafy-Realm",
+          "at_s": 374.1,
+          "killing_blow": "Cataclysmic Slam (Shade Caster)",
+          "killing_spell_id": 99999,
+          "recap": [
+            {
+              "at_s": 364.1,
+              "spell": "Shadow Volley",
+              "source": "Shade Caster",
+              "amount": 120000,
+              "hp_pct_after": 100.0
+            },
+            {
+              "at_s": 374.0,
+              "spell": "Cataclysmic Slam",
+              "source": "Shade Caster",
+              "amount": 900000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 900000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 6,
+          "wipe_cascade": false
+        },
+        {
+          "player": "Glaive-Realm",
+          "at_s": 374.1,
+          "killing_blow": "Cataclysmic Slam (Shade Caster)",
+          "killing_spell_id": 99999,
+          "recap": [
+            {
+              "at_s": 364.1,
+              "spell": "Shadow Volley",
+              "source": "Shade Caster",
+              "amount": 120000,
+              "hp_pct_after": 100.0
+            },
+            {
+              "at_s": 374.0,
+              "spell": "Cataclysmic Slam",
+              "source": "Shade Caster",
+              "amount": 900000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 900000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 6,
+          "wipe_cascade": false
+        },
+        {
+          "player": "Slacky-Realm",
+          "at_s": 374.1,
+          "killing_blow": "Cataclysmic Slam (Shade Caster)",
+          "killing_spell_id": 99999,
+          "recap": [
+            {
+              "at_s": 364.1,
+              "spell": "Shadow Volley",
+              "source": "Shade Caster",
+              "amount": 120000,
+              "hp_pct_after": 100.0
+            },
+            {
+              "at_s": 374.0,
+              "spell": "Cataclysmic Slam",
+              "source": "Shade Caster",
+              "amount": 900000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 900000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 6,
+          "wipe_cascade": false
+        },
+        {
+          "player": "Pyro-Realm",
+          "at_s": 429.4,
+          "killing_blow": "Void Pool (Shade Caster)",
+          "killing_spell_id": 88888,
+          "recap": [
+            {
+              "at_s": 419.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 30.0
+            },
+            {
+              "at_s": 424.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 427.1,
+              "spell": "Shadow Volley",
+              "source": "Shade Caster",
+              "amount": 120000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 429.3,
+              "spell": "Void Pool",
+              "source": "Shade Caster",
+              "amount": 140000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 260000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 7,
+          "wipe_cascade": false
+        },
+        {
+          "player": "Pyro-Realm",
+          "at_s": 484.4,
+          "killing_blow": "Void Pool (Spire Guardian)",
+          "killing_spell_id": 88888,
+          "recap": [
+            {
+              "at_s": 474.3,
+              "spell": "Void Pool",
+              "source": "Spire Guardian",
+              "amount": 140000,
+              "hp_pct_after": 30.0
+            },
+            {
+              "at_s": 479.3,
+              "spell": "Void Pool",
+              "source": "Spire Guardian",
+              "amount": 140000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 484.3,
+              "spell": "Void Pool",
+              "source": "Spire Guardian",
+              "amount": 140000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 140000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 8,
+          "wipe_cascade": false
+        }
+      ],
+      "pulls": [
+        {
+          "index": 1,
+          "start_s": 4.05,
+          "end_s": 43.6,
+          "deaths": 1,
+          "enemies_killed": 4,
+          "boss": null
+        },
+        {
+          "index": 2,
+          "start_s": 59.05,
+          "end_s": 98.6,
+          "deaths": 1,
+          "enemies_killed": 4,
+          "boss": null
+        },
+        {
+          "index": 3,
+          "start_s": 114.05,
+          "end_s": 153.6,
+          "deaths": 1,
+          "enemies_killed": 4,
+          "boss": null
+        },
+        {
+          "index": 4,
+          "start_s": 169.05,
+          "end_s": 243.6,
+          "deaths": 1,
+          "enemies_killed": 1,
+          "boss": "Spire Boss 3"
+        },
+        {
+          "index": 5,
+          "start_s": 259.05,
+          "end_s": 298.6,
+          "deaths": 1,
+          "enemies_killed": 4,
+          "boss": null
+        },
+        {
+          "index": 6,
+          "start_s": 354.05,
+          "end_s": 393.6,
+          "deaths": 4,
+          "enemies_killed": 4,
+          "boss": null
+        },
+        {
+          "index": 7,
+          "start_s": 409.05,
+          "end_s": 448.6,
+          "deaths": 1,
+          "enemies_killed": 4,
+          "boss": null
+        },
+        {
+          "index": 8,
+          "start_s": 464.05,
+          "end_s": 538.6,
+          "deaths": 1,
+          "enemies_killed": 1,
+          "boss": "Spire Boss 7"
+        }
+      ],
+      "downtime_s": 157.2,
+      "enemy_casts": [
+        {
+          "spell_id": 77777,
+          "name": "Shadow Volley",
+          "started": 30,
+          "succeeded": 19,
+          "interrupted": 11,
+          "priority": true
+        }
+      ],
+      "enemy_damage": [
+        {
+          "spell_id": 1,
+          "name": "Melee",
+          "total": 99900000,
+          "hits": 2220,
+          "players_hit": 1,
+          "non_tank_hit_frac": 0.0,
+          "max_hits_per_player": 2220,
+          "median_hits_per_player": 2220.0,
+          "configured_avoidable": false,
+          "likely_avoidable": false,
+          "per_player": [
+            [
+              "Shieldy-Realm",
+              99900000,
+              2220
+            ]
+          ]
+        },
+        {
+          "spell_id": 77777,
+          "name": "Shadow Volley",
+          "total": 10200000,
+          "hits": 85,
+          "players_hit": 5,
+          "non_tank_hit_frac": 1.0,
+          "max_hits_per_player": 19,
+          "median_hits_per_player": 18.0,
+          "configured_avoidable": false,
+          "likely_avoidable": false,
+          "per_player": [
+            [
+              "Shieldy-Realm",
+              2280000,
+              19
+            ],
+            [
+              "Glaive-Realm",
+              2160000,
+              18
+            ],
+            [
+              "Leafy-Realm",
+              2160000,
+              18
+            ],
+            [
+              "Slacky-Realm",
+              2160000,
+              18
+            ],
+            [
+              "Pyro-Realm",
+              1440000,
+              12
+            ]
+          ]
+        },
+        {
+          "spell_id": 88888,
+          "name": "Void Pool",
+          "total": 8400000,
+          "hits": 60,
+          "players_hit": 4,
+          "non_tank_hit_frac": 1.0,
+          "max_hits_per_player": 40,
+          "median_hits_per_player": 7.5,
+          "configured_avoidable": true,
+          "likely_avoidable": false,
+          "per_player": [
+            [
+              "Pyro-Realm",
+              5600000,
+              40
+            ],
+            [
+              "Leafy-Realm",
+              1260000,
+              9
+            ],
+            [
+              "Slacky-Realm",
+              840000,
+              6
+            ],
+            [
+              "Glaive-Realm",
+              700000,
+              5
+            ]
+          ]
+        },
+        {
+          "spell_id": 99999,
+          "name": "Cataclysmic Slam",
+          "total": 2700000,
+          "hits": 3,
+          "players_hit": 3,
+          "non_tank_hit_frac": 0.75,
+          "max_hits_per_player": 1,
+          "median_hits_per_player": 1.0,
+          "configured_avoidable": false,
+          "likely_avoidable": false,
+          "per_player": [
+            [
+              "Glaive-Realm",
+              900000,
+              1
+            ],
+            [
+              "Leafy-Realm",
+              900000,
+              1
+            ],
+            [
+              "Slacky-Realm",
+              900000,
+              1
+            ]
+          ]
+        }
+      ],
+      "lust_at_s": [
+        4.0
+      ],
+      "suggestions": [
+        {
+          "scope": "Pyro-Realm",
+          "severity": "High",
+          "category": "Death",
+          "message": "Died 8 times (0:24, 1:19, 2:14, 3:09, 4:39, 6:14, 7:09, 8:04). Killing blows: Void Pool ×8. 8 of these were to avoidable mechanics: Don't stand in the purple pools.",
+          "evidence": "Last death, final hits: 7:54 Void Pool 140.0K → 7:59 Void Pool 140.0K → 8:04 Void Pool 140.0K. Damage taken in the final 5s: 140.0K."
+        },
+        {
+          "scope": "Pyro-Realm",
+          "severity": "High",
+          "category": "Avoidable damage",
+          "message": "Took 5.60M avoidable damage, more than the group median (1.05M).",
+          "evidence": "Void Pool 5.60M (40 hits), Shadow Volley 1.44M (12 hits)"
+        },
+        {
+          "scope": "group",
+          "severity": "High",
+          "category": "Deaths",
+          "message": "11 death(s). Most common killing blows: Void Pool ×8, Cataclysmic Slam ×3. At 15s per death that's roughly 2:45 added to the timer.",
+          "evidence": "See the death recaps below for what hit each player in their last seconds."
+        },
+        {
+          "scope": "group",
+          "severity": "High",
+          "category": "Interrupts",
+          "message": "19 interruptible enemy casts went through. Assign a kick rotation for these: Shadow Volley (19 went off, 11 kicked, PRIORITY).",
+          "evidence": "A spell is treated as interruptible if anyone interrupted it at least once in this log, or if it's in the priority_interrupt config."
+        },
+        {
+          "scope": "group",
+          "severity": "High",
+          "category": "Avoidable damage",
+          "message": "The group took avoidable damage from: Void Pool (8.40M over 60 hits).",
+          "evidence": "These spells are listed as avoidable in your config."
+        },
+        {
+          "scope": "group",
+          "severity": "High",
+          "category": "Pacing",
+          "message": "28% of the run (2:37) was spent out of combat. Chain pulls, pre-position, and drink less. Longest gaps: 0:55 gap at 4:58, 0:15 gap at 2:33, 0:15 gap at 4:03.",
+          "evidence": "8 pulls detected (a gap of 5s or more with no combat counts as a break)."
+        },
+        {
+          "scope": "group",
+          "severity": "High",
+          "category": "Pull planning",
+          "message": "Near-wipe or wipe pulls: pull 6 at 5:54 (4 deaths). Plan defensives and stops for these packs, or pull fewer mobs at once.",
+          "evidence": ""
+        },
+        {
+          "scope": "Glaive-Realm",
+          "severity": "Medium",
+          "category": "Death",
+          "message": "Died at 6:14 to Cataclysmic Slam (Shade Caster). No healthstone or potion was used before dying. Use a defensive or healthstone earlier in the damage window.",
+          "evidence": "Last death, final hits: 6:04 Shadow Volley 120.0K → 6:14 Cataclysmic Slam 900.0K. Damage taken in the final 5s: 900.0K."
+        },
+        {
+          "scope": "Leafy-Realm",
+          "severity": "Medium",
+          "category": "Death",
+          "message": "Died at 6:14 to Cataclysmic Slam (Shade Caster). No healthstone or potion was used before dying. Use a defensive or healthstone earlier in the damage window.",
+          "evidence": "Last death, final hits: 6:04 Shadow Volley 120.0K → 6:14 Cataclysmic Slam 900.0K. Damage taken in the final 5s: 900.0K."
+        },
+        {
+          "scope": "Pyro-Realm",
+          "severity": "Medium",
+          "category": "Interrupts",
+          "message": "No interrupts this run, even though casts were getting through. Put your kick on your rotation.",
+          "evidence": ""
+        },
+        {
+          "scope": "Slacky-Realm",
+          "severity": "Medium",
+          "category": "Death",
+          "message": "Died at 6:14 to Cataclysmic Slam (Shade Caster). No healthstone or potion was used before dying. Use a defensive or healthstone earlier in the damage window.",
+          "evidence": "Last death, final hits: 6:04 Shadow Volley 120.0K → 6:14 Cataclysmic Slam 900.0K. Damage taken in the final 5s: 900.0K."
+        },
+        {
+          "scope": "Slacky-Realm",
+          "severity": "Medium",
+          "category": "Interrupts",
+          "message": "No interrupts this run, even though casts were getting through. Put your kick on your rotation.",
+          "evidence": ""
+        },
+        {
+          "scope": "group",
+          "severity": "Medium",
+          "category": "Interrupts",
+          "message": "Kicks were missed while Slacky-Realm, Pyro-Realm interrupted nothing. Spread the kick assignments.",
+          "evidence": ""
+        },
+        {
+          "scope": "group",
+          "severity": "Medium",
+          "category": "Timer",
+          "message": "Key not timed (9:14).",
+          "evidence": "Biggest levers, in order: deaths, downtime, then damage output."
+        },
+        {
+          "scope": "Slacky-Realm",
+          "severity": "Low",
+          "category": "Activity",
+          "message": "Estimated casting activity was 74% (group median 86%). Look for gaps in your GCD usage: keep casting while moving, and pre-cast before pulls.",
+          "evidence": "This estimate comes from cast events plus one GCD each. Channelled spells are undercounted, so compare it against your own previous logs."
+        }
+      ]
+    }
+  ],
+  "progression": []
+}
