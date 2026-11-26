@@ -7,7 +7,7 @@
 //! interrupt players used must be listed; nothing may be reused faster than
 //! its listed cooldown allows).
 
-use crate::model::{Event, Kind, Unit};
+use crate::model::{Event, Kind, Pos, Unit};
 use crate::specs::{SPECS, class_specs, spec_info};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -90,9 +90,25 @@ pub struct Ability {
     /// nothing about `cd_s`; the log audit skips it.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub cdr: bool,
+    /// Reach in yards (interrupts: required; stops: optional). Melee is 5.
+    #[serde(default)]
+    pub range_yd: Option<f32>,
+    /// Stops: the aura(s) the CC is logged as on the target, when they differ
+    /// from `ids` (Shockwave is cast as 46968 but stuns as 132168).
+    #[serde(default)]
+    pub aura_ids: Vec<u32>,
 }
 
 impl Ability {
+    /// Aura IDs that mean this stop landed: `aura_ids`, or the cast IDs.
+    pub fn stop_auras(&self) -> &[u32] {
+        if self.aura_ids.is_empty() {
+            &self.ids
+        } else {
+            &self.aura_ids
+        }
+    }
+
     /// Can a player of this class and spec have it?
     pub fn available_to(&self, class: &str, spec: &str) -> bool {
         self.class == RACIAL
@@ -174,6 +190,23 @@ impl ClassData {
                 }
                 _ => {}
             }
+            match (a.kind, a.range_yd) {
+                (AbilityKind::Interrupt, None) => {
+                    out.push(format!("{label}: an interrupt needs `range_yd`"))
+                }
+                (AbilityKind::Interrupt | AbilityKind::Stop, Some(r))
+                    if !(1.0..=100.0).contains(&r) =>
+                {
+                    out.push(format!("{label}: range_yd {r} is out of 1..100"))
+                }
+                (AbilityKind::Defensive | AbilityKind::Dispel, Some(_)) => {
+                    out.push(format!("{label}: range_yd is for interrupts and stops"))
+                }
+                _ => {}
+            }
+            if !a.aura_ids.is_empty() && a.kind != AbilityKind::Stop {
+                out.push(format!("{label}: aura_ids is for stops"));
+            }
             if (cc && a.kind != AbilityKind::Stop)
                 || (scope && a.kind != AbilityKind::Defensive)
                 || (dispel && a.kind != AbilityKind::Dispel)
@@ -193,6 +226,13 @@ impl ClassData {
             .iter()
             .filter(|a| a.kind == kind && a.available_to(class, spec))
             .collect()
+    }
+
+    /// The stop whose aura this is, if any.
+    pub fn stop_by_aura(&self, aura_id: u32) -> Option<&Ability> {
+        self.abilities
+            .iter()
+            .find(|a| a.kind == AbilityKind::Stop && a.stop_auras().contains(&aura_id))
     }
 
     /// Every entry listing this spell ID (one ability can be e.g. both a stop and an interrupt).
@@ -254,6 +294,27 @@ pub struct Audit {
     dispels: BTreeMap<(String, String, u32, String), u32>,
     /// guid -> (class, spec) of players seen acting.
     players: HashMap<String, (String, String)>,
+    /// Units created by SPELL_SUMMON (totems, guardians): their auras count as
+    /// the group's. Advanced-logging ownership also covers NPC allies such as
+    /// delve companions, so it isn't used for this.
+    summoned: BTreeSet<String>,
+    /// Last known position of every unit with advanced info.
+    pos: HashMap<String, Pos>,
+    /// Interrupt spell id -> kicker-to-caster distances (yards).
+    kick_dist: HashMap<u32, Vec<f32>>,
+    /// Inside a Mythic+ key: cast outcomes are only collected there (delves
+    /// have NPC companions whose CC would be miscounted as the group's).
+    in_key: bool,
+    /// Hostile caster guid -> (spell, cast start) while its cast bar runs.
+    casting: HashMap<String, (u32, i64)>,
+    /// Hostile unit guid -> recent harmful auras from the group: (ts, id, name).
+    debuffs: HashMap<String, Vec<(i64, u32, String)>>,
+    /// Cast bars that ended silently / completed, and which group auras
+    /// landed during them.
+    silent: u32,
+    completed: u32,
+    aura_in_silent: HashMap<(u32, String), u32>,
+    aura_in_completed: HashMap<u32, u32>,
 }
 
 /// Findings, most important first.
@@ -267,8 +328,24 @@ pub struct AuditReport {
     pub fast_reuse: Vec<String>,
     /// Abilities of classes/specs present in the logs that were never used.
     pub unseen: Vec<String>,
+    /// Interrupts usually used from further away than `range_yd` allows.
+    pub kick_ranges: Vec<String>,
+    /// Kick distances per interrupt that had enough samples, for reference.
+    pub kick_distance_summary: Vec<String>,
+    /// Group auras that land on casters whose cast then ends silently, but
+    /// rarely during casts that complete: likely stops missing from the table.
+    pub stop_candidates: Vec<String>,
+    /// Silently-ended cast bars, and how many a listed stop explains.
+    pub silent_casts: u32,
+    pub silent_explained: u32,
     pub players: usize,
 }
+
+/// A stop lands during at least this many silently-ended casts...
+const STOP_MIN: u32 = 5;
+/// ...and this many times more often than during completed casts. Real stops
+/// in Midnight logs scored 100-1300x; damage and slows that merely correlate, 5-30x.
+const STOP_LIFT: f64 = 50.0;
 
 impl Audit {
     fn player(&self, u: &Option<Unit>) -> Option<(String, (String, String))> {
@@ -286,7 +363,99 @@ impl Audit {
         Some((guid, (class.to_string(), spec.to_string())))
     }
 
+    /// A hostile caster's cast bar ended without completing, being kicked or
+    /// the caster dying: note which group auras landed during it.
+    fn end_cast(&mut self, caster: &str, start: i64, end: i64, completed: bool) {
+        let seen: BTreeSet<(u32, String)> = self
+            .debuffs
+            .get(caster)
+            .into_iter()
+            .flatten()
+            .filter(|(t, _, _)| *t >= start - 50 && *t <= end)
+            .map(|(_, id, n)| (*id, n.clone()))
+            .collect();
+        if completed {
+            self.completed += 1;
+            for (id, _) in seen {
+                *self.aura_in_completed.entry(id).or_default() += 1;
+            }
+        } else {
+            self.silent += 1;
+            for k in seen {
+                *self.aura_in_silent.entry(k).or_default() += 1;
+            }
+        }
+    }
+
     pub fn feed(&mut self, e: &Event) {
+        let info = match &e.kind {
+            Kind::Damage { info, .. }
+            | Kind::Heal { info, .. }
+            | Kind::CastSuccess { info, .. } => info.as_ref(),
+            _ => None,
+        };
+        if let Some(i) = info
+            && let Some(p) = i.pos
+        {
+            self.pos.insert(i.guid.clone(), p);
+        }
+        match &e.kind {
+            Kind::ChallengeStart { .. } => self.in_key = true,
+            Kind::ChallengeEnd { .. } => {
+                self.in_key = false;
+                self.casting.clear();
+                self.debuffs.clear();
+            }
+            _ => {}
+        }
+        let hostile_src = e.src.as_ref().filter(|u| self.in_key && u.is_hostile_npc());
+        match &e.kind {
+            Kind::CastStart { spell } => {
+                if let Some(c) = hostile_src {
+                    if let Some((_, st)) = self.casting.remove(&c.guid) {
+                        self.end_cast(&c.guid.clone(), st, e.ts, false);
+                    }
+                    self.casting.insert(c.guid.clone(), (spell.id, e.ts));
+                }
+            }
+            Kind::CastSuccess { spell, .. } => {
+                if let Some(c) = hostile_src
+                    && self
+                        .casting
+                        .get(&c.guid)
+                        .is_some_and(|(id, _)| *id == spell.id)
+                {
+                    let (_, st) = self.casting.remove(&c.guid).unwrap();
+                    self.end_cast(&c.guid.clone(), st, e.ts, true);
+                }
+            }
+            Kind::Death => {
+                if let Some(d) = &e.dst {
+                    self.casting.remove(&d.guid);
+                    self.debuffs.remove(&d.guid);
+                }
+            }
+            Kind::AuraApplied {
+                spell,
+                is_buff: false,
+            } => {
+                // From players, their pets and things they summoned (totems), not
+                // NPC allies such as delve companions.
+                if let (Some(s), Some(d)) = (&e.src, &e.dst)
+                    && self.in_key
+                    && !s.is_hostile()
+                    && (s.is_player()
+                        || s.guid.starts_with("Pet-")
+                        || self.summoned.contains(&s.guid))
+                    && d.is_hostile_npc()
+                {
+                    let v = self.debuffs.entry(d.guid.clone()).or_default();
+                    v.retain(|(t, _, _)| e.ts - t < 30_000);
+                    v.push((e.ts, spell.id, spell.name.clone()));
+                }
+            }
+            _ => {}
+        }
         match &e.kind {
             Kind::Combatant { guid, spec_id } => {
                 self.specs.insert(guid.clone(), *spec_id);
@@ -294,6 +463,7 @@ impl Audit {
             Kind::Summon { .. } => {
                 if let (Some(s), Some(d)) = (&e.src, &e.dst) {
                     self.owners.insert(d.guid.clone(), s.guid.clone());
+                    self.summoned.insert(d.guid.clone());
                 }
             }
             Kind::CastSuccess { spell, info } => {
@@ -315,6 +485,16 @@ impl Audit {
                 }
             }
             Kind::Interrupt { spell, .. } => {
+                if let Some(d) = &e.dst {
+                    self.casting.remove(&d.guid);
+                    if let (Some(k), Some(t)) = (
+                        e.src.as_ref().and_then(|u| self.pos.get(&u.guid)),
+                        self.pos.get(&d.guid),
+                    ) && let Some(dist) = k.distance(t)
+                    {
+                        self.kick_dist.entry(spell.id).or_default().push(dist);
+                    }
+                }
                 if let Some((guid, (c, s))) = self.player(&e.src) {
                     *self
                         .interrupts
@@ -419,6 +599,63 @@ impl Audit {
                 ));
             }
         }
+        // Kick distances against listed ranges. Positions are the last ones
+        // logged, and units have hitboxes, so allow a few yards.
+        let mut kick_ids: Vec<&u32> = self.kick_dist.keys().collect();
+        kick_ids.sort();
+        for id in kick_ids {
+            let mut d = self.kick_dist[id].clone();
+            if d.len() < 5 {
+                continue;
+            }
+            d.sort_by(f32::total_cmp);
+            let (med, p90) = (d[d.len() / 2], d[d.len() * 9 / 10]);
+            let Some(a) = data
+                .abilities
+                .iter()
+                .find(|a| a.kind == AbilityKind::Interrupt && a.ids.contains(id))
+            else {
+                continue;
+            };
+            let line = format!(
+                "{} ({id}): {} kicks, median {med:.1} yd, 90th percentile {p90:.1} yd",
+                a.name,
+                d.len()
+            );
+            if let Some(range) = a.range_yd
+                && med > range + 5.0
+            {
+                r.kick_ranges
+                    .push(format!("{line}; listed range {range} yd"));
+            }
+            r.kick_distance_summary.push(line);
+        }
+
+        // Stops: auras that land during silent cast endings far more than
+        // during completed casts.
+        r.silent_casts = self.silent;
+        let silent = self.silent.max(1) as f64;
+        let completed = self.completed.max(1) as f64;
+        let mut explained_ids: BTreeSet<u32> = BTreeSet::new();
+        let mut cands: Vec<(f64, String)> = vec![];
+        for ((id, name), n) in &self.aura_in_silent {
+            let in_completed = *self.aura_in_completed.get(id).unwrap_or(&0) as f64;
+            let lift = (*n as f64 / silent) / ((in_completed + 0.5) / completed);
+            if data.stop_by_aura(*id).is_some() {
+                explained_ids.insert(*id);
+            } else if *n >= STOP_MIN && lift >= STOP_LIFT {
+                cands.push((lift, format!("{name} ({id}): during {n} silent endings, {in_completed:.0} completed casts (lift {lift:.0}x)")));
+            }
+        }
+        cands.sort_by(|a, b| b.0.total_cmp(&a.0).then_with(|| a.1.cmp(&b.1)));
+        r.stop_candidates = cands.into_iter().map(|c| c.1).collect();
+        r.silent_explained = self
+            .aura_in_silent
+            .keys()
+            .filter(|(id, _)| explained_ids.contains(id))
+            .map(|k| self.aura_in_silent[k])
+            .sum::<u32>()
+            .min(self.silent);
         r
     }
 }
@@ -426,6 +663,13 @@ impl Audit {
 impl std::fmt::Display for AuditReport {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Checked against {} players in the logs.", self.players)?;
+        if self.silent_casts > 0 {
+            writeln!(
+                f,
+                "Enemy cast bars that ended silently (no completion, kick or death): {}; a listed stop landed during {} of them.",
+                self.silent_casts, self.silent_explained
+            )?;
+        }
         let section =
             |f: &mut std::fmt::Formatter<'_>, title: &str, v: &[String]| -> std::fmt::Result {
                 if !v.is_empty() {
@@ -453,9 +697,20 @@ impl std::fmt::Display for AuditReport {
         )?;
         section(
             f,
+            "Interrupts used from further than their listed range (check range_yd)",
+            &self.kick_ranges,
+        )?;
+        section(
+            f,
+            "Likely stops missing from the table (add the aura to a stop's aura_ids)",
+            &self.stop_candidates,
+        )?;
+        section(
+            f,
             "Never used by the classes/specs present (talents not taken?)",
             &self.unseen,
         )?;
+        section(f, "Kick distances", &self.kick_distance_summary)?;
         Ok(())
     }
 }

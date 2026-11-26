@@ -49,7 +49,7 @@ From that it proposes an assignment ("Bravo and Charlie: Lightning Bolt casters;
 
 ## PRs
 
-1. **Data: positions, ranges, stop auras.**
+1. **Data: positions, ranges, stop auras.** *(done; see "PR 1 findings")*
    - `AdvInfo` gains `x`, `y`, `map`, from both adapters. Check WCL's coordinate units (believed to be yards × 100) against a raw log of the same key.
    - Class table:
      - `range_yd` on interrupts
@@ -71,6 +71,21 @@ From that it proposes an assignment ("Bravo and Charlie: Lightning Bolt casters;
    - `season suggest` gains stop evidence ("stopped by CC in N of M top-key casts").
    - `promote_suggestions.py` gains a `stoppable` criterion.
    - Re-run over the logs and top keys, and draft tags for review as in M1 PR 5.
+
+## PR 1 findings
+
+- **Positions:**
+  - Raw log: X/Y/map sit at fixed offsets from the end of the advanced block (17- and 19-field layouts).
+  - WCL: hundredths of a yard with the axes swapped, checked against your raw logs of the same dungeon.
+  - Melee kicks measure a median of 2.9–4.4 yd on both paths, so the scale is right.
+  - WCL positions are sparser, so last-known positions go stale (90th percentile Counterspell distance 67 yd on WCL vs 26 yd raw). PR 2 needs a freshness limit before naming anyone.
+- **WCL adapter bug, fixed:** NPC GUIDs ignored `sourceInstance`/`targetInstance`, so every mob of one type was a single unit. On 4 public keys, "silent" cast endings dropped from 224 to 82 once fixed. `EVIDENCE_VERSION` bumped to 2, so cached `suggest` evidence is rebuilt.
+- **Stops:**
+  - Discovery found 18 stop auras: the aura IDs of existing stops, plus Death Grip, Frostwyrm's Fury (Absolute Zero), Havoc Metamorphosis' landing stun, Void Nova (Devourer, new in Midnight), Wake of Ashes, Rake from stealth, War Stomp, Storm Bolt and Tightening Grasp.
+  - Listed stops now explain 84% of silently-ended cast bars in your keys (339/404).
+  - The delve companion's Cheap Shot (Valeera) is excluded by collecting only inside keys and only from players, pets and summoned units.
+  - The remaining candidate, Frostwyrm's Fury's damage debuff, rides along with the stun and isn't one.
+- **Warlocks:** `classes check --wcl` on 4 public Demonology keys confirmed Spell Lock (27 kicks, now listed for every spec) and Singe Magic 132411. Axe Toss isn't confirmed yet.
 
 ## Verification
 - CI as always. The golden test covers the new kick and stop scenarios in the synthetic log.

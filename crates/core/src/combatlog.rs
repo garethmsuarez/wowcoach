@@ -107,11 +107,24 @@ fn adv_at(f: &[&str], i: usize, n: usize) -> Option<AdvInfo> {
     if f.len() < i + n {
         return None;
     }
+    // Position fields sit at the end of the block in every layout so far
+    // (17 fields in The War Within, 19 in Midnight): x, y, uiMapID, facing, level.
+    let pos = (n >= 17)
+        .then(|| {
+            Some(Pos {
+                x: f[i + n - 5].parse().ok()?,
+                y: f[i + n - 4].parse().ok()?,
+                map: f[i + n - 3].parse().ok()?,
+            })
+        })
+        .flatten()
+        .filter(|p| p.map != 0);
     Some(AdvInfo {
         guid: f[i].to_string(),
         owner_guid: f[i + 1].to_string(),
         hp: num_u(f[i + 2]),
         max_hp: num_u(f[i + 3]),
+        pos,
     })
 }
 
@@ -472,7 +485,16 @@ mod tests {
         match &evs[1].kind {
             Kind::Damage { amount, info, .. } => {
                 assert_eq!(*amount, 7610);
-                assert_eq!(info.as_ref().unwrap().max_hp, 1907034);
+                let i = info.as_ref().unwrap();
+                assert_eq!(i.max_hp, 1907034);
+                assert_eq!(
+                    i.pos,
+                    Some(Pos {
+                        x: 1317.03,
+                        y: 2070.76,
+                        map: 2500
+                    })
+                );
             }
             k => panic!("{k:?}"),
         }

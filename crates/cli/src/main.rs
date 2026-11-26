@@ -103,12 +103,18 @@ enum ClassesCmd {
         #[cfg(feature = "blizzard")]
         #[arg(long, default_value = "us")]
         region: String,
+        /// Also audit against Warcraft Logs reports, as CODE or CODE:FIGHT
+        /// (e.g. public keys with classes your own logs lack)
+        #[cfg(feature = "wcl")]
+        #[arg(long = "wcl", value_name = "CODE[:FIGHT]")]
+        wcl: Vec<String>,
     },
 }
 
 fn classes_check(
     table: Option<PathBuf>,
     logs: &[PathBuf],
+    wcl_reports: &[String],
     live: Option<&str>,
 ) -> anyhow::Result<()> {
     use wowcoach_core::classes::{Audit, ClassData};
@@ -162,7 +168,7 @@ fn classes_check(
     #[cfg(not(feature = "blizzard"))]
     let _ = live;
 
-    if !logs.is_empty() {
+    if !logs.is_empty() || !wcl_reports.is_empty() {
         let mut audit = Audit::default();
         for log in logs {
             let file =
@@ -172,6 +178,33 @@ fn classes_check(
                 |e| audit.feed(&e),
             )?;
         }
+        #[cfg(feature = "wcl")]
+        if !wcl_reports.is_empty() {
+            let (Ok(id), Ok(secret)) = (
+                std::env::var("WCL_CLIENT_ID"),
+                std::env::var("WCL_CLIENT_SECRET"),
+            ) else {
+                anyhow::bail!("--wcl needs WCL_CLIENT_ID and WCL_CLIENT_SECRET (env or ./.env)");
+            };
+            let client = wcl::net::Client::connect(&id, &secret)?;
+            for spec in wcl_reports {
+                let (code, fights) = match spec.split_once(':') {
+                    Some((c, f)) => (
+                        c,
+                        vec![
+                            f.parse::<i64>()
+                                .with_context(|| format!("bad fight ID in {spec:?}"))?,
+                        ],
+                    ),
+                    None => (spec.as_str(), vec![]),
+                };
+                for e in wcl::net::fetch(&client, code, &fights, false)?.events {
+                    audit.feed(&e);
+                }
+            }
+        }
+        #[cfg(not(feature = "wcl"))]
+        let _ = wcl_reports;
         let r = audit.report(&data);
         print!("{r}");
         failed |= !r.missing_interrupts.is_empty();
@@ -730,6 +763,8 @@ fn main() -> anyhow::Result<()> {
                 ClassesCmd::Check {
                     logs,
                     table,
+                    #[cfg(feature = "wcl")]
+                    wcl,
                     #[cfg(feature = "blizzard")]
                     live,
                     #[cfg(feature = "blizzard")]
@@ -740,7 +775,11 @@ fn main() -> anyhow::Result<()> {
             let live = live.then_some(region.as_str());
             #[cfg(not(feature = "blizzard"))]
             let live = None;
-            classes_check(table, &logs, live)?
+            #[cfg(feature = "wcl")]
+            let wcl_reports = wcl;
+            #[cfg(not(feature = "wcl"))]
+            let wcl_reports: Vec<String> = vec![];
+            classes_check(table, &logs, &wcl_reports, live)?
         }
         Cmd::Analyze { log, o } => {
             let cfg = o.load_config()?;

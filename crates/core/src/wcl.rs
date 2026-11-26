@@ -88,15 +88,26 @@ impl Master {
         m
     }
 
-    fn guid(&self, id: i64) -> String {
+    /// WCL has one actor per NPC *type*; individual mobs are told apart by
+    /// `sourceInstance` / `targetInstance` (absent = 1). Each gets its own GUID.
+    fn guid(&self, id: i64, instance: Option<i64>) -> String {
         match self.actors.get(&id).map(|a| a.kind.as_str()) {
             Some("Player") => format!("Player-WCL-{id}"),
             Some("Pet") => format!("Pet-WCL-{id}"),
-            _ => format!("Creature-WCL-{id}"),
+            _ => format!("Creature-WCL-{id}-{}", instance.unwrap_or(1)),
         }
     }
 
     fn unit(&self, id: Option<i64>, friendly: Option<bool>) -> Option<Unit> {
+        self.unit_n(id, friendly, None)
+    }
+
+    fn unit_n(
+        &self,
+        id: Option<i64>,
+        friendly: Option<bool>,
+        instance: Option<i64>,
+    ) -> Option<Unit> {
         let id = id.filter(|x| *x >= 0)?;
         let a = self.actors.get(&id);
         let kind = a.map(|a| a.kind.as_str()).unwrap_or("NPC");
@@ -112,7 +123,7 @@ impl Master {
             _ => TYPE_NPC,
         };
         Some(Unit {
-            guid: self.guid(id),
+            guid: self.guid(id, instance),
             name: a
                 .map(|a| a.name.clone())
                 .unwrap_or_else(|| format!("#{id}")),
@@ -159,13 +170,15 @@ impl Master {
     /// Convert one WCL event object into our model.
     pub fn convert(&self, e: &Value) -> Option<Event> {
         let ts = i(e, "timestamp")?;
-        let src = self.unit(
+        let src = self.unit_n(
             i(e, "sourceID"),
             e.get("sourceIsFriendly").and_then(Value::as_bool),
+            i(e, "sourceInstance"),
         );
-        let dst = self.unit(
+        let dst = self.unit_n(
             i(e, "targetID"),
             e.get("targetIsFriendly").and_then(Value::as_bool),
+            i(e, "targetInstance"),
         );
         let ability = self.spell(i(e, "abilityGameID"));
         let info = || -> Option<AdvInfo> {
@@ -179,11 +192,23 @@ impl Master {
             } else {
                 &dst
             };
+            // WCL map coordinates are hundredths of a yard with the axes
+            // swapped: raw x = WCL y / 100, raw y = -WCL x / 100 (checked
+            // against raw logs of the same dungeon).
+            let pos = match (e["x"].as_f64(), e["y"].as_f64(), i(e, "mapID")) {
+                (Some(x), Some(y), Some(map)) if map > 0 => Some(Pos {
+                    x: (y / 100.0) as f32,
+                    y: (-x / 100.0) as f32,
+                    map: map as u32,
+                }),
+                _ => None,
+            };
             Some(AdvInfo {
                 guid: who.as_ref()?.guid.clone(),
                 owner_guid: "0000000000000000".into(),
                 hp: u(e, "hitPoints"),
                 max_hp: max,
+                pos,
             })
         };
         let kind = match e["type"].as_str()? {
@@ -714,7 +739,7 @@ mod tests {
     #[test]
     fn converts_damage_and_heal() {
         let m = master();
-        let e = m.convert(&json!({"timestamp": 500, "type": "damage", "sourceID": 2, "targetID": 1, "abilityGameID": 999, "amount": 100, "absorbed": 20, "sourceIsFriendly": false, "targetIsFriendly": true, "hitPoints": 50, "maxHitPoints": 100, "resourceActor": 2})).unwrap();
+        let e = m.convert(&json!({"timestamp": 500, "type": "damage", "sourceID": 2, "targetID": 1, "abilityGameID": 999, "amount": 100, "absorbed": 20, "sourceIsFriendly": false, "targetIsFriendly": true, "hitPoints": 50, "maxHitPoints": 100, "resourceActor": 2, "x": 38882, "y": 450407, "mapID": 2572})).unwrap();
         assert!(e.dst.as_ref().unwrap().is_group_player());
         assert!(e.src.as_ref().unwrap().is_hostile_npc());
         match e.kind {
@@ -727,7 +752,17 @@ mod tests {
             } => {
                 assert_eq!(spell.name, "Big Slam");
                 assert_eq!((amount, absorbed), (100, 20));
-                assert_eq!(info.unwrap().max_hp, 100);
+                let info = info.unwrap();
+                assert_eq!(info.max_hp, 100);
+                // WCL hundredths of a yard, axes swapped, into the raw-log frame.
+                assert_eq!(
+                    info.pos,
+                    Some(Pos {
+                        x: 4504.07,
+                        y: -388.82,
+                        map: 2572
+                    })
+                );
             }
             k => panic!("{k:?}"),
         }
@@ -741,6 +776,37 @@ mod tests {
             }
         ));
         assert_eq!(m.ownership_events(0).len(), 1);
+    }
+
+    #[test]
+    fn npc_instances_are_separate_units() {
+        // Two mobs of the same NPC type: one actor, two instances.
+        let m = master();
+        let a = m.convert(&json!({"timestamp": 1, "type": "begincast", "sourceID": 2, "sourceInstance": 1, "abilityGameID": 999})).unwrap();
+        let b = m.convert(&json!({"timestamp": 2, "type": "begincast", "sourceID": 2, "sourceInstance": 2, "abilityGameID": 999})).unwrap();
+        let c = m
+            .convert(&json!({"timestamp": 3, "type": "death", "targetID": 2, "targetInstance": 2}))
+            .unwrap();
+        let guid = |e: &Event, src: bool| {
+            (if src { &e.src } else { &e.dst })
+                .as_ref()
+                .unwrap()
+                .guid
+                .clone()
+        };
+        assert_ne!(guid(&a, true), guid(&b, true));
+        assert_eq!(
+            guid(&b, true),
+            guid(&c, false),
+            "the death is the second mob's"
+        );
+        // No instance field means instance 1.
+        let d = m
+            .convert(
+                &json!({"timestamp": 4, "type": "begincast", "sourceID": 2, "abilityGameID": 999}),
+            )
+            .unwrap();
+        assert_eq!(guid(&a, true), guid(&d, true));
     }
 
     #[test]

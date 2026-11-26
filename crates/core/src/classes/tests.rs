@@ -70,6 +70,7 @@ fn problems_are_specific() {
         class = "Wizard"
         kind = "interrupt"
         cd_s = 15
+        range_yd = 5
         [[ability]]
         ids = [2]
         name = "B"
@@ -91,12 +92,14 @@ fn problems_are_specific() {
         kind = "interrupt"
         scope = "personal"
         cd_s = 8
+        range_yd = 5
         [[ability]]
         ids = [4]
         name = "E"
         class = "Monk"
         kind = "interrupt"
         cd_s = 8
+        range_yd = 5
         "#,
     );
     let want = [
@@ -127,6 +130,7 @@ fn audit_finds_missing_interrupts_fast_reuse_and_unseen() {
         class = "Warrior"
         kind = "interrupt"
         cd_s = 15
+        range_yd = 5
         [[ability]]
         ids = [97462]
         name = "Rallying Cry"
@@ -206,7 +210,7 @@ fn companions_are_not_credited_to_players() {
     // A delve companion (Creature-) owned by a player interrupts: not the
     // player's ability. A class pet (Pet-) is.
     let data = ClassData::parse(
-        "[[ability]]\nids = [19647]\nname = \"Spell Lock\"\nclass = \"Warlock\"\nkind = \"interrupt\"\ncd_s = 24\n",
+        "[[ability]]\nids = [19647]\nname = \"Spell Lock\"\nclass = \"Warlock\"\nkind = \"interrupt\"\ncd_s = 24\nrange_yd = 40\n",
     )
     .unwrap();
     let lock = player("Lock");
@@ -246,4 +250,149 @@ fn companions_are_not_credited_to_players() {
         r.missing_interrupts
     );
     assert_eq!(r.players, 1);
+}
+
+#[test]
+fn ranges_and_stop_auras_are_validated() {
+    let p = table(
+        r#"
+        [[ability]]
+        ids = [1]
+        name = "NoRange"
+        class = "Monk"
+        kind = "interrupt"
+        cd_s = 15
+        [[ability]]
+        ids = [2]
+        name = "Huge"
+        class = "Monk"
+        kind = "interrupt"
+        cd_s = 15
+        range_yd = 500
+        [[ability]]
+        ids = [3]
+        name = "Wall"
+        class = "Monk"
+        kind = "defensive"
+        scope = "personal"
+        cd_s = 60
+        range_yd = 5
+        aura_ids = [9]
+        "#,
+    );
+    assert_eq!(
+        p,
+        [
+            "NoRange (Monk, Interrupt): an interrupt needs `range_yd`",
+            "Huge (Monk, Interrupt): range_yd 500 is out of 1..100",
+            "Wall (Monk, Defensive): range_yd is for interrupts and stops",
+            "Wall (Monk, Defensive): aura_ids is for stops",
+        ]
+    );
+    // Stops resolve by their aura, falling back to the cast IDs.
+    let d = ClassData::embedded();
+    assert!(
+        d.stop_by_aura(119381)
+            .is_some_and(|a| a.name == "Leg Sweep")
+    );
+}
+
+fn at(log: &mut Log, ts: i64, u: &Unit, x: f32, y: f32) {
+    // Any event with advanced info carries the unit's position.
+    log.push(
+        ts,
+        Some(u),
+        None,
+        crate::model::Kind::CastSuccess {
+            spell: spell(999_999, "Something"),
+            info: Some(crate::model::AdvInfo {
+                guid: u.guid.clone(),
+                owner_guid: "0000000000000000".into(),
+                hp: 1,
+                max_hp: 1,
+                pos: Some(crate::model::Pos { x, y, map: 1 }),
+            }),
+        },
+    );
+}
+
+#[test]
+fn audit_measures_kick_distance_and_discovers_stops() {
+    let data = ClassData::parse(
+        r#"
+        [[ability]]
+        ids = [6552]
+        name = "Pummel"
+        class = "Warrior"
+        kind = "interrupt"
+        cd_s = 15
+        range_yd = 5
+        [[ability]]
+        ids = [46968]
+        name = "Shockwave"
+        class = "Warrior"
+        kind = "stop"
+        cc = "stun"
+        cd_s = 40
+        aura_ids = [132168]
+        "#,
+    )
+    .unwrap();
+    let war = player("War");
+    let mob = enemy("Caster", 1);
+    let mut log = Log::default();
+    log.combatant(0, &war, 73).key_start(0, "Spire", 2000, 10);
+    let kick = |log: &mut Log, ts| {
+        log.push(
+            ts,
+            Some(&war),
+            Some(&mob),
+            crate::model::Kind::Interrupt {
+                spell: spell(6552, "Pummel"),
+                extra: spell(1, "Bolt"),
+            },
+        );
+    };
+    // Five Pummels from 20 yd away: further than a melee kick can reach.
+    let mut t = 1000;
+    for _ in 0..5 {
+        at(&mut log, t, &war, 0.0, 0.0);
+        at(&mut log, t, &mob, 20.0, 0.0);
+        log.cast_start(t, &mob, 500, "Bolt");
+        kick(&mut log, t + 500);
+        t += 20_000;
+    }
+    // Five casts ended silently by Shockwave (listed), five by "Stomp" (not
+    // listed), and many that completed with only a DoT on the caster.
+    for (aura, name) in [(132168, "Shockwave"), (777, "Stomp")] {
+        for _ in 0..5 {
+            log.cast_start(t, &mob, 600, "Hex")
+                .debuff(t + 200, &war, &mob, aura, name)
+                .cast_start(t + 3000, &mob, 601, "Next");
+            log.cast(t + 4500, &mob, 601, "Next");
+            t += 10_000;
+        }
+    }
+    // Realistic proportions: most casts complete (lift needs a baseline).
+    for _ in 0..45 {
+        log.cast_start(t, &mob, 600, "Hex")
+            .debuff(t + 200, &war, &mob, 888, "Rend")
+            .cast(t + 2000, &mob, 600, "Hex");
+        t += 10_000;
+    }
+    log.key_end(t, 2000, true, t);
+    let mut a = Audit::default();
+    for e in &log.events {
+        a.feed(e);
+    }
+    let r = a.report(&data);
+    assert_eq!(
+        r.kick_ranges,
+        ["Pummel (6552): 5 kicks, median 20.0 yd, 90th percentile 20.0 yd; listed range 5 yd"]
+    );
+    assert_eq!((r.silent_casts, r.silent_explained), (10, 5));
+    assert_eq!(r.stop_candidates.len(), 1, "{:?}", r.stop_candidates);
+    assert!(
+        r.stop_candidates[0].starts_with("Stomp (777): during 5 silent endings, 0 completed casts")
+    );
 }

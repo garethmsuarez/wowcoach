@@ -128,11 +128,16 @@ kicked or dispelled this?" and "was a defensive available?".
 ```bash
 wowcoach classes check                         # validate the table
 wowcoach classes check --live LOGS...          # + Blizzard spell API, + audit against real logs
+wowcoach classes check --wcl CODE:FIGHT        # audit against public keys (classes your logs lack)
 ```
 
 The log audit fails if players used an interrupt the table doesn't list. It
-also reports abilities that are usually reused faster than their listed
-cooldown, dispels that came from side effects, and abilities nobody used.
+also reports:
+- abilities that are usually reused faster than their listed cooldown
+- interrupts used from further away than their listed range
+- crowd control that keeps ending enemy casts but isn't listed as a stop
+- dispels that came from side effects
+- abilities nobody used
 
 The built-in Midnight Season 2 pack was built this way: from 12 guild logs and
 64 top public keys. Its tags were drafted by `tools/promote_suggestions.py`
