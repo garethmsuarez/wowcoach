@@ -80,6 +80,24 @@ ids = [77777]
 exclude = true
 ```
 
+### Updating the pack
+
+`wowcoach season sync` refreshes a pack from the Blizzard Game Data API: the
+current keystone dungeon pool, timers, bosses and Encounter Journal spells.
+Tags, notes and IDs learned from logs are never touched, and a re-run with
+nothing new changes nothing. With Warcraft Logs credentials it also fills
+raid bosses' logged encounter IDs.
+
+```bash
+# Credentials: a Battle.net client from https://develop.battle.net/access/clients
+# (and optionally WCL_*), as env vars or in ./.env (gitignored):
+#   BLIZZARD_CLIENT_ID=...
+#   BLIZZARD_CLIENT_SECRET=...
+wowcoach season sync --dry-run                                   # what would change
+wowcoach season sync --raid 1320 --raid 1317 --raid 1324         # add raids by journal ID
+wowcoach season sync                                             # refresh (raids already in the pack)
+```
+
 The older `[[avoidable]]` and `[[priority_interrupt]]` lists still work. How
 packs are built from the Blizzard API, your logs and Warcraft Logs is described
 in [`docs/milestones/m1-season-data.md`](docs/milestones/m1-season-data.md).

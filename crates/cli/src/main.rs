@@ -58,6 +58,115 @@ enum SeasonCmd {
         /// Pack file, e.g. data/seasons/midnight-s2.toml
         path: Option<PathBuf>,
     },
+    /// Update a pack from the Blizzard API: current dungeon pool, timers,
+    /// bosses and journal spells. Tags, notes and logged IDs are kept.
+    #[cfg(feature = "blizzard")]
+    Sync {
+        /// Pack file to update in place
+        #[arg(long, default_value = "data/seasons/midnight-s2.toml")]
+        pack: PathBuf,
+        /// Raid journal instance IDs to include (default: the raids already in the pack)
+        #[arg(long = "raid", value_name = "JOURNAL_ID")]
+        raids: Vec<u32>,
+        /// API region: us, eu, kr or tw
+        #[arg(long, default_value = "us")]
+        region: String,
+        /// Show what would change without writing the pack
+        #[arg(long)]
+        dry_run: bool,
+        /// Battle.net client ID (or BLIZZARD_CLIENT_ID, also read from ./.env)
+        #[arg(long, env = "BLIZZARD_CLIENT_ID", hide_env_values = true)]
+        client_id: String,
+        /// Battle.net client secret (or BLIZZARD_CLIENT_SECRET, also read from ./.env)
+        #[arg(long, env = "BLIZZARD_CLIENT_SECRET", hide_env_values = true)]
+        client_secret: String,
+    },
+}
+
+#[cfg(feature = "blizzard")]
+fn season_sync(
+    pack_path: &std::path::Path,
+    raids: Vec<u32>,
+    region: &str,
+    dry_run: bool,
+    client_id: &str,
+    client_secret: &str,
+) -> anyhow::Result<()> {
+    use wowcoach_core::blizzard;
+    let previous = std::fs::read_to_string(pack_path)
+        .with_context(|| format!("reading {}", pack_path.display()))?;
+    let mut pack = SeasonPack::parse(&previous)
+        .with_context(|| format!("{} is not a valid pack", pack_path.display()))?;
+    let raids = if raids.is_empty() {
+        pack.raids
+            .iter()
+            .map(|r| r.journal_id)
+            .filter(|id| *id != 0)
+            .collect()
+    } else {
+        raids
+    };
+
+    eprintln!("Connecting to Battle.net ({region})...");
+    let client = blizzard::net::Client::connect(client_id, client_secret, region)?;
+    eprintln!("Scanning keystone dungeons for the current pool...");
+    let synced = blizzard::fetch(&client, &raids, |line| eprintln!("  {line}"))?;
+    let wcl = wcl_encounters();
+
+    let summary = blizzard::merge(&mut pack, &synced, &wcl);
+    let problems = pack.problems();
+    if !problems.is_empty() {
+        anyhow::bail!(
+            "the merged pack is invalid, nothing written:\n  - {}",
+            problems.join("\n  - ")
+        );
+    }
+    let text = blizzard::render(&pack, &previous)?;
+    print!("{summary}");
+    println!("{}", pack.summary());
+    if dry_run {
+        println!("Dry run: {} not written.", pack_path.display());
+    } else if text == previous {
+        println!("{} is already up to date.", pack_path.display());
+    } else {
+        std::fs::write(pack_path, text)
+            .with_context(|| format!("writing {}", pack_path.display()))?;
+        println!(
+            "Wrote {}. Review the diff before committing.",
+            pack_path.display()
+        );
+    }
+    Ok(())
+}
+
+/// Raid boss name -> logged encounter ID from Warcraft Logs, when its
+/// credentials are available. Optional: sync works without it.
+#[cfg(feature = "blizzard")]
+fn wcl_encounters() -> Vec<(String, u32)> {
+    #[cfg(feature = "wcl")]
+    if let (Ok(id), Ok(secret)) = (
+        std::env::var("WCL_CLIENT_ID"),
+        std::env::var("WCL_CLIENT_SECRET"),
+    ) {
+        eprintln!("Looking up encounter IDs on Warcraft Logs...");
+        match wcl::net::Client::connect(&id, &secret).and_then(|c| c.zone_encounters()) {
+            Ok(v) => return v,
+            Err(e) => eprintln!("  skipped: {e:#}"),
+        }
+        return vec![];
+    }
+    eprintln!(
+        "No WCL_CLIENT_ID/WCL_CLIENT_SECRET: raid encounter IDs are left for `season suggest`."
+    );
+    vec![]
+}
+
+/// Read API credentials from ./.env without overriding the environment.
+fn load_dotenv() {
+    for (k, v) in wowcoach_core::dotenv::missing_from_env(std::path::Path::new(".env")) {
+        // SAFETY: runs first thing in main, before any other thread exists.
+        unsafe { std::env::set_var(k, v) };
+    }
 }
 
 #[derive(Subcommand)]
@@ -155,6 +264,7 @@ fn print_summary(r: &Report) {
 }
 
 fn main() -> anyhow::Result<()> {
+    load_dotenv();
     let cli = Cli::parse();
     match cli.cmd {
         Cmd::InitConfig { out } => {
@@ -170,6 +280,18 @@ fn main() -> anyhow::Result<()> {
             };
             println!("{}", pack.summary());
         }
+        #[cfg(feature = "blizzard")]
+        Cmd::Season {
+            cmd:
+                SeasonCmd::Sync {
+                    pack,
+                    raids,
+                    region,
+                    dry_run,
+                    client_id,
+                    client_secret,
+                },
+        } => season_sync(&pack, raids, &region, dry_run, &client_id, &client_secret)?,
         Cmd::Analyze { log, o } => {
             let cfg = o.load_config()?;
             let file =

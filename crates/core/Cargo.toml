@@ -18,9 +18,11 @@ toml.workspace = true
 ureq = { workspace = true, optional = true }
 
 [features]
-default = ["wcl"]
+default = ["wcl", "blizzard"]
 # Warcraft Logs v2 API adapter (network). Build with --no-default-features for an offline-only build.
 wcl = ["dep:ureq", "dep:serde_json"]
+# Blizzard Game Data API client for `season sync` (network).
+blizzard = ["dep:ureq", "dep:serde_json"]
 
 [dev-dependencies]
 serde_json.workspace = true

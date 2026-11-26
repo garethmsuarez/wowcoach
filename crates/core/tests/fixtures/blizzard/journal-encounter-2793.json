@@ -1,0 +1,247 @@
+{
+ "_links": {
+  "self": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-encounter/2793?namespace=static-12.1.5_70077-us"
+  }
+ },
+ "category": {
+  "type": "DUNGEON"
+ },
+ "creatures": [
+  {
+   "creature_display": {
+    "id": 128554,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/media/creature-display/128554?namespace=static-12.1.5_70077-us"
+    }
+   },
+   "id": 5962,
+   "name": "Charonus"
+  }
+ ],
+ "description": "The overly confident and ostentatious owner of the Voidscar Arena, Charonus, is impressed by the fighting ability of Azerothians and demands them for his grand collection.",
+ "id": 2793,
+ "instance": {
+  "id": 1313,
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-instance/1313?namespace=static-12.1.5_70077-us"
+  },
+  "name": "Voidscar Arena"
+ },
+ "items": [
+  {
+   "id": 45863,
+   "item": {
+    "id": 250224,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/250224?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Mindpiercer's Sigil"
+   }
+  },
+  {
+   "id": 45864,
+   "item": {
+    "id": 251234,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251234?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Graft of the Domanaar"
+   }
+  },
+  {
+   "id": 45865,
+   "item": {
+    "id": 251232,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251232?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Overseer's Diadem"
+   }
+  },
+  {
+   "id": 45866,
+   "item": {
+    "id": 251235,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251235?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Gravitic Girdle"
+   }
+  },
+  {
+   "id": 45867,
+   "item": {
+    "id": 251233,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251233?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Manipulator's Vest"
+   }
+  },
+  {
+   "id": 45868,
+   "item": {
+    "id": 251230,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251230?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Charonic Crescent"
+   }
+  },
+  {
+   "id": 45869,
+   "item": {
+    "id": 251231,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/251231?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Singularity Slicer"
+   }
+  },
+  {
+   "id": 46324,
+   "item": {
+    "id": 256721,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/256721?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Design: Voidstone Shielding Array"
+   }
+  },
+  {
+   "id": 46808,
+   "item": {
+    "id": 264336,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/item/264336?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Voidlight Brazier"
+   }
+  }
+ ],
+ "modes": [
+  {
+   "name": "Normal",
+   "type": "NORMAL"
+  },
+  {
+   "name": "Heroic",
+   "type": "HEROIC"
+  },
+  {
+   "name": "Mythic",
+   "type": "MYTHIC"
+  },
+  {
+   "name": "Mythic+ Dungeons",
+   "type": "MYTHIC_KEYSTONE"
+  }
+ ],
+ "name": "Charonus",
+ "sections": [
+  {
+   "body_text": "Charonus truly tests his prey to learn their limits. He attacks players using [Unstable Singularity] and creates [Gravitic Orbs] to hunt them down.",
+   "id": 32982,
+   "sections": [
+    {
+     "body_text": "$bullet;[Unstable Singularity] inflicts Shadow damage and reduces the movement speed of players caught within it.\r\n\r\n$bullet;[Gravitic Orbs] continually seek out players until collapsed by an [Unstable Singularity].",
+     "id": 32983,
+     "title": "Damage Dealers"
+    },
+    {
+     "body_text": "$bullet;[Condensed Mass] inflicts high damage to all players.\r\n\r\n$bullet;[Gravitic Orbs] continually seek out players until collapsed by an [Unstable Singularity].",
+     "id": 32984,
+     "title": "Healers"
+    },
+    {
+     "body_text": "$bullet;[Unstable Singularity] inflicts Shadow damage and reduces the movement speed of players caught within it.\r\n\r\n$bullet;[Gravitic Orbs] continually seek out players until collapsed by an [Unstable Singularity].",
+     "id": 32985,
+     "title": "Tanks"
+    }
+   ],
+   "title": "Overview"
+  },
+  {
+   "id": 32987,
+   "sections": [
+    {
+     "id": 36983,
+     "spell": {
+      "id": 1310026,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1310026?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Atomized"
+     },
+     "title": "Atomized"
+    }
+   ],
+   "spell": {
+    "id": 1264191,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1264191?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Unstable Singularity"
+   },
+   "title": "Unstable Singularity"
+  },
+  {
+   "id": 33511,
+   "sections": [
+    {
+     "id": 33672,
+     "spell": {
+      "id": 1263983,
+      "key": {
+       "href": "https://us.api.blizzard.com/data/wow/spell/1263983?namespace=static-12.1.5_70077-us"
+      },
+      "name": "Condensed Mass"
+     },
+     "title": "Condensed Mass"
+    }
+   ],
+   "spell": {
+    "id": 1223298,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1223298?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Gravitic Orbs"
+   },
+   "title": "Gravitic Orbs"
+  },
+  {
+   "id": 32990,
+   "spell": {
+    "id": 1222755,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1222755?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Void Cascade"
+   },
+   "title": "Void Cascade"
+  },
+  {
+   "id": 37150,
+   "spell": {
+    "id": 1311923,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1311923?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Dark Waves"
+   },
+   "title": "Dark Waves"
+  },
+  {
+   "id": 32989,
+   "spell": {
+    "id": 1227197,
+    "key": {
+     "href": "https://us.api.blizzard.com/data/wow/spell/1227197?namespace=static-12.1.5_70077-us"
+    },
+    "name": "Cosmic Crash"
+   },
+   "title": "Cosmic Crash"
+  }
+ ]
+}

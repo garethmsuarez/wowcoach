@@ -1,0 +1,108 @@
+{
+ "_links": {
+  "self": {
+   "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/season/18?namespace=dynamic-us"
+  }
+ },
+ "id": 18,
+ "periods": [
+  {
+   "id": 1076,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1076?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1077,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1077?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1078,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1078?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1079,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1079?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1080,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1080?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1081,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1081?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1082,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1082?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1083,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1083?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1084,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1084?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1085,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1085?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1086,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1086?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1087,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1087?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1088,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1088?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1089,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1089?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1090,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1090?namespace=dynamic-us"
+   }
+  },
+  {
+   "id": 1091,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/period/1091?namespace=dynamic-us"
+   }
+  }
+ ],
+ "season_name": "Mythic+ Dungeons (Midnight Season 2)",
+ "start_timestamp": 1786460400000
+}

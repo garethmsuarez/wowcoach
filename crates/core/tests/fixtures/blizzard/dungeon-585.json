@@ -1,0 +1,38 @@
+{
+ "_links": {
+  "self": {
+   "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/dungeon/585?namespace=dynamic-us"
+  }
+ },
+ "dungeon": {
+  "id": 1313,
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-instance/1313?namespace=static-12.1.5_70077-us"
+  },
+  "name": "Voidscar Arena"
+ },
+ "id": 585,
+ "is_tracked": true,
+ "keystone_upgrades": [
+  {
+   "qualifying_duration": 1800000,
+   "upgrade_level": 1
+  },
+  {
+   "qualifying_duration": 1440000,
+   "upgrade_level": 2
+  },
+  {
+   "qualifying_duration": 1080000,
+   "upgrade_level": 3
+  }
+ ],
+ "map": {
+  "id": 2923,
+  "name": "Voidscar Arena"
+ },
+ "name": "Voidscar Arena",
+ "zone": {
+  "slug": "voidscar-arena"
+ }
+}

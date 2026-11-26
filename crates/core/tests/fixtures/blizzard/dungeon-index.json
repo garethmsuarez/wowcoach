@@ -1,0 +1,23 @@
+{
+ "_links": {
+  "self": {
+   "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/dungeon/?namespace=dynamic-us"
+  }
+ },
+ "dungeons": [
+  {
+   "id": 542,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/dungeon/542?namespace=dynamic-us"
+   },
+   "name": "Eco-Dome Al'dani"
+  },
+  {
+   "id": 585,
+   "key": {
+    "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/dungeon/585?namespace=dynamic-us"
+   },
+   "name": "Voidscar Arena"
+  }
+ ]
+}

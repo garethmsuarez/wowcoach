@@ -1,0 +1,38 @@
+{
+ "_links": {
+  "self": {
+   "href": "https://us.api.blizzard.com/data/wow/mythic-keystone/dungeon/542?namespace=dynamic-us"
+  }
+ },
+ "dungeon": {
+  "id": 1303,
+  "key": {
+   "href": "https://us.api.blizzard.com/data/wow/journal-instance/1303?namespace=static-12.1.5_70077-us"
+  },
+  "name": "Eco-Dome Al'dani"
+ },
+ "id": 542,
+ "is_tracked": false,
+ "keystone_upgrades": [
+  {
+   "qualifying_duration": 1860000,
+   "upgrade_level": 1
+  },
+  {
+   "qualifying_duration": 1488000,
+   "upgrade_level": 2
+  },
+  {
+   "qualifying_duration": 1116000,
+   "upgrade_level": 3
+  }
+ ],
+ "map": {
+  "id": 2830,
+  "name": "Eco-Dome Al'dani"
+ },
+ "name": "Eco-Dome Al'dani",
+ "zone": {
+  "slug": "ecodome-aldani"
+ }
+}
