@@ -578,3 +578,175 @@ fn spell_evidence_for_season_suggest() {
     );
     assert_eq!(crush.players_hit, 2);
 }
+
+// --------------------------------------------------------- cast timeline
+
+/// Party specs: Blood DK tank (Mind Freeze 15s, 15 yd), Discipline healer
+/// (no interrupt), three Arcane mages (Counterspell 24s, 40 yd).
+fn outcomes_run() -> (Party, Vec<Unit>, Log) {
+    let party = Party::new();
+    let mobs: Vec<Unit> = (1..=6).map(|n| enemy("Caster", n)).collect();
+    let (alpha, bravo, charlie) = (&party.dps[0], &party.dps[1], &party.dps[2]);
+    let mut log = Log::default();
+    party.log_specs(&mut log, 0);
+    log.key_start(0, "Spire", 2000, 10);
+    log.damage(900, alpha, &mobs[0], 100, "Strike", 1);
+    // Kicked by Alpha 0.8s into the bar.
+    log.cast_start(1000, &mobs[0], 500, "Bolt").kick_with(
+        1800,
+        alpha,
+        &mobs[0],
+        2139,
+        "Counterspell",
+        500,
+        "Bolt",
+    );
+    // Stunned by the tank's Asphyxiate, then the mob starts another cast.
+    log.cast_start(5000, &mobs[1], 501, "Hex")
+        .debuff(5500, &party.tank, &mobs[1], 221562, "Asphyxiate")
+        .cast_start(8000, &mobs[1], 502, "Later");
+    // Killed mid-cast.
+    log.cast_start(9000, &mobs[2], 503, "Nova")
+        .death(9500, &mobs[2]);
+    // Ends silently with nothing to explain it.
+    log.cast_start(10_000, &mobs[3], 504, "Shriek")
+        .cast_start(13_000, &mobs[3], 505, "Again");
+    // Charlie dies; the tank uses Mind Freeze just before the next cast ends.
+    log.death(14_000, charlie);
+    log.cast(29_000, &party.tank, 47528, "Mind Freeze");
+    // Completes at 30s. Alpha's Counterspell (24s) is back since 25.8s, 10 yd
+    // away; Bravo never used his, but stands 90 yd away.
+    log.at(29_500, alpha, 0.0, 0.0)
+        .at(29_500, bravo, 100.0, 0.0)
+        .at(29_500, &mobs[4], 10.0, 0.0)
+        .cast_start(28_000, &mobs[4], 500, "Bolt")
+        .cast(30_000, &mobs[4], 500, "Bolt");
+    log.key_end(40_000, 2000, true, 40_000);
+    (party, mobs, log)
+}
+
+#[test]
+fn cast_bars_record_how_they_ended() {
+    let (_, _, log) = outcomes_run();
+    let cfg = Config {
+        priority_interrupt: vec![note(500, "Bolt")],
+        ..Config::default()
+    };
+    let f = &analyze(&log, cfg)[0];
+    let by_spell = |id: u32| f.casts.iter().filter(move |c| c.spell_id == id);
+    let kicked = by_spell(500).next().unwrap();
+    assert_eq!(
+        kicked.outcome,
+        CastOutcome::Kicked {
+            by: "Alpha-Realm".into(),
+            spell: "Counterspell".into(),
+            latency_s: 0.8
+        }
+    );
+    assert!(kicked.priority);
+    assert_eq!(kicked.caster_npc, 1);
+    assert_eq!(
+        by_spell(501).next().unwrap().outcome,
+        CastOutcome::Stopped {
+            by: "Tank-Realm".into(),
+            ability: "Asphyxiate".into(),
+            cc: "stun".into()
+        }
+    );
+    assert_eq!(
+        by_spell(503).next().unwrap().outcome,
+        CastOutcome::CasterDied
+    );
+    assert_eq!(
+        by_spell(504).next().unwrap().outcome,
+        CastOutcome::Cancelled
+    );
+    // Bars still open when the key ends aren't recorded.
+    assert!(by_spell(502).next().is_none() && by_spell(505).next().is_none());
+
+    let done = by_spell(500).nth(1).unwrap();
+    assert_eq!(done.outcome, CastOutcome::Completed);
+    assert_eq!((done.start_s, done.end_s), (28.0, 30.0));
+    let ready: Vec<(&str, &str, Option<f32>, Option<bool>)> = done
+        .ready_kickers
+        .iter()
+        .map(|k| {
+            (
+                k.player.as_str(),
+                k.ability.as_str(),
+                k.distance_yd,
+                k.in_range,
+            )
+        })
+        .collect();
+    // Charlie is dead, the tank's Mind Freeze is on cooldown, the healer has none.
+    assert_eq!(
+        ready,
+        [
+            ("Alpha-Realm", "Counterspell", Some(10.0), Some(true)),
+            ("Bravo-Realm", "Counterspell", Some(90.0), Some(false)),
+        ]
+    );
+    let p = &f.pulls[0];
+    assert_eq!(
+        (
+            p.casts_kicked,
+            p.casts_stopped,
+            p.casters_killed,
+            p.priority_completed
+        ),
+        (1, 1, 1, 1)
+    );
+}
+
+#[test]
+fn stale_positions_give_no_distance() {
+    let (party, mobs, mut log) = outcomes_run();
+    // Same run, but Alpha's last position is 5s old when the cast completes.
+    log.events.retain(|e| {
+        !(e.ts == 29_500 && e.src.as_ref().is_some_and(|s| s.guid == party.dps[0].guid))
+    });
+    log.at(25_000, &party.dps[0], 0.0, 0.0);
+    log.events.sort_by_key(|e| e.ts);
+    let f = &analyze(&log, Config::default())[0];
+    let done = f
+        .casts
+        .iter()
+        .find(|c| c.outcome == CastOutcome::Completed && c.caster_npc == npc_id(&mobs[4]))
+        .unwrap();
+    let alpha = done
+        .ready_kickers
+        .iter()
+        .find(|k| k.player == "Alpha-Realm")
+        .unwrap();
+    assert_eq!((alpha.distance_yd, alpha.in_range), (None, None));
+}
+
+fn npc_id(u: &Unit) -> u32 {
+    super::casts::npc_id(&u.guid)
+}
+
+#[test]
+fn observed_faster_reuse_counts_as_the_cooldown() {
+    // A warrior who reuses Pummel every 8s (talents) is ready again sooner
+    // than the table's 15s.
+    let war = player("War");
+    let mob = enemy("Caster", 1);
+    let mut log = Log::default();
+    log.combatant(0, &war, 73).key_start(0, "Spire", 2000, 10);
+    log.damage(100, &war, &mob, 100, "Strike", 1);
+    log.cast(1000, &war, 6552, "Pummel")
+        .cast(9000, &war, 6552, "Pummel");
+    log.cast_start(15_000, &mob, 500, "Bolt")
+        .cast(17_500, &mob, 500, "Bolt");
+    log.key_end(20_000, 2000, true, 20_000);
+    let f = &analyze(&log, Config::default())[0];
+    let done = &f.casts[0];
+    assert_eq!(done.outcome, CastOutcome::Completed);
+    assert_eq!(
+        done.ready_kickers.len(),
+        1,
+        "9s + 8s observed cd = ready at 17s"
+    );
+    assert_eq!(done.ready_kickers[0].ability, "Pummel");
+}

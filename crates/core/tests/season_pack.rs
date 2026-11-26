@@ -82,3 +82,39 @@ fn every_player_spec_has_class_abilities() {
         );
     }
 }
+
+#[test]
+fn cast_records_on_a_real_key() {
+    use wowcoach_core::analysis::CastOutcome;
+    let f = run(PackChoice::Embedded);
+    let shroud: Vec<_> = f
+        .casts
+        .iter()
+        .filter(|c| c.name == "Winter's Shroud")
+        .collect();
+    let kicked: Vec<&str> = shroud
+        .iter()
+        .filter_map(|c| match &c.outcome {
+            CastOutcome::Kicked { by, .. } => Some(by.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(kicked.len(), 2, "{shroud:?}");
+    assert!(
+        kicked
+            .iter()
+            .all(|by| by.starts_with("Player") && by.ends_with("-Realm-US")),
+        "{kicked:?}"
+    );
+    let done = shroud
+        .iter()
+        .find(|c| c.outcome == CastOutcome::Completed)
+        .expect("one went off");
+    assert!(done.priority);
+    // Raw logs carry fresh positions: every ready kicker has a distance.
+    assert!(
+        done.ready_kickers.iter().all(|k| k.distance_yd.is_some()),
+        "{:?}",
+        done.ready_kickers
+    );
+}

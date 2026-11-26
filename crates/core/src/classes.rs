@@ -140,6 +140,25 @@ impl ClassData {
         Self::parse(&text).map_err(|e| anyhow::anyhow!("{}: {e}", path.display()))
     }
 
+    /// The embedded table, parsed once and shared (analysis uses it per event).
+    pub fn shared() -> &'static ClassData {
+        static DATA: std::sync::OnceLock<ClassData> = std::sync::OnceLock::new();
+        DATA.get_or_init(ClassData::embedded)
+    }
+
+    /// Interrupts a spec has. The first non-racial one is its main interrupt,
+    /// which everyone of that spec can be assumed to have; the others
+    /// (talents, racials) only count once a player actually uses them.
+    pub fn interrupts_for(&self, spec_id: u32) -> (Option<&Ability>, Vec<&Ability>) {
+        let all = self.for_spec(spec_id, AbilityKind::Interrupt);
+        let main = all.iter().copied().find(|a| a.class != RACIAL);
+        let extra = all
+            .into_iter()
+            .filter(|a| main.is_none_or(|m| !std::ptr::eq(*a, m)))
+            .collect();
+        (main, extra)
+    }
+
     pub fn embedded() -> ClassData {
         Self::parse(EMBEDDED).unwrap_or_else(|e| panic!("embedded class table is invalid: {e}"))
     }

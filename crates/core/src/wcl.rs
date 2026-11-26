@@ -18,6 +18,8 @@ pub struct Actor {
     pub name: String,
     pub kind: String,
     pub pet_owner: Option<i64>,
+    /// NPC ID for NPCs (`gameID`).
+    pub game_id: Option<i64>,
 }
 
 #[derive(Debug, Clone)]
@@ -75,6 +77,7 @@ impl Master {
                         name: a["name"].as_str().unwrap_or("?").to_string(),
                         kind: a["type"].as_str().unwrap_or("NPC").to_string(),
                         pet_owner: i(a, "petOwner").filter(|o| *o > 0),
+                        game_id: i(a, "gameID").filter(|g| *g > 0),
                     },
                 );
             }
@@ -89,12 +92,19 @@ impl Master {
     }
 
     /// WCL has one actor per NPC *type*; individual mobs are told apart by
-    /// `sourceInstance` / `targetInstance` (absent = 1). Each gets its own GUID.
+    /// `sourceInstance` / `targetInstance` (absent = 1). Each gets its own GUID,
+    /// shaped like the game's (`Creature-0-…-NPCID-spawn`) so the NPC ID sits in
+    /// the same field.
     fn guid(&self, id: i64, instance: Option<i64>) -> String {
-        match self.actors.get(&id).map(|a| a.kind.as_str()) {
+        let a = self.actors.get(&id);
+        match a.map(|a| a.kind.as_str()) {
             Some("Player") => format!("Player-WCL-{id}"),
             Some("Pet") => format!("Pet-WCL-{id}"),
-            _ => format!("Creature-WCL-{id}-{}", instance.unwrap_or(1)),
+            _ => format!(
+                "Creature-0-WCL-{id}-0-{}-{}",
+                a.and_then(|a| a.game_id).unwrap_or(0),
+                instance.unwrap_or(1)
+            ),
         }
     }
 
@@ -605,7 +615,7 @@ pub mod net {
 
     const META_Q: &str = r#"query($code:String!){ reportData{ report(code:$code){
         title startTime
-        masterData{ actors{ id name type subType petOwner } abilities{ gameID name } }
+        masterData{ actors{ id name type subType petOwner gameID } abilities{ gameID name } }
         fights{ id encounterID name startTime endTime kill bossPercentage difficulty size keystoneLevel keystoneTime keystoneBonus keystoneAffixes
                 gameZone{ id } dungeonPulls{ encounterID name startTime endTime kill } }
     }}}"#;
@@ -729,7 +739,7 @@ mod tests {
         Master::from_json(&json!({
             "actors": [
                 {"id": 1, "name": "Tanky", "type": "Player"},
-                {"id": 2, "name": "Boss", "type": "NPC"},
+                {"id": 2, "name": "Boss", "type": "NPC", "gameID": 424242},
                 {"id": 3, "name": "Wolf", "type": "Pet", "petOwner": 1}
             ],
             "abilities": [{"gameID": 999, "name": "Big Slam"}]
@@ -794,6 +804,8 @@ mod tests {
                 .guid
                 .clone()
         };
+        // The NPC ID sits where the game puts it in a Creature GUID.
+        assert_eq!(guid(&a, true).split('-').nth(5), Some("424242"));
         assert_ne!(guid(&a, true), guid(&b, true));
         assert_eq!(
             guid(&b, true),

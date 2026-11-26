@@ -627,7 +627,11 @@
           "end_s": 43.6,
           "deaths": 1,
           "enemies_killed": 4,
-          "boss": null
+          "boss": null,
+          "casts_kicked": 2,
+          "casts_stopped": 0,
+          "casters_killed": 0,
+          "priority_completed": 3
         },
         {
           "index": 2,
@@ -635,7 +639,11 @@
           "end_s": 98.6,
           "deaths": 1,
           "enemies_killed": 4,
-          "boss": null
+          "boss": null,
+          "casts_kicked": 0,
+          "casts_stopped": 0,
+          "casters_killed": 0,
+          "priority_completed": 5
         },
         {
           "index": 3,
@@ -643,7 +651,11 @@
           "end_s": 153.6,
           "deaths": 1,
           "enemies_killed": 4,
-          "boss": null
+          "boss": null,
+          "casts_kicked": 2,
+          "casts_stopped": 0,
+          "casters_killed": 0,
+          "priority_completed": 3
         },
         {
           "index": 4,
@@ -651,7 +663,11 @@
           "end_s": 243.6,
           "deaths": 1,
           "enemies_killed": 1,
-          "boss": "Spire Boss 3"
+          "boss": "Spire Boss 3",
+          "casts_kicked": 0,
+          "casts_stopped": 0,
+          "casters_killed": 0,
+          "priority_completed": 0
         },
         {
           "index": 5,
@@ -659,7 +675,11 @@
           "end_s": 298.6,
           "deaths": 1,
           "enemies_killed": 4,
-          "boss": null
+          "boss": null,
+          "casts_kicked": 2,
+          "casts_stopped": 0,
+          "casters_killed": 0,
+          "priority_completed": 3
         },
         {
           "index": 6,
@@ -667,7 +687,11 @@
           "end_s": 393.6,
           "deaths": 4,
           "enemies_killed": 4,
-          "boss": null
+          "boss": null,
+          "casts_kicked": 2,
+          "casts_stopped": 0,
+          "casters_killed": 0,
+          "priority_completed": 3
         },
         {
           "index": 7,
@@ -675,7 +699,11 @@
           "end_s": 448.6,
           "deaths": 1,
           "enemies_killed": 4,
-          "boss": null
+          "boss": null,
+          "casts_kicked": 3,
+          "casts_stopped": 0,
+          "casters_killed": 0,
+          "priority_completed": 2
         },
         {
           "index": 8,
@@ -683,7 +711,11 @@
           "end_s": 538.6,
           "deaths": 1,
           "enemies_killed": 1,
-          "boss": "Spire Boss 7"
+          "boss": "Spire Boss 7",
+          "casts_kicked": 0,
+          "casts_stopped": 0,
+          "casters_killed": 0,
+          "priority_completed": 0
         }
       ],
       "downtime_s": 157.2,

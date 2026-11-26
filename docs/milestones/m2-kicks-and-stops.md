@@ -56,7 +56,7 @@ From that it proposes an assignment ("Bravo and Charlie: Lightning Bolt casters;
      - `aura_ids` on stops
      - missing stops added: Metamorphosis landing stun, pet Intimidation, Capacitor Totem stun via its totem
    - `classes check` gains stop discovery: harmful auras from the group on casters whose cast ended silently, that the table doesn't list.
-2. **Cast timeline + interrupt availability** (analysis only, no new advice).
+2. **Cast timeline + interrupt availability** (analysis only, no new advice). *(done. On 5 raw keys, outcomes look like 14–55 kicked, 1–18 stopped, 4–17 casters killed and 2–5 cancelled per key. Every ready kicker for a completed priority cast had a known distance; about half were in range. One claim was re-derived by hand from raw events: Counter Shot ready, 15.2 yd, exact match. On a public WCL key, 94% of ready kickers had a fresh-enough position. WCL creature GUIDs now carry the NPC ID that PR 4 needs)*
    - Records as above, `#[serde(skip)]` on the full list.
    - A per-pull summary table goes into the JSON.
    - Tests use synthetic event streams: kick, stun, kill, silent cancel, cooldown with observed CDR, out-of-range kicker.

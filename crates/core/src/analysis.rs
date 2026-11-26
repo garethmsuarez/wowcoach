@@ -2,6 +2,9 @@
 //! then aggregates group- and player-level metrics for each.
 
 use crate::config::Config;
+pub use casts::{CastOutcome, CastRecord, ReadyKicker};
+
+mod casts;
 use crate::model::*;
 use crate::specs::{Role, spec_info};
 use serde::{Deserialize, Serialize};
@@ -73,6 +76,12 @@ pub struct PullReport {
     pub deaths: u32,
     pub enemies_killed: u32,
     pub boss: Option<String>,
+    /// Enemy cast bars in this pull that were kicked, stopped by crowd
+    /// control, or ended by killing the caster, and priority casts that completed.
+    pub casts_kicked: u32,
+    pub casts_stopped: u32,
+    pub casters_killed: u32,
+    pub priority_completed: u32,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -193,6 +202,10 @@ pub struct FightReport {
     /// Per hostile spell, for `season suggest`. Not part of the report output.
     #[serde(skip)]
     pub spell_evidence: Vec<SpellEvidence>,
+    /// Every enemy cast bar and how it ended. Not part of the report output
+    /// (thousands per key); rules and the HTML report read it.
+    #[serde(skip)]
+    pub casts: Vec<CastRecord>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -310,6 +323,7 @@ struct FightBuilder {
     /// M+ boss fight in progress: (name, start ts, encounter ID).
     open_boss: Option<(String, i64, u32)>,
     enemy_extra: HashMap<u32, EX>,
+    casts: casts::Tracker,
     deaths: Vec<DeathReport>,
     /// hostile cast bars in progress: (caster guid, spell id) -> start ts
     enemy_pending: HashMap<(String, u32), i64>,
@@ -414,6 +428,7 @@ impl FightBuilder {
             bosses: vec![],
             open_boss: None,
             enemy_extra: HashMap::new(),
+            casts: casts::Tracker::default(),
             deaths: vec![],
             enemy_pending: HashMap::new(),
         }
@@ -484,10 +499,27 @@ impl FightBuilder {
         x
     }
 
-    fn ingest(&mut self, e: &Event, owners: &HashMap<String, String>, cfg: &Config) {
+    fn ingest(
+        &mut self,
+        e: &Event,
+        owners: &HashMap<String, String>,
+        specs: &HashMap<String, u32>,
+        cfg: &Config,
+    ) {
         let ts = e.ts;
         self.last_ts = ts;
         let g = &cfg.general;
+        let priority = |id: u32| cfg.is_priority_kick(id);
+        self.casts.feed(
+            e,
+            &casts::Ctx {
+                fight_start: self.start,
+                pull: self.cur_pull.as_ref().map(|_| self.pulls.len()),
+                owners,
+                specs,
+                priority: &priority,
+            },
+        );
         match &e.kind {
             Kind::Damage {
                 spell,
@@ -987,6 +1019,16 @@ impl FightBuilder {
                 .then_with(|| a.name.cmp(&b.name))
         });
 
+        let mut cast_records = std::mem::take(&mut self.casts.records);
+        for c in cast_records.iter_mut() {
+            c.pull = c.pull.map(|i| i + 1);
+        }
+        let count = |i: usize, f: &dyn Fn(&CastRecord) -> bool| {
+            cast_records
+                .iter()
+                .filter(|c| c.pull == Some(i) && f(c))
+                .count() as u32
+        };
         let pulls: Vec<PullReport> = self
             .pulls
             .iter()
@@ -998,6 +1040,12 @@ impl FightBuilder {
                 deaths: p.deaths,
                 enemies_killed: p.kills,
                 boss: p.boss.clone(),
+                casts_kicked: count(i + 1, &|c| matches!(c.outcome, CastOutcome::Kicked { .. })),
+                casts_stopped: count(i + 1, &|c| matches!(c.outcome, CastOutcome::Stopped { .. })),
+                casters_killed: count(i + 1, &|c| c.outcome == CastOutcome::CasterDied),
+                priority_completed: count(i + 1, &|c| {
+                    c.priority && c.outcome == CastOutcome::Completed
+                }),
             })
             .collect();
         let mut deaths = std::mem::take(&mut self.deaths);
@@ -1141,6 +1189,7 @@ impl FightBuilder {
             lust_at_s,
             suggestions: vec![],
             spell_evidence,
+            casts: cast_records,
         }
     }
 }
@@ -1331,7 +1380,7 @@ impl Analyzer {
                 .or_insert_with(|| i.owner_guid.clone());
         }
         if let Some(c) = &mut self.cur {
-            c.ingest(&e, &self.owners, &self.cfg);
+            c.ingest(&e, &self.owners, &self.specs, &self.cfg);
         }
     }
 
