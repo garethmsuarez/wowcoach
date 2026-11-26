@@ -4,8 +4,9 @@ use std::path::PathBuf;
 #[cfg(feature = "wcl")]
 use wowcoach_core::analysis::Analyzer;
 use wowcoach_core::analysis::{self, FightKind, Severity};
-use wowcoach_core::config::{self, Config};
+use wowcoach_core::config::{self, Config, PackChoice};
 use wowcoach_core::report::{self, Report};
+use wowcoach_core::season::SeasonPack;
 #[cfg(feature = "wcl")]
 use wowcoach_core::wcl;
 
@@ -28,9 +29,35 @@ struct OutOpts {
     /// Also write machine-readable JSON here
     #[arg(long)]
     json: Option<PathBuf>,
-    /// Config with thresholds and avoidable/priority-kick spell lists
+    /// Config with thresholds and overrides of the season pack
     #[arg(short, long)]
     config: Option<PathBuf>,
+    /// Use this season pack instead of the built-in one (e.g. while editing it)
+    #[arg(long, value_name = "PATH", conflicts_with = "no_season_pack")]
+    season_pack: Option<PathBuf>,
+    /// Don't use any season pack: only the spells in --config
+    #[arg(long)]
+    no_season_pack: bool,
+}
+
+impl OutOpts {
+    fn load_config(&self) -> anyhow::Result<Config> {
+        let pack = match (&self.season_pack, self.no_season_pack) {
+            (Some(p), _) => PackChoice::File(p.clone()),
+            (None, true) => PackChoice::None,
+            (None, false) => PackChoice::Embedded,
+        };
+        Config::load_with(self.config.as_deref(), pack)
+    }
+}
+
+#[derive(Subcommand)]
+enum SeasonCmd {
+    /// Validate a season pack and summarise it (default: the built-in pack)
+    Check {
+        /// Pack file, e.g. data/seasons/midnight-s2.toml
+        path: Option<PathBuf>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -59,7 +86,12 @@ enum Cmd {
         #[command(flatten)]
         o: OutOpts,
     },
-    /// Write the default config so you can add spell IDs for this season
+    /// Season data pack: dungeons, bosses and tagged enemy spells
+    Season {
+        #[command(subcommand)]
+        cmd: SeasonCmd,
+    },
+    /// Write the default config (thresholds and season pack overrides)
     InitConfig {
         #[arg(short, long, default_value = "wowcoach.toml")]
         out: PathBuf,
@@ -129,8 +161,17 @@ fn main() -> anyhow::Result<()> {
             std::fs::write(&out, config::DEFAULT_CONFIG)?;
             println!("Wrote {}", out.display());
         }
+        Cmd::Season {
+            cmd: SeasonCmd::Check { path },
+        } => {
+            let pack = match &path {
+                Some(p) => SeasonPack::load(p)?,
+                None => SeasonPack::embedded(),
+            };
+            println!("{}", pack.summary());
+        }
         Cmd::Analyze { log, o } => {
-            let cfg = Config::load(o.config.as_deref())?;
+            let cfg = o.load_config()?;
             let file =
                 std::fs::File::open(&log).with_context(|| format!("opening {}", log.display()))?;
             let t0 = std::time::Instant::now();
@@ -159,7 +200,7 @@ fn main() -> anyhow::Result<()> {
             no_rankings,
             o,
         } => {
-            let cfg = Config::load(o.config.as_deref())?;
+            let cfg = o.load_config()?;
             eprintln!("Connecting to Warcraft Logs...");
             let client = wcl::net::Client::connect(&client_id, &client_secret)?;
             let fetched = wcl::net::fetch(&client, &code, &fights, !no_rankings)?;

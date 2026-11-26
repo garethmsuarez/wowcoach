@@ -8,6 +8,7 @@ pub mod config;
 pub mod model;
 pub mod report;
 pub mod rules;
+pub mod season;
 pub mod specs;
 #[cfg(test)]
 mod testutil;
@@ -30,6 +31,7 @@ pub fn build_report(source: String, mut fights: Vec<FightReport>, cfg: &Config) 
     }
     Report {
         source,
+        season_pack: cfg.knowledge.pack_key.clone(),
         fights,
         progression,
     }
