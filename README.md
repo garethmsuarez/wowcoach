@@ -134,6 +134,10 @@ The log audit fails if players used an interrupt the table doesn't list. It
 also reports abilities that are usually reused faster than their listed
 cooldown, dispels that came from side effects, and abilities nobody used.
 
+The built-in Midnight Season 2 pack was built this way: from 12 guild logs and
+64 top public keys. Its tags were drafted by `tools/promote_suggestions.py`
+(criteria are documented in the script) and approved in review.
+
 The older `[[avoidable]]` and `[[priority_interrupt]]` lists still work. How
 packs are built from the Blizzard API, your logs and Warcraft Logs is described
 in [`docs/milestones/m1-season-data.md`](docs/milestones/m1-season-data.md).

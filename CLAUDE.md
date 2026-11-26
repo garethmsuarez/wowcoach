@@ -38,6 +38,7 @@ python3 tools/gen_sample_log.py raid > samples/raid.txt   # gitignored; generate
 - **Analysis unit tests** (`crates/core/src/analysis/tests.rs`) feed hand-built event streams through `Analyzer` using the builders in `crates/core/src/testutil.rs` (`Log`, `Party`, `player`, `enemy`, `analyze`).
 - **Rules unit tests** (`crates/core/src/rules/tests.rs`) build `FightReport`s directly, so each test sets only the metrics a rule reads. A new rule gets a positive and a negative test here.
 - **Output must be deterministic.** Report lists built from `HashMap`s need a full tie-breaker in their sort (name or spell ID), or the golden test flakes.
+- **`tests/season_pack.rs`** runs the *embedded* pack on `tests/fixtures/den-of-nalorakk-excerpt.txt`, an anonymised real-key excerpt. It must keep passing as the pack evolves; if a re-tag changes it, that's a deliberate review decision.
 - **Real logs** live in the gitignored `test logs/`. Use them for manual smoke runs. To turn an excerpt into a committed fixture, use `tools/anonymise_log.py LOG --list`, then `--segment N`, and write the result under `crates/core/tests/fixtures/`. The script replaces player GUIDs, names and pet names consistently and refuses to write if any original identifier remains.
 
 ## Architecture
@@ -70,6 +71,7 @@ All modules below live in `crates/core/src/`.
 ## Conventions and constraints
 
 - Rules stay generic. Season- or tier-specific spell IDs belong in the season pack (`data/seasons/`) or the user's `wowcoach.toml`, never in code. Tools may write IDs and `suggested`, but only a human review sets `tags`.
+- Season tags: `season suggest` proposes, `tools/promote_suggestions.py` drafts by fixed criteria (documented in the script), and a human approves in the PR. Don't hand-pick tags outside that flow without saying so in the PR.
 - Keep the golden test on `PackChoice::None`: the synthetic log uses made-up spell IDs, and the snapshot must not change when the real pack grows.
 - Network features: `wcl` and `blizzard` (both default, both pull in ureq). New network code goes behind one of them, with its JSON mapping testable offline from saved responses. Saved API responses must be game data only (no player names or GUIDs).
 - Dependencies are deliberately minimal (anyhow, clap, serde, serde_json, toml, optional ureq), declared once in the root `[workspace.dependencies]`. Small helpers such as base64 in `wcl::net` are hand-rolled instead of pulling in a crate. `docs/ROADMAP.md` lists the planned exceptions (e.g. SQLite for history); anything else needs a reason.
