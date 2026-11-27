@@ -37,10 +37,18 @@ impl Unit {
     }
 }
 
+/// Spell school bit for physical damage (`spellSchool` in the log is a
+/// bitmask: 1 physical, 2 holy, 4 fire, 8 nature, 16 frost, 32 shadow,
+/// 64 arcane; combinations are OR-ed).
+pub const SCHOOL_PHYSICAL: u32 = 0x1;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Spell {
     pub id: u32,
     pub name: String,
+    /// School bitmask, 0 when unknown (environmental damage, a WCL ability
+    /// without a type).
+    pub school: u32,
 }
 
 impl Spell {
@@ -48,7 +56,13 @@ impl Spell {
         Spell {
             id: 1,
             name: "Melee".into(),
+            school: SCHOOL_PHYSICAL,
         }
+    }
+
+    /// Purely physical (melee, most "strikes"); false for mixed schools.
+    pub fn is_physical(&self) -> bool {
+        self.school == SCHOOL_PHYSICAL
     }
 }
 

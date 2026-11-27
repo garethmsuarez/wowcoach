@@ -100,6 +100,7 @@ fn spell_at(f: &[&str], i: usize) -> Option<Spell> {
     Some(Spell {
         id: f.get(i)?.parse().ok()?,
         name: unquote(f.get(i + 1)?).to_string(),
+        school: f.get(i + 2).map(|s| hex(s)).unwrap_or(0),
     })
 }
 
@@ -346,6 +347,7 @@ impl Parser {
                         Spell {
                             id: 0,
                             name: format!("Environment ({t})"),
+                            school: 0,
                         }
                     }
                 };
@@ -459,7 +461,8 @@ mod tests {
                 info,
                 ..
             } => {
-                assert_eq!(spell.id, 12345);
+                assert_eq!((spell.id, spell.school), (12345, 4), "fire");
+                assert!(!spell.is_physical());
                 assert_eq!(amount, 20000);
                 assert_eq!(overkill, 0);
                 assert_eq!(absorbed, 500);

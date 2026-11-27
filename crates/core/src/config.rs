@@ -26,6 +26,9 @@ heuristic_min_share = 0.02  # enemy spell must be >=2% of group damage taken to 
 
 # Bloodlust / Heroism / Time Warp / Primal Rage (+ hunter pet version) / Fury of the Aspects
 lust_spell_ids = [2825, 32182, 80353, 264667, 272678, 390386]
+# Debuffs lust leaves on players (Exhaustion, Sated, Temporal Displacement,
+# Fatigued, evoker Exhaustion): while a player has one, lust isn't available
+sated_aura_ids = [57723, 57724, 80354, 264689, 390435]
 # Healthstone, Demonic Healthstone
 healthstone_spell_ids = [6262, 452930]
 # Healing potions (Midnight): Silvermoon, Concentrated Silvermoon, Potent, Invigorating
@@ -72,6 +75,7 @@ pub struct General {
     pub early_death_frac: f64,
     pub heuristic_min_share: f64,
     pub lust_spell_ids: Vec<u32>,
+    pub sated_aura_ids: Vec<u32>,
     pub healthstone_spell_ids: Vec<u32>,
     pub potion_spell_ids: Vec<u32>,
     pub absorb_exclude_spell_ids: Vec<u32>,
@@ -90,6 +94,7 @@ impl Default for General {
             early_death_frac: 0.30,
             heuristic_min_share: 0.02,
             lust_spell_ids: vec![2825, 32182, 80353, 264667, 272678, 390386],
+            sated_aura_ids: vec![57723, 57724, 80354, 264689, 390435],
             healthstone_spell_ids: vec![6262, 452930],
             potion_spell_ids: vec![1234768, 1295247, 1262857, 1238009],
             absorb_exclude_spell_ids: vec![115069, 114556],
@@ -303,6 +308,12 @@ mod tests {
         let c = Config::load(None).unwrap();
         assert_eq!(c.knowledge.pack_key.as_deref(), Some("midnight-s2"));
         assert_eq!(c.general.pull_gap_ms, General::default().pull_gap_ms);
+        // Defaults are written twice; the lists must agree.
+        let d = General::default();
+        assert_eq!(
+            (&c.general.lust_spell_ids, &c.general.sated_aura_ids),
+            (&d.lust_spell_ids, &d.sated_aura_ids)
+        );
         let none = Config::load_with(None, PackChoice::None).unwrap();
         assert!(none.knowledge.pack_key.is_none());
     }

@@ -126,8 +126,8 @@ uses more than `--max-points` (default 3000) of the hourly limit.
 ### Class abilities
 
 `data/classes.toml` lists each class's interrupts, crowd control that stops
-casts, defensives and dispels, with cooldowns and the spell IDs they're logged
-under. It's compiled in, and coaching rules use it to ask "who could have
+casts, defensives, dispels and tanks' active mitigation, with cooldowns and the
+spell IDs they're logged under (including buff IDs that differ from the cast). It's compiled in, and coaching rules use it to ask "who could have
 kicked or dispelled this?" and "was a defensive available?".
 
 ```bash

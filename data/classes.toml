@@ -14,6 +14,12 @@
 #   kind = "defensive"  scope = personal | external | group
 #   kind = "dispel"     types = [magic, curse, poison, disease, bleed, enrage]
 #                       target = friendly | enemy
+#   kind = "mitigation" a tank's active mitigation buff; specs = tank specs only
+#   (defensive, mitigation)
+#                       aura_ids = the buff, when it differs from ids
+#                       dur_s = how long it's active, when no buff is logged
+#                       school = physical | magic, if it only works against one
+#   instant = true      (defensives) an instant heal: used, never active
 #   cdr = true          talents routinely cut the cooldown a lot; the log audit
 #                       doesn't check its reuse
 #   situational = true  (stops) credited when it lands, never suggested as
@@ -99,6 +105,7 @@ class = "Death Knight"
 kind = "defensive"
 scope = "personal"
 cd_s = 60
+school = "magic"
 
 [[ability]]
 ids = [51052]
@@ -107,6 +114,8 @@ class = "Death Knight"
 kind = "defensive"
 scope = "group"
 cd_s = 120
+dur_s = 8  # buff not seen yet (4 casts in local logs)
+school = "magic"
 
 [[ability]]
 ids = [55233]
@@ -125,6 +134,24 @@ class = "Death Knight"
 kind = "defensive"
 scope = "personal"
 cd_s = 120
+
+[[ability]]
+ids = [195182]
+name = "Bone Shield"
+class = "Death Knight"
+specs = ["Blood"]
+kind = "mitigation"
+cd_s = 1
+aura_ids = [195181]  # from Marrowrend; seen in logs
+
+[[ability]]
+ids = [49998]
+name = "Blood Shield"
+class = "Death Knight"
+specs = ["Blood"]
+kind = "mitigation"
+cd_s = 1
+aura_ids = [77535]  # from Death Strike; seen in logs
 
 # ------------------------------------------------------------------ Demon Hunter
 
@@ -216,6 +243,7 @@ specs = ["Havoc", "Devourer"]
 kind = "defensive"
 scope = "personal"
 cd_s = 60
+aura_ids = [212800]  # seen in logs (classes check, 2026-11)
 
 [[ability]]
 ids = [196718]
@@ -224,6 +252,7 @@ class = "Demon Hunter"
 kind = "defensive"
 scope = "group"
 cd_s = 300
+dur_s = 8  # no buff is logged
 
 # Metamorphosis (187827) is not listed as a Vengeance defensive: in Midnight
 # logs it's reused every ~34s (median of 207 reuses), so it isn't a button a
@@ -237,6 +266,7 @@ specs = ["Vengeance"]
 kind = "defensive"
 scope = "personal"
 cd_s = 60
+aura_ids = [207771]  # buff on the DH and debuff on the target; seen in logs
 
 [[ability]]
 ids = [278326]
@@ -255,6 +285,16 @@ kind = "dispel"
 types = ["magic"]
 target = "friendly"
 cd_s = 8         # seen in logs (Havoc); new in Midnight, types/cooldown unconfirmed
+
+[[ability]]
+ids = [203720]
+name = "Demon Spikes"
+class = "Demon Hunter"
+specs = ["Vengeance"]
+kind = "mitigation"
+cd_s = 20
+cdr = true  # charges
+aura_ids = [203819]  # seen in logs
 
 # ------------------------------------------------------------------ Druid
 
@@ -375,6 +415,14 @@ kind = "dispel"
 types = ["enrage"]
 target = "enemy"
 cd_s = 10
+
+[[ability]]
+ids = [192081]
+name = "Ironfur"
+class = "Druid"
+specs = ["Guardian"]
+kind = "mitigation"
+cd_s = 0.5
 
 # ------------------------------------------------------------------ Evoker
 
@@ -550,6 +598,7 @@ class = "Hunter"
 kind = "defensive"
 scope = "personal"
 cd_s = 120
+instant = true  # a heal: used, never active
 
 [[ability]]
 ids = [19801]
@@ -617,6 +666,7 @@ class = "Mage"
 kind = "defensive"
 scope = "personal"
 cd_s = 60
+aura_ids = [342246]  # seen in logs (classes check, 2026-11)
 
 [[ability]]
 ids = [55342]
@@ -633,6 +683,7 @@ class = "Mage"
 kind = "defensive"
 scope = "personal"
 cd_s = 120
+aura_ids = [110960]  # seen in logs (classes check, 2026-11)
 
 [[ability]]
 ids = [475]
@@ -693,6 +744,7 @@ class = "Monk"
 kind = "defensive"
 scope = "personal"
 cd_s = 120
+aura_ids = [120954]  # seen in logs (classes check, 2026-11)
 
 [[ability]]
 ids = [122783]
@@ -701,6 +753,7 @@ class = "Monk"
 kind = "defensive"
 scope = "personal"
 cd_s = 90
+school = "magic"
 
 [[ability]]
 ids = [122470]
@@ -710,6 +763,7 @@ specs = ["Windwalker"]
 kind = "defensive"
 scope = "personal"
 cd_s = 90
+aura_ids = [125174]  # seen in logs (classes check, 2026-11)
 
 [[ability]]
 ids = [116849]
@@ -728,6 +782,7 @@ specs = ["Mistweaver"]
 kind = "defensive"
 scope = "group"
 cd_s = 180
+instant = true  # a heal: used, never active
 
 [[ability]]
 ids = [115310]
@@ -758,6 +813,23 @@ kind = "dispel"
 types = ["poison", "disease"]
 target = "friendly"
 cd_s = 8         # seen in logs
+
+[[ability]]
+ids = [215479]  # passive from Keg Smash / Blackout Kick: never cast
+name = "Shuffle"
+class = "Monk"
+specs = ["Brewmaster"]
+kind = "mitigation"
+cd_s = 1
+
+[[ability]]
+ids = [1241059]
+name = "Celestial Infusion"
+class = "Monk"
+specs = ["Brewmaster"]
+kind = "mitigation"
+cd_s = 45
+cdr = true  # charges
 
 # ------------------------------------------------------------------ Paladin
 
@@ -865,6 +937,7 @@ class = "Paladin"
 kind = "defensive"
 scope = "external"
 cd_s = 600
+instant = true  # a heal: used, never active
 
 [[ability]]
 ids = [31821]
@@ -894,6 +967,15 @@ kind = "dispel"
 types = ["poison", "disease"]
 target = "friendly"
 cd_s = 8         # seen in logs (Retribution)
+
+[[ability]]
+ids = [53600]
+name = "Shield of the Righteous"
+class = "Paladin"
+specs = ["Protection"]
+kind = "mitigation"
+cd_s = 1
+aura_ids = [132403]  # seen in logs
 
 # ------------------------------------------------------------------ Priest
 
@@ -986,6 +1068,7 @@ specs = ["Holy"]
 kind = "defensive"
 scope = "group"
 cd_s = 180
+aura_ids = [64844]  # seen in logs (classes check, 2026-11)
 
 [[ability]]
 ids = [15286]
@@ -1076,6 +1159,7 @@ class = "Rogue"
 kind = "defensive"
 scope = "personal"
 cd_s = 120
+school = "magic"
 
 [[ability]]
 ids = [5277]
@@ -1084,6 +1168,7 @@ class = "Rogue"
 kind = "defensive"
 scope = "personal"
 cd_s = 120
+school = "physical"
 
 [[ability]]
 ids = [1966]
@@ -1161,6 +1246,7 @@ specs = ["Restoration"]
 kind = "defensive"
 scope = "group"
 cd_s = 180
+aura_ids = [325174]  # applied by the totem; seen in logs
 
 [[ability]]
 ids = [108280]
@@ -1367,6 +1453,7 @@ class = "Warrior"
 kind = "defensive"
 scope = "group"
 cd_s = 180
+aura_ids = [97463]  # seen in logs (classes check, 2026-11)
 
 [[ability]]
 ids = [23920]
@@ -1375,6 +1462,27 @@ class = "Warrior"
 kind = "defensive"
 scope = "personal"
 cd_s = 25
+aura_ids = [385391]  # seen in logs (classes check, 2026-11)
+school = "magic"
+
+[[ability]]
+ids = [2565]
+name = "Shield Block"
+class = "Warrior"
+specs = ["Protection"]
+kind = "mitigation"
+cd_s = 15
+cdr = true  # charges
+school = "physical"
+aura_ids = [132404]  # seen in logs
+
+[[ability]]
+ids = [190456]
+name = "Ignore Pain"
+class = "Warrior"
+specs = ["Protection"]
+kind = "mitigation"
+cd_s = 1
 
 # ------------------------------------------------------------------ Racial
 

@@ -7,8 +7,8 @@
 //! interrupt players used must be listed; nothing may be reused faster than
 //! its listed cooldown allows).
 
-use crate::model::{Event, Kind, Pos, Unit};
-use crate::specs::{SPECS, class_specs, spec_info};
+use crate::model::{Event, Kind, Pos, Spell, Unit};
+use crate::specs::{Role, SPECS, class_specs, spec_info};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -25,6 +25,19 @@ pub enum AbilityKind {
     Stop,
     Defensive,
     Dispel,
+    /// A tank's active mitigation buff (Shield Block, Ironfur): short,
+    /// rotational, and expected to be up for tank busters.
+    Mitigation,
+}
+
+/// Damage a defensive or mitigation only works against.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Protects {
+    /// Physical hits only (Shield Block, Evasion).
+    Physical,
+    /// Magic only (Anti-Magic Shell, Cloak of Shadows).
+    Magic,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
@@ -93,10 +106,23 @@ pub struct Ability {
     /// Reach in yards (interrupts: required; stops: optional). Melee is 5.
     #[serde(default)]
     pub range_yd: Option<f32>,
-    /// Stops: the aura(s) the CC is logged as on the target, when they differ
-    /// from `ids` (Shockwave is cast as 46968 but stuns as 132168).
+    /// The aura(s) it's logged as, when they differ from `ids`. Stops: the
+    /// CC on the target (Shockwave is cast as 46968 but stuns as 132168).
+    /// Defensives and mitigation: the buff (Blur is cast as 198589, the buff
+    /// is 212800).
     #[serde(default)]
     pub aura_ids: Vec<u32>,
+    /// Defensives and mitigation: how long it lasts, for abilities whose buff
+    /// isn't logged (then it counts as active this long after the cast).
+    #[serde(default)]
+    pub dur_s: Option<f64>,
+    /// Defensives and mitigation that only work against one kind of damage.
+    #[serde(default)]
+    pub school: Option<Protects>,
+    /// Defensives: an instant heal (Lay on Hands, Exhilaration). It's used,
+    /// but never "active".
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub instant: bool,
     /// Stops: credited when it lands, but never suggested as an available
     /// stop. For damage cooldowns that happen to stun (Havoc Metamorphosis'
     /// landing) and stuns with a condition the log can't see (Rake from
@@ -106,12 +132,23 @@ pub struct Ability {
 }
 
 impl Ability {
-    /// Aura IDs that mean this stop landed: `aura_ids`, or the cast IDs.
-    pub fn stop_auras(&self) -> &[u32] {
+    /// Aura IDs that mean it landed or is active: `aura_ids`, or the cast IDs.
+    pub fn auras(&self) -> &[u32] {
         if self.aura_ids.is_empty() {
             &self.ids
         } else {
             &self.aura_ids
+        }
+    }
+
+    /// Does it work against this hit? Unknown schools (0) count as covered,
+    /// so a missing school never blames anyone.
+    pub fn protects_against(&self, spell: &Spell) -> bool {
+        match self.school {
+            None => true,
+            _ if spell.school == 0 => true,
+            Some(Protects::Physical) => spell.is_physical(),
+            Some(Protects::Magic) => !spell.is_physical(),
         }
     }
 
@@ -229,8 +266,38 @@ impl ClassData {
                 }
                 _ => {}
             }
-            if !a.aura_ids.is_empty() && a.kind != AbilityKind::Stop {
-                out.push(format!("{label}: aura_ids is for stops"));
+            let buff = matches!(a.kind, AbilityKind::Defensive | AbilityKind::Mitigation);
+            if !a.aura_ids.is_empty() && !buff && a.kind != AbilityKind::Stop {
+                out.push(format!(
+                    "{label}: aura_ids is for stops, defensives and mitigation"
+                ));
+            }
+            if a.dur_s.is_some() && !buff {
+                out.push(format!("{label}: dur_s is for defensives and mitigation"));
+            }
+            if a.dur_s.is_some_and(|d| d.is_nan() || d <= 0.0) {
+                out.push(format!("{label}: dur_s must be positive"));
+            }
+            if a.instant && a.kind != AbilityKind::Defensive {
+                out.push(format!("{label}: instant is for defensives"));
+            }
+            if a.instant && (a.dur_s.is_some() || !a.aura_ids.is_empty()) {
+                out.push(format!(
+                    "{label}: an instant defensive has no aura_ids or dur_s"
+                ));
+            }
+            if a.school.is_some() && !buff {
+                out.push(format!("{label}: school is for defensives and mitigation"));
+            }
+            if a.kind == AbilityKind::Mitigation {
+                let tank = |s: &str| {
+                    SPECS
+                        .iter()
+                        .any(|x| x.1 == a.class && x.2 == s && x.3 == Role::Tank)
+                };
+                if a.specs.is_empty() || !a.specs.iter().all(|s| tank(s)) {
+                    out.push(format!("{label}: mitigation needs `specs`, all tank specs"));
+                }
             }
             if a.situational && a.kind != AbilityKind::Stop {
                 out.push(format!("{label}: situational is for stops"));
@@ -260,7 +327,7 @@ impl ClassData {
     pub fn stop_by_aura(&self, aura_id: u32) -> Option<&Ability> {
         self.abilities
             .iter()
-            .find(|a| a.kind == AbilityKind::Stop && a.stop_auras().contains(&aura_id))
+            .find(|a| a.kind == AbilityKind::Stop && a.auras().contains(&aura_id))
     }
 
     /// Every entry listing this spell ID (one ability can be e.g. both a stop and an interrupt).
@@ -292,13 +359,14 @@ impl ClassData {
             .map(|s| format!("{} {}", s.2, s.1))
             .collect();
         format!(
-            "{} abilities for {} classes: {} interrupts, {} stops, {} defensives, {} dispels. Specs without a class interrupt: {}.",
+            "{} abilities for {} classes: {} interrupts, {} stops, {} defensives, {} dispels, {} mitigation. Specs without a class interrupt: {}.",
             self.abilities.len(),
             classes.len(),
             by_kind.get(&AbilityKind::Interrupt).unwrap_or(&0),
             by_kind.get(&AbilityKind::Stop).unwrap_or(&0),
             by_kind.get(&AbilityKind::Defensive).unwrap_or(&0),
             by_kind.get(&AbilityKind::Dispel).unwrap_or(&0),
+            by_kind.get(&AbilityKind::Mitigation).unwrap_or(&0),
             if no_interrupt.is_empty() {
                 "none".into()
             } else {
@@ -343,6 +411,20 @@ pub struct Audit {
     completed: u32,
     aura_in_silent: HashMap<(u32, String), u32>,
     aura_in_completed: HashMap<u32, u32>,
+    /// Player guid -> casts in the last `BUFF_AFTER_MS`: (ts, spell id, buffs
+    /// seen after it so far).
+    recent_casts: HashMap<String, Vec<(i64, u32, BTreeSet<u32>)>>,
+    /// Player casts per spell id, and in total.
+    cast_n: HashMap<u32, u32>,
+    cast_total: u32,
+    /// (cast spell id, buff id) -> casts followed by that buff from the same
+    /// player within `BUFF_AFTER_MS`, and buff id -> any cast followed by it.
+    buff_after: HashMap<(u32, u32), u32>,
+    buff_after_any: HashMap<u32, u32>,
+    buff_names: HashMap<u32, String>,
+    /// Player guid -> buffs they applied in the last `BUFF_BEFORE_MS`: the
+    /// raw log often writes a defensive's buff just before its cast event.
+    recent_buffs: HashMap<String, Vec<(i64, u32)>>,
 }
 
 /// Findings, most important first.
@@ -363,6 +445,12 @@ pub struct AuditReport {
     /// Group auras that land on casters whose cast then ends silently, but
     /// rarely during casts that complete: likely stops missing from the table.
     pub stop_candidates: Vec<String>,
+    /// Buffs that reliably follow a listed defensive or mitigation cast,
+    /// under an ID the table doesn't list: likely missing `aura_ids`.
+    pub buff_candidates: Vec<String>,
+    /// Defensives and mitigation cast often, whose listed aura never followed
+    /// the cast and without `dur_s`: the analysis can't tell when they're active.
+    pub no_buff: Vec<String>,
     /// Silently-ended cast bars, and how many a listed stop explains.
     pub silent_casts: u32,
     pub silent_explained: u32,
@@ -374,6 +462,16 @@ const STOP_MIN: u32 = 5;
 /// ...and this many times more often than during completed casts. Real stops
 /// in Midnight logs scored 100-1300x; damage and slows that merely correlate, 5-30x.
 const STOP_LIFT: f64 = 50.0;
+/// A defensive's buff lands within this long of its cast.
+const BUFF_AFTER_MS: i64 = 1000;
+/// ...or up to this long before it (logged ahead of the cast event).
+const BUFF_BEFORE_MS: i64 = 200;
+/// Buff discovery: enough casts to judge, the buff follows most of them, and
+/// far more often than it follows the player's casts in general (procs and
+/// rotational buffs follow everything).
+const BUFF_MIN_CASTS: u32 = 3;
+const BUFF_RATE: f64 = 0.6;
+const BUFF_LIFT: f64 = 20.0;
 
 impl Audit {
     fn player(&self, u: &Option<Unit>) -> Option<(String, (String, String))> {
@@ -389,6 +487,16 @@ impl Audit {
         };
         let (class, spec, _) = spec_info(*self.specs.get(&guid)?)?;
         Some((guid, (class.to_string(), spec.to_string())))
+    }
+
+    /// The player behind a buff: the player, their pet, or something they
+    /// summoned (Spirit Link Totem).
+    fn buff_source(&self, u: &Option<Unit>) -> Option<String> {
+        let g = &u.as_ref()?.guid;
+        if self.summoned.contains(g) {
+            return self.owners.get(g).cloned();
+        }
+        Some(self.player(u)?.0)
     }
 
     /// A hostile caster's cast bar ended without completing, being kicked or
@@ -509,7 +617,40 @@ impl Audit {
                         .entry((guid.clone(), spell.id))
                         .or_default()
                         .push(e.ts);
+                    let mut seen = BTreeSet::new();
+                    for (t, b) in self.recent_buffs.get(&guid).into_iter().flatten() {
+                        if e.ts - t <= BUFF_BEFORE_MS && seen.insert(*b) {
+                            *self.buff_after.entry((spell.id, *b)).or_default() += 1;
+                            *self.buff_after_any.entry(*b).or_default() += 1;
+                        }
+                    }
+                    let recent = self.recent_casts.entry(guid.clone()).or_default();
+                    recent.retain(|(t, _, _)| e.ts - t <= BUFF_AFTER_MS);
+                    recent.push((e.ts, spell.id, seen));
+                    *self.cast_n.entry(spell.id).or_default() += 1;
+                    self.cast_total += 1;
                     self.players.insert(guid, cs);
+                }
+            }
+            Kind::AuraApplied {
+                spell,
+                is_buff: true,
+            } => {
+                if let Some(p) = self.buff_source(&e.src) {
+                    self.buff_names
+                        .entry(spell.id)
+                        .or_insert_with(|| spell.name.clone());
+                    // Credit each recent cast once per buff (a group buff
+                    // lands on five players).
+                    for (t, cast, seen) in self.recent_casts.get_mut(&p).into_iter().flatten() {
+                        if e.ts - *t <= BUFF_AFTER_MS && seen.insert(spell.id) {
+                            *self.buff_after.entry((*cast, spell.id)).or_default() += 1;
+                            *self.buff_after_any.entry(spell.id).or_default() += 1;
+                        }
+                    }
+                    let rb = self.recent_buffs.entry(p).or_default();
+                    rb.retain(|(t, _)| e.ts - t <= BUFF_BEFORE_MS);
+                    rb.push((e.ts, spell.id));
                 }
             }
             Kind::Interrupt { spell, .. } => {
@@ -578,6 +719,7 @@ impl Audit {
             .map(|k| k.1)
             .chain(self.interrupts.keys().map(|k| k.2))
             .chain(self.dispels.keys().map(|k| k.2))
+            .chain(self.buff_names.keys().copied())
             .collect();
         for a in &data.abilities {
             if a.class == RACIAL {
@@ -627,6 +769,58 @@ impl Audit {
                 ));
             }
         }
+        // Buffs of defensives and mitigation. Judge each ability on its most
+        // cast ID (some list a cast and an effect ID).
+        let any_rate = |buff: u32| {
+            (*self.buff_after_any.get(&buff).unwrap_or(&0) as f64 + 0.5)
+                / self.cast_total.max(1) as f64
+        };
+        let listed_buffs: BTreeSet<u32> = data
+            .abilities
+            .iter()
+            .filter(|a| matches!(a.kind, AbilityKind::Defensive | AbilityKind::Mitigation))
+            .flat_map(|a| a.auras().iter().chain(&a.ids).copied())
+            .collect();
+        for a in &data.abilities {
+            if !matches!(a.kind, AbilityKind::Defensive | AbilityKind::Mitigation) {
+                continue;
+            }
+            let Some((cast, n)) = a
+                .ids
+                .iter()
+                .map(|id| (*id, *self.cast_n.get(id).unwrap_or(&0)))
+                .max_by_key(|(id, n)| (*n, std::cmp::Reverse(*id)))
+                .filter(|(_, n)| *n >= BUFF_MIN_CASTS)
+            else {
+                continue;
+            };
+            let followed = |buff: u32| *self.buff_after.get(&(cast, buff)).unwrap_or(&0);
+            let has_listed = a.auras().iter().any(|b| followed(*b) > 0);
+            let mut cands: Vec<(u32, u32, f64)> = self
+                .buff_after
+                .iter()
+                .filter(|((c, b), _)| *c == cast && !listed_buffs.contains(b))
+                .map(|((_, b), k)| (*b, *k, *k as f64 / n as f64))
+                .filter(|(b, _, rate)| *rate >= BUFF_RATE && rate / any_rate(*b) >= BUFF_LIFT)
+                .collect();
+            cands.sort_by(|x, y| y.1.cmp(&x.1).then(x.0.cmp(&y.0)));
+            for (b, k, rate) in &cands {
+                r.buff_candidates.push(format!(
+                    "{} ({}): {} ({b}) followed {k} of {n} casts (lift {:.0}x)",
+                    a.name,
+                    a.class,
+                    self.buff_names.get(b).map(String::as_str).unwrap_or("?"),
+                    rate / any_rate(*b)
+                ));
+            }
+            if !has_listed && cands.is_empty() && a.dur_s.is_none() && !a.instant {
+                r.no_buff.push(format!(
+                    "{} ({}): cast {n}x, no listed buff followed",
+                    a.name, a.class
+                ));
+            }
+        }
+
         // Kick distances against listed ranges. Positions are the last ones
         // logged, and units have hitboxes, so allow a few yards.
         let mut kick_ids: Vec<&u32> = self.kick_dist.keys().collect();
@@ -732,6 +926,16 @@ impl std::fmt::Display for AuditReport {
             f,
             "Likely stops missing from the table (add the aura to a stop's aura_ids)",
             &self.stop_candidates,
+        )?;
+        section(
+            f,
+            "Likely defensive/mitigation buffs missing from the table (add to aura_ids)",
+            &self.buff_candidates,
+        )?;
+        section(
+            f,
+            "Defensives/mitigation with no logged buff (add aura_ids, or dur_s if none is logged)",
+            &self.no_buff,
         )?;
         section(
             f,
