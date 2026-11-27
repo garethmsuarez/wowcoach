@@ -48,7 +48,7 @@ absorb_exclude_spell_ids = [115069, 114556]
 deferred_damage_spell_ids = [124255, 324393]
 
 # Adjust the season pack. Tags are added to the pack's; name/note replace it.
-# Tags: priority_kick, stoppable, avoidable, dispel_priority, tank_buster,
+# Tags: priority_kick, kick, stoppable, avoidable, dispel_priority, tank_buster,
 #       dangerous_cast, affix
 # [[spell]]
 # ids = [123456]
@@ -221,6 +221,18 @@ impl Config {
     pub fn is_priority_kick(&self, id: u32) -> bool {
         self.has_tag(id, Tag::PriorityKick)
     }
+
+    /// Kick tier: 1 = must kick (`priority_kick`), 2 = kick when free
+    /// (`kick`), None = not tagged. Tier 1 wins when both apply.
+    pub fn kick_tier(&self, id: u32) -> Option<u8> {
+        if self.is_priority_kick(id) {
+            Some(1)
+        } else if self.has_tag(id, Tag::Kick) {
+            Some(2)
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]
@@ -307,6 +319,26 @@ mod tests {
         assert_eq!(c.avoidable_note(11).unwrap().note, "Move");
         assert!(c.has_tag(10, Tag::Avoidable) && c.has_tag(10, Tag::DangerousCast));
         assert!(c.is_priority_kick(40));
+    }
+
+    #[test]
+    fn kick_tiers() {
+        let c = cfg(
+            r#"
+            [[spell]]
+            ids = [50]
+            name = "Earth Bolt"
+            tags = ["kick"]
+            [[priority_interrupt]]
+            spell_id = 51
+            name = "Healing Breeze"
+            "#,
+            None,
+        );
+        assert_eq!(c.kick_tier(51), Some(1));
+        assert_eq!(c.kick_tier(50), Some(2));
+        assert!(!c.is_priority_kick(50));
+        assert_eq!(c.kick_tier(52), None);
     }
 
     #[test]

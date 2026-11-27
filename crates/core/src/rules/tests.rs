@@ -205,6 +205,7 @@ fn missed_kicks(mut f: FightReport) -> FightReport {
         succeeded: 2,
         interrupted: 1,
         priority: true,
+        kick: false,
     }];
     for p in f.players.iter_mut() {
         p.interrupts = 0;
@@ -473,6 +474,7 @@ fn cast(name: &str, start: f64, end: f64, priority: bool, outcome: CastOutcome) 
         end_s: end,
         pull: Some(1),
         priority,
+        tier: priority.then_some(1),
         outcome,
         ready_kickers: vec![],
         ready_stoppers: vec![],
@@ -485,6 +487,7 @@ fn ready(player: &str, ability: &str, d: f32, in_range: bool) -> ReadyKicker {
         ability: ability.into(),
         distance_yd: Some(d),
         in_range: Some(in_range),
+        cd_s: 15.0,
     }
 }
 
@@ -542,6 +545,83 @@ fn players_get_missed_and_wasted_kicks() {
     );
 }
 
+/// Three Earth Bolts (kick when free) went off with Alpha's kick ready and in
+/// range; `breeze_at` adds a Healing Breeze (must kick) in the same pull.
+fn free_kick_fight(breeze: Option<(f64, CastOutcome)>) -> FightReport {
+    let mut f = mplus(true, 1200.0);
+    for i in 0..3 {
+        let at = 100.0 + 40.0 * i as f64;
+        let mut c = cast("Earth Bolt", at, at + 2.0, false, CastOutcome::Completed);
+        c.tier = Some(2);
+        c.ready_kickers = vec![ready("Alpha", "Pummel", 5.0, true)];
+        f.casts.push(c);
+    }
+    if let Some((at, outcome)) = breeze {
+        let mut c = cast("Healing Breeze", at, at + 2.5, true, outcome);
+        if c.outcome == CastOutcome::Completed {
+            c.ready_kickers = vec![ready("Alpha", "Pummel", 5.0, true)];
+        }
+        f.casts.push(c);
+    }
+    f
+}
+
+#[test]
+fn free_kicks_are_named_when_no_priority_cast_needs_the_kick() {
+    let s = run(free_kick_fight(None), &Config::default());
+    let a = get(&s, "Alpha", "Free kicks").unwrap();
+    assert_eq!(a.severity, Severity::Low);
+    assert_eq!(
+        a.message,
+        "Pummel ready and in range, with no priority cast to save it for, as 3 kick-when-free cast(s) went off: Earth Bolt ×3."
+    );
+    assert!(
+        get(&s, "Alpha", "Priority kicks").is_none(),
+        "tier 2 is not a must-kick"
+    );
+    // A Healing Breeze elsewhere in the pull, outside the cooldown window of
+    // every Earth Bolt, doesn't excuse them.
+    let kicked = CastOutcome::Kicked {
+        by: "Alpha".into(),
+        spell: "Pummel".into(),
+        latency_s: 1.0,
+    };
+    let s = run(free_kick_fight(Some((400.0, kicked))), &Config::default());
+    assert!(get(&s, "Alpha", "Free kicks").is_some());
+}
+
+#[test]
+fn free_kicks_are_not_named_when_a_priority_cast_needed_the_kick() {
+    // Healing Breeze right after the first Earth Bolt, kicked by Alpha: that
+    // Earth Bolt was rightly let go, leaving 2, under the minimum of 3.
+    let kicked = CastOutcome::Kicked {
+        by: "Alpha".into(),
+        spell: "Pummel".into(),
+        latency_s: 1.0,
+    };
+    let f = free_kick_fight(Some((105.0, kicked)));
+    assert_eq!(missed_free(&f.casts, "Alpha").len(), 2);
+    assert!(get(&run(f, &Config::default()), "Alpha", "Free kicks").is_none());
+    // Same when the Healing Breeze went off with Alpha ready: Alpha should
+    // have saved it, and that's Priority kicks advice instead.
+    let f = free_kick_fight(Some((143.0, CastOutcome::Completed)));
+    assert_eq!(missed_free(&f.casts, "Alpha").len(), 2);
+    let s = run(f, &Config::default());
+    assert!(get(&s, "Alpha", "Free kicks").is_none());
+    assert!(get(&s, "Alpha", "Priority kicks").is_some());
+    // Someone else kicking the Breeze still counts: Alpha was right to hold
+    // their kick as backup.
+    let other = CastOutcome::Kicked {
+        by: "Bravo".into(),
+        spell: "Kick".into(),
+        latency_s: 1.0,
+    };
+    assert_eq!(
+        missed_free(&free_kick_fight(Some((105.0, other))).casts, "Alpha").len(),
+        2
+    );
+}
+
 #[test]
 fn simultaneous_casts_are_merged_and_generic_advice_deduplicated() {
     let mut f = kick_fight();
@@ -556,6 +636,7 @@ fn simultaneous_casts_are_merged_and_generic_advice_deduplicated() {
         succeeded: 3,
         interrupted: 1,
         priority: true,
+        kick: false,
     }];
     for p in f.players.iter_mut() {
         p.interrupts = 0;
@@ -611,6 +692,7 @@ fn interrupt_list_puts_priority_casts_first() {
             succeeded: 29,
             interrupted: 11,
             priority: false,
+            kick: false,
         },
         EnemyCastReport {
             spell_id: 2,
@@ -619,6 +701,7 @@ fn interrupt_list_puts_priority_casts_first() {
             succeeded: 1,
             interrupted: 2,
             priority: true,
+            kick: false,
         },
     ];
     let s = run(f, &Config::default());

@@ -44,10 +44,14 @@ impl Origin {
 pub const MIN_EVENTS: u32 = 3;
 /// No proposal from fewer fights than this: one key is an anecdote.
 pub const MIN_FIGHTS: u32 = 2;
-/// `priority_kick`: kicked at least this often...
+/// `priority_kick` / `kick`: kicked at least this often...
 pub const MIN_KICKS: u32 = 3;
-/// ...and at least this share of completed-or-kicked cast bars was kicked.
-pub const KICK_RATE: f64 = 0.5;
+/// ...and `priority_kick` (must kick) when at least this share of
+/// completed-or-kicked cast bars was kicked...
+pub const PRIORITY_KICK_RATE: f64 = 0.9;
+/// ...or `kick` (kick when free) from this share up to it. Top groups letting
+/// one in ten through usually means they had something better to kick.
+pub const KICK_RATE: f64 = 0.7;
 /// `avoidable`: flagged by the uneven-hit heuristic in at least half of the
 /// fights where it hit twice or more, in at least this many fights.
 pub const MIN_AVOIDABLE_FIGHTS: u32 = 2;
@@ -266,8 +270,10 @@ impl SpellAgg {
             Some(t) if t.interrupted + t.casts_succeeded >= MIN_KICKS => t.clone(),
             _ => all.clone(),
         };
-        if kicks.interrupted >= MIN_KICKS && kicks.kick_rate() >= KICK_RATE {
+        if kicks.interrupted >= MIN_KICKS && kicks.kick_rate() >= PRIORITY_KICK_RATE {
             out.push(Tag::PriorityKick);
+        } else if kicks.interrupted >= MIN_KICKS && kicks.kick_rate() >= KICK_RATE {
+            out.push(Tag::Kick);
         }
         let tank_share = if all.damage > 0 {
             all.tank_damage as f64 / all.damage as f64
@@ -721,7 +727,13 @@ pub fn apply(pack: &mut SeasonPack, c: &Collected) -> Applied {
         if e.map_id == 0 && !e.affixes.is_empty() && affix_note.is_some() {
             proposed.push(Tag::Affix);
         }
-        proposed.retain(|t| !e.tags.contains(t) && !e.dismissed.contains(t));
+        // A reviewed kick tier stands: don't propose the other one.
+        let tiered = e.tags.contains(&Tag::PriorityKick) || e.tags.contains(&Tag::Kick);
+        proposed.retain(|t| {
+            !e.tags.contains(t)
+                && !e.dismissed.contains(t)
+                && !(tiered && matches!(t, Tag::PriorityKick | Tag::Kick))
+        });
         let new: Vec<Tag> = proposed
             .iter()
             .copied()

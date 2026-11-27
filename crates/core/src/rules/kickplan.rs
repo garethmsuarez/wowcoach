@@ -4,8 +4,9 @@
 //! A "pack" is the set of NPC types that cast priority spells in a pull, so
 //! the same pack is recognised across keys even when the route differs.
 //! For each pack we measure how often each priority spell is cast, then
-//! assign kickers greedily: busiest spell first, each kicker able to do
-//! 60 / cooldown kicks a minute (shared across the spells they cover), with
+//! assign kickers greedily: must-kicks (`priority_kick`) first, busiest first,
+//! then kick-when-free spells (`kick`) with the spare capacity. Each kicker
+//! can do 60 / cooldown kicks a minute (shared across the spells they cover), with
 //! a margin for travel and reaction time. Players who already kicked a spell,
 //! then players who were usually in range of it, are preferred.
 
@@ -23,6 +24,8 @@ pub const MAX_PACKS: usize = 10;
 #[derive(Serialize, Clone, Debug, PartialEq)]
 pub struct SpellNeed {
     pub spell: String,
+    /// 1 = must kick (`priority_kick`), 2 = kick when free (`kick`).
+    pub tier: u8,
     pub casts: u32,
     pub casts_per_min: f64,
     pub kicked: u32,
@@ -46,7 +49,8 @@ pub struct PackPlan {
     pub pulls: u32,
     pub spells: Vec<SpellNeed>,
     pub assignments: Vec<Assignment>,
-    /// Spells the group's interrupts can't cover at the observed rate.
+    /// Must-kicks the group's interrupts can't cover at the observed rate
+    /// (kick-when-free spells only get spare capacity, so never count).
     pub uncovered: Vec<String>,
 }
 
@@ -90,7 +94,7 @@ pub fn kick_plans(fights: &[FightReport]) -> Vec<KickPlan> {
         let mut packs: BTreeMap<Vec<u32>, PackAcc> = BTreeMap::new();
         for f in &keys {
             let mut per_pull: BTreeMap<usize, Vec<&CastRecord>> = BTreeMap::new();
-            for c in f.casts.iter().filter(|c| c.priority) {
+            for c in f.casts.iter().filter(|c| c.tier.is_some()) {
                 if let Some(p) = c.pull {
                     per_pull.entry(p).or_default().push(c);
                 }
@@ -120,6 +124,7 @@ pub fn kick_plans(fights: &[FightReport]) -> Vec<KickPlan> {
                         .entry(c.name.clone())
                         .or_insert_with(|| SpellNeed {
                             spell: c.name.clone(),
+                            tier: c.tier.unwrap_or(1),
                             casts: 0,
                             casts_per_min: 0.0,
                             kicked: 0,
@@ -127,6 +132,8 @@ pub fn kick_plans(fights: &[FightReport]) -> Vec<KickPlan> {
                             went_off: 0,
                         });
                     s.casts += 1;
+                    // Same name under several IDs: the stricter tier wins.
+                    s.tier = s.tier.min(c.tier.unwrap_or(1));
                     match &c.outcome {
                         CastOutcome::Kicked { by, .. } => {
                             s.kicked += 1;
@@ -167,12 +174,21 @@ pub fn kick_plans(fights: &[FightReport]) -> Vec<KickPlan> {
             .into_iter()
             .map(|(ids, acc)| plan_pack(ids, acc, &kickers))
             .collect();
-        // Most dangerous first: most priority casts that went off, then busiest.
+        // Most dangerous first: most must-kicks that went off, then all that
+        // went off, then busiest.
         plans.sort_by(|a, b| {
+            let off1 = |p: &PackPlan| {
+                p.spells
+                    .iter()
+                    .filter(|s| s.tier == 1)
+                    .map(|s| s.went_off)
+                    .sum::<u32>()
+            };
             let off = |p: &PackPlan| p.spells.iter().map(|s| s.went_off).sum::<u32>();
             let rate = |p: &PackPlan| p.spells.iter().map(|s| s.casts_per_min).sum::<f64>();
-            off(b)
-                .cmp(&off(a))
+            off1(b)
+                .cmp(&off1(a))
+                .then(off(b).cmp(&off(a)))
                 .then(rate(b).total_cmp(&rate(a)))
                 .then_with(|| a.name.cmp(&b.name))
         });
@@ -219,9 +235,11 @@ fn plan_pack(ids: Vec<u32>, acc: PackAcc, kickers: &[(String, String, f64)]) -> 
             s
         })
         .collect();
+    // Must-kicks are assigned first; kick-when-free spells get what's left.
     spells.sort_by(|a, b| {
-        b.casts_per_min
-            .total_cmp(&a.casts_per_min)
+        a.tier
+            .cmp(&b.tier)
+            .then(b.casts_per_min.total_cmp(&a.casts_per_min))
             .then_with(|| a.spell.cmp(&b.spell))
     });
 
@@ -271,7 +289,7 @@ fn plan_pack(ids: Vec<u32>, acc: PackAcc, kickers: &[(String, String, f64)]) -> 
                 .or_default()
                 .push(s.spell.clone());
         }
-        if need > 0.05 {
+        if need > 0.05 && s.tier == 1 {
             uncovered.push(s.spell.clone());
         }
     }
@@ -317,6 +335,7 @@ mod tests {
             end_s: at + 2.0,
             pull: Some(pull),
             priority: true,
+            tier: Some(1),
             outcome,
             ready_kickers: vec![],
             ready_stoppers: vec![],
@@ -387,6 +406,7 @@ mod tests {
                     ability: "Counterspell".into(),
                     distance_yd: Some(20.0),
                     in_range: Some(true),
+                    cd_s: 24.0,
                 }];
             }
             casts.push(c);
@@ -478,6 +498,51 @@ mod tests {
         let p = &kick_plans(&[f])[0].packs[0];
         assert_eq!(p.uncovered, ["Healing Breeze"]);
         assert_eq!(p.assignments.len(), 1);
+    }
+
+    #[test]
+    fn must_kicks_are_assigned_before_kick_when_free() {
+        // One mob type casting Healing Breeze (must kick) twice and Earth Bolt
+        // (kick when free) ten times in a minute; one Warrior (4 kicks/min).
+        let mut casts = vec![];
+        for i in 0..2 {
+            casts.push(rec(
+                1,
+                "Shaman",
+                "Healing Breeze",
+                i as f64 * 30.0,
+                1,
+                CastOutcome::Completed,
+            ));
+        }
+        for i in 0..10 {
+            let mut c = rec(
+                1,
+                "Shaman",
+                "Earth Bolt",
+                i as f64 * 6.0,
+                1,
+                CastOutcome::Completed,
+            );
+            (c.priority, c.tier) = (false, Some(2));
+            casts.push(c);
+        }
+        let f = key(
+            &[("Warrior", "Warrior", "Arms")],
+            casts,
+            vec![pull(1, 0.0, 60.0)],
+        );
+        let p = &kick_plans(&[f])[0].packs[0];
+        // Healing Breeze first despite the lower rate; Earth Bolt gets what's
+        // left and is never "uncovered".
+        let order: Vec<(&str, u8)> = p
+            .spells
+            .iter()
+            .map(|s| (s.spell.as_str(), s.tier))
+            .collect();
+        assert_eq!(order, [("Healing Breeze", 1), ("Earth Bolt", 2)]);
+        assert_eq!(p.assignments[0].spells, ["Healing Breeze", "Earth Bolt"]);
+        assert!(p.uncovered.is_empty());
     }
 
     #[test]

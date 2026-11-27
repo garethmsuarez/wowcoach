@@ -150,8 +150,8 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
     // --- Interrupts
     let mut missed: Vec<&EnemyCastReport> =
         f.enemy_casts.iter().filter(|c| c.succeeded > 0).collect();
-    // Priority casts first, so they aren't buried behind filler.
-    missed.sort_by_key(|c| !c.priority);
+    // Must-kicks first, then kick-when-free, so they aren't buried behind filler.
+    missed.sort_by_key(|c| (!c.priority, !c.kick));
     if !missed.is_empty() {
         let total_missed: u32 = missed.iter().map(|c| c.succeeded).sum();
         let pri = missed.iter().any(|c| c.priority);
@@ -164,7 +164,13 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
                     c.name,
                     c.succeeded,
                     c.interrupted,
-                    if c.priority { ", PRIORITY" } else { "" }
+                    if c.priority {
+                        ", PRIORITY"
+                    } else if c.kick {
+                        ", kick when free"
+                    } else {
+                        ""
+                    }
                 )
             })
             .collect::<Vec<_>>()
@@ -397,6 +403,9 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
 
 /// How many events a message lists before summarising.
 const LIST_MAX: usize = 4;
+/// "Free kicks" advice needs at least this many kick-when-free casts that went
+/// off with the player's kick free.
+const FREE_KICKS_MIN: usize = 3;
 
 fn priority_kicks(f: &FightReport, out: &mut Vec<Suggestion>) {
     let went_off: Vec<&CastRecord> = f
@@ -804,6 +813,39 @@ fn player_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
                             .map(|(_, k)| format!("{:.0} yd", k.distance_yd.unwrap_or_default()))
                             .collect::<Vec<_>>()
                             .join(", ")
+                    ),
+                ));
+            }
+            let free = missed_free(&f.casts, &p.name);
+            if free.len() >= FREE_KICKS_MIN {
+                let mut by_spell: Vec<(String, usize)> = vec![];
+                for (c, _) in &free {
+                    match by_spell.iter_mut().find(|e| e.0 == c.name) {
+                        Some(e) => e.1 += 1,
+                        None => by_spell.push((c.name.clone(), 1)),
+                    }
+                }
+                by_spell.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+                let list = by_spell
+                    .iter()
+                    .take(LIST_MAX)
+                    .map(|(n, k)| format!("{n} ×{k}"))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                out.push(sugg(
+                    me,
+                    Severity::Low,
+                    "Free kicks",
+                    format!(
+                        "{} ready and in range, with no priority cast to save it for, as {} kick-when-free cast(s) went off: {list}{}.",
+                        free[0].1.ability,
+                        free.len(),
+                        if by_spell.len() > LIST_MAX { ", …" } else { "" }
+                    ),
+                    format!(
+                        "First: {} at {}. Only counted when no priority cast in the same pull came within your kick's cooldown.",
+                        free[0].0.name,
+                        mmss(free[0].0.end_s)
                     ),
                 ));
             }

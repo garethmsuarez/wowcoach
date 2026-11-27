@@ -49,8 +49,8 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 | Deaths and most common killing blows (+ M+ timer cost from the key's affixes) | Death recap (last hits, HP%), avoidable vs not, healthstone/potion used |
 | Raid wipe: early first death that snowballed | Avoidable damage vs group median (config-listed) |
 | Missed interrupts: a cast counts as interruptible if it was kicked at least once, or is listed in config | "Possibly avoidable": took far more of a spell than peers (heuristic) |
-| M+ priority kicks: each priority cast that went off, and who had a kick ready and in range | Priority casts you could have kicked; kicks wasted on filler while a priority cast went off |
-| M+ kick plan per dungeon: who should cover which priority casters, from all keys of that dungeon | |
+| M+ priority kicks: each priority cast that went off, and who had a kick ready and in range | Priority casts you could have kicked; kicks wasted on filler while a priority cast went off; "free kicks" (a `kick` spell went off while your kick was free and no priority cast was near) |
+| M+ kick plan per dungeon: who should cover which priority casters, from all keys of that dungeon. Must-kicks are covered first, kick-when-free spells get the spare kicks | |
 | M+ stops: priority casts that crowd control also stops (`stoppable`), that went off while someone had a stun, knock or incapacitate ready and in range | |
 | M+ spikes: the group losing half its HP within 5 s while a group defensive was ready and unused, naming who held it | M+: died with a personal defensive ready (used earlier in the key, off cooldown) |
 | M+ summons: enemy totems and adds that led a spike or healed enemies and lived too long | M+ tanks: tank busters taken with no active mitigation or defensive up |
@@ -67,9 +67,11 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 ## Season data
 
 Spell IDs change every season, so the rules stay generic. Season knowledge
-(dungeons, bosses, and enemy spells tagged `priority_kick`, `avoidable`, …)
+(dungeons, bosses, and enemy spells tagged `priority_kick`, `kick`, `avoidable`, …)
 lives in a **season pack**, `data/seasons/midnight-s2.toml`, which is compiled
-into the binary:
+into the binary. `priority_kick` means must kick; `kick` means kick when free,
+never instead of a `priority_kick` (Earth Bolt versus Healing Breeze from the
+same pack):
 
 ```bash
 wowcoach season check                    # summarise the built-in pack

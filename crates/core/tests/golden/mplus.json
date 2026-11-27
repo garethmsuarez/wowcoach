@@ -1499,6 +1499,7 @@
           "spells": [
             {
               "spell": "Shadow Volley",
+              "tier": 1,
               "casts": 32,
               "casts_per_min": 8.09,
               "kicked": 11,
