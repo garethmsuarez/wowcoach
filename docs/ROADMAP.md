@@ -64,6 +64,7 @@ Detailed plan: [`docs/milestones/m3-defensives.md`](milestones/m3-defensives.md)
   - Lust timing in M+ (current rules only cover raid).
 
 ## M4: Dispels & affixes
+Detailed plan: [`docs/milestones/m4-dispels-and-affixes.md`](milestones/m4-dispels-and-affixes.md).
 - Dispel latency on debuffs tagged `dispel_priority`.
 - Debuffs that expired or killed someone without being dispelled.
 - Who had a dispel available.
