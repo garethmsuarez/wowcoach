@@ -87,7 +87,7 @@ Decisions (2026-11-27):
    - `timed` / `upgrades`, enemies and forces per pull (summons excluded), segments, and forces at each boss.
    - Synthetic log: a summon in a pull, a key over its timer, trash after the last boss.
    - The golden snapshot stays on `PackChoice::None` (no forces). A second snapshot runs the synthetic log with a small fixture pack that has forces and a timer.
-3. **Top-run reference.** `wcl::reference`, `--compare-top N` with cache and point budget, and `FightReport.reference`.
+3. **Top-run reference.** *(done; see "PR 3 findings")* `wcl::reference`, `--compare-top N` with cache and point budget, and `FightReport.reference`.
    - Offline tests on a trimmed saved response; one manual live run.
 4. **Rules + report.** Timer, Route, Segments and overshoot. The HTML route table and pull columns.
    - Golden updated, then a smoke run over your logs with `--compare-top 5`. Hand-check the +14 Murder Row segment 3 claim against the raw log.
@@ -117,6 +117,15 @@ Decisions (2026-11-27):
   - The kick plan now sees the six Shade Caster pulls as one pack.
   - The key is completed, and a trash pull follows the last boss.
   - With no pack the title is "Completed". `tests/golden/mplus-route.json` runs the same log with `tests/fixtures/synthetic-pack.toml`, and the key is "Depleted", 34 s over a 540 s timer.
+
+## PR 3 findings
+
+- **Cost:** the live `--compare-top 5` over the 13 local logs compared 18 completed keys against 70 public runs in 302 points, about 4 per run. The run from the cache cost 22 points (the ranking lookups) and gave identical results.
+- **The cache is game data only:** pull windows with encounter IDs, and kills as NPC ID and time. Forces are computed at report time from the current pack.
+- **The numbers match the probe.** Top +14 Murder Row runs killed the bosses at a median 348 / 564 / 863 / 1173 s, with 36.3 / 40.3 / 76.9 / 101.5% forces. Yours: 476 / 776 / 1358 / 1850 s, with 35.4 / 39.4 / 76.5 / 103.8%.
+- **Same route, slower execution, again:** in both +13 Kings' Rest keys, your forces at the bosses equal the top runs' (23.7 / 70.2 / 96.5%). The gap is combat time: segment 2 (to Mchimba) took 510–638 s of combat against the top runs' 372.
+- **Known limit:** public runs only log deaths, so Kings' Rest's Shadow of Zul is missing from their forces (96.5% at the end against your 101.5%). PR 4's overshoot rule should judge against 100%, not against the top runs' final forces.
+- **Segment matching:** segments line up by their bosses' encounter IDs. A boss the top runs never killed, or a trailing trash segment they don't have, gets no reference.
 
 ## Verification
 - CI as always, with the golden snapshots (without and with forces).

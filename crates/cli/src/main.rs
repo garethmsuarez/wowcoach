@@ -48,6 +48,16 @@ struct OutOpts {
     /// Debugging: write every hostile debuff on the group and how it ended (JSON)
     #[arg(long, hide = true, value_name = "PATH")]
     dump_dispels: Option<PathBuf>,
+    /// M+: compare each key with the top N public runs of its dungeon and
+    /// level on Warcraft Logs (~5 points per run, cached; needs WCL_CLIENT_ID
+    /// and WCL_CLIENT_SECRET)
+    #[cfg(feature = "wcl")]
+    #[arg(long, default_value_t = 0, value_name = "N")]
+    compare_top: usize,
+    /// Most Warcraft Logs points --compare-top may spend in this run
+    #[cfg(feature = "wcl")]
+    #[arg(long, default_value_t = 1000.0, value_name = "POINTS")]
+    compare_max_points: f64,
 }
 
 impl OutOpts {
@@ -466,6 +476,127 @@ fn season_suggest(a: SuggestArgs) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// `~/.cache/wowcoach` (or `$XDG_CACHE_HOME/wowcoach`).
+#[cfg(feature = "wcl")]
+fn cache_root() -> PathBuf {
+    std::env::var_os("XDG_CACHE_HOME")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))
+        .unwrap_or_else(std::env::temp_dir)
+        .join("wowcoach")
+}
+
+/// `--compare-top N`: line each completed M+ key up with the top N public
+/// runs of its dungeon and level. Runs are cached as game data only
+/// (`compare/v1-{code}-{fight}.json`), so a re-run costs a couple of points.
+#[cfg(feature = "wcl")]
+fn attach_top_runs(
+    fights: &mut [analysis::FightReport],
+    cfg: &Config,
+    o: &OutOpts,
+) -> anyhow::Result<()> {
+    use wowcoach_core::reference::{self, RefRun};
+    if o.compare_top == 0 {
+        return Ok(());
+    }
+    let Some(pack) = cfg.knowledge.pack.as_ref() else {
+        eprintln!("--compare-top needs a season pack (dungeons and forces); skipped.");
+        return Ok(());
+    };
+    let (Ok(id), Ok(secret)) = (
+        std::env::var("WCL_CLIENT_ID"),
+        std::env::var("WCL_CLIENT_SECRET"),
+    ) else {
+        anyhow::bail!("--compare-top needs WCL_CLIENT_ID and WCL_CLIENT_SECRET (env or ./.env)");
+    };
+    let cache = cache_root().join("compare");
+    eprintln!(
+        "Comparing with top public runs on Warcraft Logs (cache: {})...",
+        cache.display()
+    );
+    let client = wcl::net::Client::connect(&id, &secret)?;
+    let (spent0, limit, _) = client.rate_limit()?;
+    let ceiling = (spent0 + o.compare_max_points).min(limit * 0.9);
+    let encounters = client.zone_encounters()?;
+    let mut memo: std::collections::HashMap<(u32, u32), Vec<RefRun>> = Default::default();
+    let mut out_of_points = false;
+    for f in fights.iter_mut() {
+        let FightKind::MythicPlus {
+            map_id,
+            level,
+            success: true,
+            bosses,
+            ..
+        } = &f.kind
+        else {
+            continue;
+        };
+        let (map_id, level) = (*map_id, *level);
+        let Some(d) = pack.dungeon_by_map(map_id) else {
+            continue;
+        };
+        let Some((_, enc)) = encounters
+            .iter()
+            .find(|(n, id)| n.eq_ignore_ascii_case(&d.name) && *id % 10_000 == d.map_id)
+        else {
+            eprintln!("  {}: not found on Warcraft Logs, skipped", d.name);
+            continue;
+        };
+        if !memo.contains_key(&(*enc, level)) && !out_of_points {
+            let mut keys: Vec<wcl::RankedKey> = vec![];
+            for page in 1..=3 {
+                let (ranked, more) = client.top_keys(*enc, Some(level), page)?;
+                keys.extend(ranked.into_iter().filter(|k| k.level == level));
+                if keys.len() >= o.compare_top || !more {
+                    break;
+                }
+            }
+            keys.truncate(o.compare_top);
+            let mut runs = vec![];
+            for k in &keys {
+                let path = cache.join(format!("v1-{}-{}.json", k.code, k.fight_id));
+                if let Some(r) = std::fs::read_to_string(&path)
+                    .ok()
+                    .and_then(|t| serde_json::from_str::<RefRun>(&t).ok())
+                {
+                    runs.push(r);
+                    continue;
+                }
+                let (spent, _, reset) = client.rate_limit()?;
+                if spent + 15.0 > ceiling {
+                    eprintln!(
+                        "  Stopping: {spent:.0} of {limit:.0} Warcraft Logs points used this hour (budget {ceiling:.0}); resets in {} min. Re-run later: fetched runs are cached.",
+                        reset / 60
+                    );
+                    out_of_points = true;
+                    break;
+                }
+                match wcl::net::ref_run(&client, &k.code, k.fight_id) {
+                    Ok(r) => {
+                        std::fs::create_dir_all(&cache)?;
+                        std::fs::write(&path, serde_json::to_string(&r)?)?;
+                        runs.push(r);
+                    }
+                    Err(e) => eprintln!("    skipped {}:{}: {e:#}", k.code, k.fight_id),
+                }
+            }
+            memo.insert((*enc, level), runs);
+        }
+        let runs = memo.get(&(*enc, level)).map(Vec::as_slice).unwrap_or(&[]);
+        let table = pack.forces(map_id);
+        let forces = (d.forces_total > 0).then_some((d.forces_total, &table));
+        f.reference = reference::summarize(runs, level, bosses, &f.segments, forces);
+        eprintln!(
+            "  {}: compared with {} top +{level} run(s)",
+            f.title,
+            runs.len()
+        );
+    }
+    let (spent, _, _) = client.rate_limit()?;
+    eprintln!("Warcraft Logs points used: {:.0}", spent - spent0);
+    Ok(())
+}
+
 #[cfg(feature = "wcl")]
 fn suggest_from_wcl(
     a: &SuggestArgs,
@@ -482,13 +613,10 @@ fn suggest_from_wcl(
     ) else {
         anyhow::bail!("--wcl / --wcl-top need WCL_CLIENT_ID and WCL_CLIENT_SECRET (env or ./.env)");
     };
-    let cache = a.cache_dir.clone().unwrap_or_else(|| {
-        std::env::var_os("XDG_CACHE_HOME")
-            .map(PathBuf::from)
-            .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".cache")))
-            .unwrap_or_else(std::env::temp_dir)
-            .join("wowcoach/suggest")
-    });
+    let cache = a
+        .cache_dir
+        .clone()
+        .unwrap_or_else(|| cache_root().join("suggest"));
     eprintln!(
         "Connecting to Warcraft Logs (evidence cache: {})...",
         cache.display()
@@ -765,10 +893,12 @@ enum Cmd {
 
 fn finish(
     source: String,
-    fights: Vec<analysis::FightReport>,
+    #[allow(unused_mut)] mut fights: Vec<analysis::FightReport>,
     cfg: &Config,
     o: &OutOpts,
 ) -> anyhow::Result<()> {
+    #[cfg(feature = "wcl")]
+    attach_top_runs(&mut fights, cfg, o)?;
     let rep = wowcoach_core::build_report(source, fights, cfg);
     if let Some(p) = &o.dump_casts {
         let all: Vec<_> = rep
