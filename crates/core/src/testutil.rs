@@ -205,6 +205,53 @@ impl Log {
             },
         )
     }
+    /// An aura from `src` fades from `dst`.
+    pub fn fade(&mut self, ts: i64, src: &Unit, dst: &Unit, id: u32, is_buff: bool) -> &mut Self {
+        self.push(
+            ts,
+            Some(src),
+            Some(dst),
+            Kind::AuraRemoved {
+                spell: spell(id, "aura"),
+                is_buff,
+            },
+        )
+    }
+    /// Damage of a given school, with `dst`'s max HP in the advanced info.
+    #[allow(clippy::too_many_arguments)]
+    pub fn hit(
+        &mut self,
+        ts: i64,
+        src: &Unit,
+        dst: &Unit,
+        id: u32,
+        school: u32,
+        amount: u64,
+        max_hp: u64,
+    ) -> &mut Self {
+        self.push(
+            ts,
+            Some(src),
+            Some(dst),
+            Kind::Damage {
+                spell: Spell {
+                    school,
+                    ..spell(id, &format!("Spell {id}"))
+                },
+                amount,
+                overkill: 0,
+                absorbed: 0,
+                periodic: false,
+                info: Some(AdvInfo {
+                    guid: dst.guid.clone(),
+                    owner_guid: "0000000000000000".into(),
+                    hp: max_hp / 2,
+                    max_hp,
+                    pos: None,
+                }),
+            },
+        )
+    }
     /// `src` dispels aura `removed_id` from `dst`.
     pub fn dispel(
         &mut self,

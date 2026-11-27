@@ -3,8 +3,12 @@
 
 use crate::config::Config;
 pub use casts::{CastOutcome, CastRecord, ReadyKicker, missed_priority, wasted_kicks};
+pub use defensives::{
+    DefensiveUse, EnemySummon, GroupDefensive, ReadyDefensive, Spike, SpikeSpell, TankHit,
+};
 
 mod casts;
+mod defensives;
 use crate::model::*;
 use crate::specs::{Role, spec_info};
 use serde::{Deserialize, Serialize};
@@ -53,7 +57,7 @@ pub struct RecapLine {
     pub hp_pct_after: Option<f64>,
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug, Default)]
 pub struct DeathReport {
     pub player: String,
     pub at_s: f64,
@@ -66,9 +70,16 @@ pub struct DeathReport {
     pub pull: Option<usize>,
     /// Raid wipe: died after the wipe was effectively called (cascade noise).
     pub wipe_cascade: bool,
+    /// `damage_last_5s` as a share of the player's max HP, when known.
+    pub damage_last_5s_frac: Option<f64>,
+    /// Personal defensives the player had used earlier in the fight that were
+    /// off cooldown a moment before the death.
+    pub defensives_ready: Vec<ReadyDefensive>,
+    /// Defensive and mitigation buffs up on the player when they died.
+    pub defensives_active: Vec<String>,
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug, Default)]
 pub struct PullReport {
     pub index: usize,
     pub start_s: f64,
@@ -82,6 +93,18 @@ pub struct PullReport {
     pub casts_stopped: u32,
     pub casters_killed: u32,
     pub priority_completed: u32,
+    /// Group damage spikes, tank-buster hits on tanks, and those hits with no
+    /// mitigation or defensive up that works against them.
+    pub spikes: u32,
+    pub tank_hits: u32,
+    pub tank_hits_unmitigated: u32,
+    /// Lust: available when the pull started (a lust class in the group, nobody
+    /// Sated; judged up to `LUST_LEAD_MS` before the first hit, since lust goes
+    /// out just before), seconds of the pull it was available, and whether it
+    /// was cast (in that lead-in or during the pull).
+    pub lust_ready_at_start: bool,
+    pub lust_ready_s: f64,
+    pub lust_used: bool,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -215,6 +238,17 @@ pub struct FightReport {
     /// (thousands per key); rules and the HTML report read it.
     #[serde(skip)]
     pub casts: Vec<CastRecord>,
+    /// Defensive uses, group damage spikes, tank-buster hits and enemy
+    /// summons. Not part of the report output; rules read them
+    /// (`analyze --dump-defensives` writes them for debugging).
+    #[serde(skip)]
+    pub defensive_uses: Vec<DefensiveUse>,
+    #[serde(skip)]
+    pub spikes: Vec<Spike>,
+    #[serde(skip)]
+    pub tank_hits: Vec<TankHit>,
+    #[serde(skip)]
+    pub enemy_summons: Vec<EnemySummon>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -333,7 +367,10 @@ struct FightBuilder {
     open_boss: Option<(String, i64, u32)>,
     enemy_extra: HashMap<u32, EX>,
     casts: casts::Tracker,
+    defs: defensives::Tracker,
     deaths: Vec<DeathReport>,
+    /// (ts, guid) of each entry in `deaths`.
+    death_at: Vec<(i64, String)>,
     /// hostile cast bars in progress: (caster guid, spell id) -> start ts
     enemy_pending: HashMap<(String, u32), i64>,
 }
@@ -355,6 +392,9 @@ pub fn difficulty_name(id: u32) -> String {
     }
     .to_string()
 }
+
+/// Lust cast this long before a pull's first hit still belongs to that pull.
+pub const LUST_LEAD_MS: i64 = 10_000;
 
 fn secs(ms: i64) -> f64 {
     ms as f64 / 1000.0
@@ -438,7 +478,9 @@ impl FightBuilder {
             open_boss: None,
             enemy_extra: HashMap::new(),
             casts: casts::Tracker::default(),
+            defs: defensives::Tracker::default(),
             deaths: vec![],
+            death_at: vec![],
             enemy_pending: HashMap::new(),
         }
     }
@@ -529,6 +571,17 @@ impl FightBuilder {
                 specs,
                 priority: &priority,
                 stoppable: &stoppable,
+            },
+        );
+        let tank_buster = |id: u32| cfg.has_tag(id, crate::season::Tag::TankBuster);
+        self.defs.feed(
+            e,
+            &defensives::Ctx {
+                owners,
+                specs,
+                tank_buster: &tank_buster,
+                sated: &g.sated_aura_ids,
+                deferred: &g.deferred_damage_spell_ids,
             },
         );
         match &e.kind {
@@ -797,9 +850,13 @@ impl FightBuilder {
                         recap,
                         pull: pull_idx,
                         wipe_cascade: false,
+                        damage_last_5s_frac: None,
+                        defensives_ready: vec![],
+                        defensives_active: vec![],
                     };
                     p.recent.clear();
                     self.deaths.push(report);
+                    self.death_at.push((ts, d.guid.clone()));
                 } else if d.is_hostile_npc()
                     && let Some(cp) = &mut self.cur_pull
                 {
@@ -1050,6 +1107,32 @@ impl FightBuilder {
             p.priority_missed = missed_priority(&cast_records, &p.name).len() as u32;
             p.wasted_kicks = wasted_kicks(&cast_records, &p.name).len() as u32;
         }
+        let def_out = self.defs.finish(
+            &defensives::Fin {
+                fight_start: start,
+                end_ts,
+                spike_window_ms: cfg.general.spike_window_ms,
+                spike_frac: cfg.general.spike_frac,
+                deaths: self.death_at.clone(),
+                pulls: self.pulls.iter().map(|p| (p.start, p.end)).collect(),
+            },
+            specs,
+        );
+        // Lust usually goes out just before the first hit, so a pull starts
+        // up to LUST_LEAD_MS early for lust (never before the previous pull ended).
+        let lust: Vec<(bool, i64, bool)> = self
+            .pulls
+            .iter()
+            .enumerate()
+            .map(|(i, p)| {
+                let prev_end = if i == 0 { start } else { self.pulls[i - 1].end };
+                let lead = (p.start - LUST_LEAD_MS).max(prev_end).min(p.start);
+                let (ready_at_lead, _) = self.defs.lust_window(lead, p.end, specs, &self.lust);
+                let (_, ready_ms) = self.defs.lust_window(p.start, p.end, specs, &self.lust);
+                let used = self.lust.iter().any(|t| *t >= lead && *t <= p.end);
+                (ready_at_lead, ready_ms, used)
+            })
+            .collect();
         let count = |i: usize, f: &dyn Fn(&CastRecord) -> bool| {
             cast_records
                 .iter()
@@ -1073,11 +1156,38 @@ impl FightBuilder {
                 priority_completed: count(i + 1, &|c| {
                     c.priority && c.outcome == CastOutcome::Completed
                 }),
+                spikes: def_out
+                    .spikes
+                    .iter()
+                    .filter(|s| s.pull == Some(i + 1))
+                    .count() as u32,
+                tank_hits: def_out
+                    .tank_hits
+                    .iter()
+                    .filter(|h| h.pull == Some(i + 1))
+                    .count() as u32,
+                tank_hits_unmitigated: def_out
+                    .tank_hits
+                    .iter()
+                    .filter(|h| {
+                        h.pull == Some(i + 1) && h.mitigation.is_empty() && h.defensives.is_empty()
+                    })
+                    .count() as u32,
+                lust_ready_at_start: lust[i].0,
+                lust_ready_s: secs(lust[i].1),
+                lust_used: lust[i].2,
             })
             .collect();
         let mut deaths = std::mem::take(&mut self.deaths);
-        for d in deaths.iter_mut() {
+        for (d, (ts, guid)) in deaths.iter_mut().zip(&self.death_at) {
             d.pull = d.pull.map(|i| i + 1);
+            let (ready, active) = self.defs.at_death(guid, *ts, start);
+            d.defensives_ready = ready;
+            d.defensives_active = active;
+            d.damage_last_5s_frac = self
+                .defs
+                .max_hp(guid)
+                .map(|m| d.damage_last_5s as f64 / m as f64);
         }
         // On a raid wipe, once ~a quarter of the raid is dead the pull is lost;
         // later deaths are cascade noise and shouldn't drive suggestions.
@@ -1223,6 +1333,10 @@ impl FightBuilder {
             suggestions: vec![],
             spell_evidence,
             casts: cast_records,
+            defensive_uses: def_out.uses,
+            spikes: def_out.spikes,
+            tank_hits: def_out.tank_hits,
+            enemy_summons: def_out.summons,
         }
     }
 }

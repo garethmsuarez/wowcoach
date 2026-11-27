@@ -808,3 +808,322 @@ fn evidence_counts_stops() {
     let hex = f.spell_evidence.iter().find(|e| e.spell_id == 501).unwrap();
     assert_eq!(hex.stopped, 1, "Asphyxiate stopped the Hex");
 }
+
+// ------------------------------------------------------------ defensives
+
+fn tagged(tags: &[(u32, crate::season::Tag)]) -> Config {
+    use crate::season::{Knowledge, SpellEntry};
+    let entries: Vec<SpellEntry> = tags
+        .iter()
+        .map(|(id, t)| SpellEntry {
+            ids: vec![*id],
+            tags: vec![*t],
+            ..Default::default()
+        })
+        .collect();
+    Config {
+        knowledge: Knowledge::build(None, &entries),
+        ..Config::default()
+    }
+}
+
+/// Keeps one M+ pull going from `from` to `to` (a hit every second).
+fn keep_pull(log: &mut Log, who: &Unit, mob: &Unit, from: i64, to: i64) {
+    for t in (from..=to).step_by(1000) {
+        log.damage(t, who, mob, 100, "Strike", 1);
+    }
+}
+
+#[test]
+fn defensive_buff_logged_before_its_cast_is_one_use() {
+    // Blur's buff (212800) is logged 50 ms before its cast (198589), as raw
+    // logs do. Die by the Sword's buff is its cast ID.
+    let dh = player("Dh");
+    let war = player("War");
+    let mob = enemy("Mob", 1);
+    let mut log = Log::default();
+    log.combatant(0, &dh, 577)
+        .combatant(0, &war, 71)
+        .key_start(0, "Spire", 2000, 10);
+    keep_pull(&mut log, &dh, &mob, 100, 80_000);
+    log.buff(1950, &dh, &dh, 212800, "Blur")
+        .cast(2000, &dh, 198589, "Blur")
+        .fade(12_000, &dh, &dh, 212800, true);
+    log.buff(60_000, &war, &war, 118038, "Die by the Sword")
+        .cast(60_000, &war, 118038, "Die by the Sword");
+    log.death(62_000, &war).death(70_000, &dh);
+    log.key_end(90_000, 2000, true, 90_000);
+    let f = &analyze(&log, Config::default())[0];
+    let uses: Vec<(&str, &str, &str, f64)> = f
+        .defensive_uses
+        .iter()
+        .map(|u| {
+            (
+                u.player.as_str(),
+                u.ability.as_str(),
+                u.scope.as_str(),
+                u.at_s,
+            )
+        })
+        .collect();
+    assert_eq!(
+        uses,
+        [
+            ("Dh-Realm", "Blur", "personal", 1.95),
+            ("War-Realm", "Die by the Sword", "personal", 60.0)
+        ]
+    );
+    let died = |n: &str| f.deaths.iter().find(|d| d.player == n).unwrap();
+    // The warrior died with Die by the Sword up, so it wasn't ready.
+    let w = died("War-Realm");
+    assert_eq!(w.defensives_active, ["Die by the Sword"]);
+    assert!(w.defensives_ready.is_empty());
+    // Blur (60 s) was back by the DH's death and had faded.
+    let d = died("Dh-Realm");
+    assert!(d.defensives_active.is_empty());
+    assert_eq!(
+        d.defensives_ready,
+        [ReadyDefensive {
+            player: "Dh-Realm".into(),
+            ability: "Blur".into(),
+            last_used_s: 1.95
+        }]
+    );
+}
+
+#[test]
+fn observed_reuse_shortens_a_defensive_cooldown() {
+    // Fast reused Blur after 40 s (talents), so by 82.5 s it's ready again;
+    // Slow used it once at 41 s and the table's 60 s still applies.
+    let fast = player("Fast");
+    let slow = player("Slow");
+    let mob = enemy("Mob", 1);
+    let mut log = Log::default();
+    log.combatant(0, &fast, 577)
+        .combatant(0, &slow, 577)
+        .key_start(0, "Spire", 2000, 10);
+    keep_pull(&mut log, &fast, &mob, 100, 85_000);
+    log.cast(1000, &fast, 198589, "Blur")
+        .cast(41_000, &fast, 198589, "Blur")
+        .cast(41_000, &slow, 198589, "Blur");
+    log.death(82_500, &fast).death(82_500, &slow);
+    log.key_end(90_000, 2000, true, 90_000);
+    let f = &analyze(&log, Config::default())[0];
+    let ready = |n: &str| {
+        !f.deaths
+            .iter()
+            .find(|d| d.player == n)
+            .unwrap()
+            .defensives_ready
+            .is_empty()
+    };
+    assert!(ready("Fast-Realm"));
+    assert!(!ready("Slow-Realm"));
+}
+
+#[test]
+fn spikes_record_group_defensives_used_and_ready() {
+    // Two players with 1000 HP each: losing 1000 within 5 s is a spike.
+    // Rallying Cry answers the first; by the second (after its 180 s
+    // cooldown) it's ready but unused, and the healer dies.
+    let war = player("War");
+    let heal = player("Heal");
+    let mob = enemy("Mob", 1);
+    let mut log = Log::default();
+    log.combatant(0, &war, 71)
+        .combatant(0, &heal, 264)
+        .key_start(0, "Spire", 2000, 10);
+    log.hit(500, &mob, &heal, 900, 1, 1, 1000);
+    log.cast(1000, &war, 97462, "Rallying Cry");
+    for t in [2000, 3000, 4000] {
+        log.hit(t, &mob, &war, 900, 1, 400, 1000);
+    }
+    // A small hit that's no spike.
+    log.hit(60_000, &mob, &war, 900, 1, 300, 1000);
+    for t in [200_000, 201_000, 202_000] {
+        log.hit(t, &mob, &heal, 901, 32, 400, 1000);
+    }
+    log.death(203_000, &heal);
+    log.key_end(210_000, 2000, true, 210_000);
+    let f = &analyze(&log, Config::default())[0];
+    assert_eq!(f.spikes.len(), 2, "{:?}", f.spikes);
+    let (a, b) = (&f.spikes[0], &f.spikes[1]);
+    assert_eq!(
+        a.group_used,
+        [GroupDefensive {
+            player: "War-Realm".into(),
+            ability: "Rallying Cry".into(),
+            at_s: 1.0
+        }]
+    );
+    assert!(a.group_ready.is_empty() && a.deaths.is_empty());
+    assert!((a.peak_frac - 0.6005).abs() < 1e-9, "{}", a.peak_frac);
+    assert_eq!(a.top[0].spell_id, 900);
+    assert!(b.group_used.is_empty());
+    assert_eq!(
+        b.group_ready,
+        [ReadyDefensive {
+            player: "War-Realm".into(),
+            ability: "Rallying Cry".into(),
+            last_used_s: 1.0
+        }]
+    );
+    assert_eq!(b.deaths, ["Heal-Realm"]);
+    assert_eq!((b.start_s, b.end_s), (200.0, 202.0));
+    let pulls: Vec<u32> = f.pulls.iter().map(|p| p.spikes).collect();
+    assert_eq!(pulls.iter().sum::<u32>(), 2);
+}
+
+#[test]
+fn tank_busters_check_mitigation_against_the_school() {
+    use crate::season::Tag;
+    // A Prot warrior: Shield Block (physical only) up 1-5 s, Ignore Pain up
+    // since before the key until 8 s (only its fade is logged).
+    let tank = player("Tank");
+    let mob = enemy("Boss", 1);
+    let mut log = Log::default();
+    log.combatant(0, &tank, 73).key_start(0, "Spire", 2000, 10);
+    log.buff(1000, &tank, &tank, 132404, "Shield Block");
+    log.hit(1500, &mob, &tank, 700, 1, 500, 1000) // physical
+        .hit(2000, &mob, &tank, 701, 32, 500, 1000); // shadow
+    log.fade(5000, &tank, &tank, 132404, true);
+    log.hit(6000, &mob, &tank, 700, 1, 500, 1000);
+    log.fade(8000, &tank, &tank, 190456, true);
+    log.hit(9000, &mob, &tank, 700, 1, 500, 1000);
+    log.hit(9500, &mob, &tank, 702, 1, 500, 1000); // not a tank buster
+    log.key_end(20_000, 2000, true, 20_000);
+    let cfg = tagged(&[(700, Tag::TankBuster), (701, Tag::TankBuster)]);
+    let f = &analyze(&log, cfg)[0];
+    let got: Vec<(f64, u32, Vec<&str>)> = f
+        .tank_hits
+        .iter()
+        .map(|h| {
+            (
+                h.at_s,
+                h.school,
+                h.mitigation.iter().map(String::as_str).collect(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        got,
+        [
+            (1.5, 1, vec!["Ignore Pain", "Shield Block"]),
+            (2.0, 32, vec!["Ignore Pain"]),
+            (6.0, 1, vec!["Ignore Pain"]),
+            (9.0, 1, vec![]),
+        ]
+    );
+    assert_eq!(f.pulls[0].tank_hits, 4);
+    assert_eq!(f.pulls[0].tank_hits_unmitigated, 1);
+}
+
+#[test]
+fn sated_gates_lust() {
+    // Pull 1: lust and Sated at 1.5 s, half a second before the first hit.
+    // Pull 2 (100 s): everyone Sated. Sated
+    // fades at 600 s, so pull 3 (610 s) has lust ready again.
+    let sham = player("Sham");
+    let war = player("War");
+    let mob = enemy("Mob", 1);
+    let mut log = Log::default();
+    log.combatant(0, &sham, 262)
+        .combatant(0, &war, 71)
+        .key_start(0, "Spire", 2000, 10);
+    // Lust goes out just before the first hit, as groups do.
+    log.cast(1500, &sham, 2825, "Bloodlust");
+    for p in [&sham, &war] {
+        log.debuff(1500, &sham, p, 57724, "Sated");
+    }
+    keep_pull(&mut log, &war, &mob, 2000, 10_000);
+    keep_pull(&mut log, &war, &mob, 100_000, 110_000);
+    for p in [&sham, &war] {
+        log.fade(600_000, &sham, p, 57724, false);
+    }
+    keep_pull(&mut log, &war, &mob, 610_000, 620_000);
+    log.key_end(630_000, 2000, true, 630_000);
+    let f = &analyze(&log, Config::default())[0];
+    let got: Vec<(bool, f64, bool)> = f
+        .pulls
+        .iter()
+        .map(|p| (p.lust_ready_at_start, p.lust_ready_s, p.lust_used))
+        .collect();
+    assert_eq!(
+        got,
+        [(true, 0.0, true), (false, 0.0, false), (true, 10.0, false)]
+    );
+}
+
+#[test]
+fn a_lust_cast_without_a_logged_sated_still_counts() {
+    // No Sated debuff in the log: the cast itself makes lust unavailable
+    // for 10 minutes.
+    let sham = player("Sham");
+    let mob = enemy("Mob", 1);
+    let mut log = Log::default();
+    log.combatant(0, &sham, 262).key_start(0, "Spire", 2000, 10);
+    log.cast(1500, &sham, 2825, "Bloodlust");
+    keep_pull(&mut log, &sham, &mob, 2000, 10_000);
+    keep_pull(&mut log, &sham, &mob, 100_000, 110_000);
+    // Sated (from 1.5 s) is over by this pull's lead-in at 605 s.
+    keep_pull(&mut log, &sham, &mob, 615_000, 620_000);
+    log.key_end(630_000, 2000, true, 630_000);
+    let f = &analyze(&log, Config::default())[0];
+    let got: Vec<bool> = f.pulls.iter().map(|p| p.lust_ready_at_start).collect();
+    assert_eq!(got, [true, false, true]);
+}
+
+#[test]
+fn no_lust_class_means_no_lust_available() {
+    let war = player("War");
+    let mob = enemy("Mob", 1);
+    let mut log = Log::default();
+    log.combatant(0, &war, 71).key_start(0, "Spire", 2000, 10);
+    keep_pull(&mut log, &war, &mob, 1000, 10_000);
+    log.key_end(20_000, 2000, true, 20_000);
+    let f = &analyze(&log, Config::default())[0];
+    assert!(!f.pulls[0].lust_ready_at_start);
+}
+
+#[test]
+fn enemy_totems_are_tracked_and_named_in_spikes() {
+    // A shaman drops a Magma Totem at 1 s; it hits both players (1000 HP
+    // each) for 600, a spike, and is only killed at 13 s.
+    let war = player("War");
+    let heal = player("Heal");
+    let shaman = enemy("Shaman", 1);
+    let totem = enemy("Magma Totem", 2);
+    let mut log = Log::default();
+    log.combatant(0, &war, 71)
+        .combatant(0, &heal, 264)
+        .key_start(0, "Spire", 2000, 10);
+    keep_pull(&mut log, &war, &shaman, 500, 14_000);
+    log.summon(1000, &shaman, &totem);
+    log.hit(3000, &totem, &war, 1246825, 4, 600, 1000)
+        .hit(4000, &totem, &heal, 1246825, 4, 600, 1000);
+    log.death(13_000, &totem);
+    log.key_end(20_000, 2000, true, 20_000);
+    let f = &analyze(&log, Config::default())[0];
+    let s = &f.enemy_summons;
+    assert_eq!(s.len(), 1);
+    assert_eq!(
+        (
+            s[0].name.as_str(),
+            s[0].summoner.as_str(),
+            s[0].npc,
+            s[0].killed
+        ),
+        ("Magma Totem", "Shaman", 2, true)
+    );
+    assert_eq!((s[0].start_s, s[0].end_s), (1.0, 13.0));
+    assert_eq!(s[0].damage_to_group, 1200);
+    let top = &f.spikes[0].top[0];
+    assert_eq!(
+        (
+            top.source.as_str(),
+            top.summoned_by.as_deref(),
+            top.summon_age_s
+        ),
+        ("Magma Totem", Some("Shaman"), Some(2.0))
+    );
+}
