@@ -187,6 +187,7 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
     // --- Priority kicks (M+): who could have kicked what went off
     if is_mplus {
         priority_kicks(f, out);
+        priority_stops(f, out);
     }
 
     // --- Avoidable damage
@@ -425,6 +426,53 @@ fn priority_kicks(f: &FightReport, out: &mut Vec<Suggestion>) {
         "Priority kicks",
         msg,
         "Ready = alive, with an interrupt off cooldown before the cast finished, and within its range by logged positions. The spec's main interrupt always counts; others once used this run.".into(),
+    ));
+}
+
+/// Priority casts that can also be stopped by crowd control, that went off
+/// while someone had a stop ready and in range.
+fn priority_stops(f: &FightReport, out: &mut Vec<Suggestion>) {
+    let missed: Vec<(&CastRecord, Vec<String>)> = f
+        .casts
+        .iter()
+        .filter(|c| c.priority && c.outcome == CastOutcome::Completed)
+        .map(|c| {
+            let who = c
+                .ready_stoppers
+                .iter()
+                .filter(|k| k.in_range == Some(true))
+                .map(|k| {
+                    format!(
+                        "{} ({}, {:.0} yd)",
+                        k.player,
+                        k.ability,
+                        k.distance_yd.unwrap_or_default()
+                    )
+                })
+                .collect::<Vec<_>>();
+            (c, who)
+        })
+        .filter(|(_, who)| !who.is_empty())
+        .collect();
+    if missed.is_empty() {
+        return;
+    }
+    let list = missed
+        .iter()
+        .take(LIST_MAX)
+        .map(|(c, who)| format!("{} at {}: {}", c.name, mmss(c.end_s), who.join(", ")))
+        .collect::<Vec<_>>()
+        .join("; ");
+    out.push(sugg(
+        "group",
+        Severity::Medium,
+        "Stops",
+        format!(
+            "{} priority cast(s) that crowd control also stops went off while a stop was ready: {list}{}. When kicks are down, a stun or knock does the job.",
+            missed.len(),
+            if missed.len() > LIST_MAX { "; …" } else { "" }
+        ),
+        "A stop counts once its player has used it this run. Ranges without a listed value are taken as 8 yd.".into(),
     ));
 }
 

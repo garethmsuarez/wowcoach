@@ -463,6 +463,7 @@ fn cast(name: &str, start: f64, end: f64, priority: bool, outcome: CastOutcome) 
         priority,
         outcome,
         ready_kickers: vec![],
+        ready_stoppers: vec![],
     }
 }
 
@@ -623,4 +624,30 @@ pub(crate) fn fight_for_plans(kind: FightKind) -> FightReport {
 
 pub(crate) fn player_for_plans(name: &str) -> PlayerReport {
     player(name, Role::Dps)
+}
+
+#[test]
+fn stoppable_priority_casts_with_a_stop_ready() {
+    let mut f = mplus(true, 1200.0);
+    let mut c = cast("Healing Breeze", 10.0, 12.5, true, CastOutcome::Completed);
+    c.ready_stoppers = vec![
+        ready("Monk", "Leg Sweep", 4.0, true),
+        ready("Far", "Hex", 40.0, false),
+    ];
+    f.casts = vec![
+        c,
+        cast("Arc Lightning", 30.0, 32.0, true, CastOutcome::Completed),
+    ];
+    let s = run(f, &Config::default());
+    let stops = get(&s, "group", "Stops").unwrap();
+    assert_eq!(stops.severity, Severity::Medium);
+    assert_eq!(
+        stops.message,
+        "1 priority cast(s) that crowd control also stops went off while a stop was ready: Healing Breeze at 0:12: Monk (Leg Sweep, 4 yd). When kicks are down, a stun or knock does the job."
+    );
+    assert!(
+        run(mplus(true, 1200.0), &Config::default())
+            .iter()
+            .all(|x| x.category != "Stops")
+    );
 }

@@ -45,6 +45,7 @@ Detailed plan: [`docs/milestones/m1-season-data.md`](milestones/m1-season-data.m
 - Delivered in 5 PRs: schema → sync → suggest → class tables → S2 content.
 
 ## M2: M+ kicks & stops
+**Status: done.**
 Detailed plan: [`docs/milestones/m2-kicks-and-stops.md`](milestones/m2-kicks-and-stops.md).
 - Record how each enemy cast bar ended: completed, kicked, stopped by CC, or the caster was killed.
 - Name who could have kicked a priority cast that went off: interrupt off cooldown, alive, and in range from logged positions.

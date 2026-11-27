@@ -97,6 +97,12 @@ pub struct Ability {
     /// from `ids` (Shockwave is cast as 46968 but stuns as 132168).
     #[serde(default)]
     pub aura_ids: Vec<u32>,
+    /// Stops: credited when it lands, but never suggested as an available
+    /// stop. For damage cooldowns that happen to stun (Havoc Metamorphosis'
+    /// landing) and stuns with a condition the log can't see (Rake from
+    /// stealth).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub situational: bool,
 }
 
 impl Ability {
@@ -225,6 +231,9 @@ impl ClassData {
             }
             if !a.aura_ids.is_empty() && a.kind != AbilityKind::Stop {
                 out.push(format!("{label}: aura_ids is for stops"));
+            }
+            if a.situational && a.kind != AbilityKind::Stop {
+                out.push(format!("{label}: situational is for stops"));
             }
             if (cc && a.kind != AbilityKind::Stop)
                 || (scope && a.kind != AbilityKind::Defensive)

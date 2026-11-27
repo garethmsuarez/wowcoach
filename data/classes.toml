@@ -16,6 +16,9 @@
 #                       target = friendly | enemy
 #   cdr = true          talents routinely cut the cooldown a lot; the log audit
 #                       doesn't check its reuse
+#   situational = true  (stops) credited when it lands, never suggested as
+#                       available: a damage cooldown that happens to stun, or a
+#                       stun with a condition the log can't show (stealth)
 #
 # Cooldowns are base values; talents can shorten them. For "was a defensive
 # available?" rules a base cooldown errs on the side of not blaming players.
@@ -44,6 +47,7 @@ specs = ["Frost"]
 kind = "stop"
 cc = "stun"
 cd_s = 90
+situational = true  # a damage cooldown: credited when it stops a cast, never suggested as a stop
 aura_ids = [377048]  # the Absolute Zero talent's stun; seen in logs
 
 [[ability]]
@@ -132,6 +136,7 @@ specs = ["Havoc"]
 kind = "stop"
 cc = "stun"
 cd_s = 120
+situational = true  # a damage cooldown: credited when it stops a cast, never suggested as a stop
 cdr = true
 aura_ids = [200166]  # stun on landing; seen in logs
 
@@ -261,6 +266,7 @@ specs = ["Feral"]
 kind = "stop"
 cc = "stun"
 cd_s = 1         # stuns only from stealth, so availability can't be inferred
+situational = true  # stealth only: credited when it stops a cast, never suggested as a stop
 aura_ids = [163505]  # seen in logs
 
 [[ability]]
@@ -763,6 +769,7 @@ specs = ["Retribution"]
 kind = "stop"
 cc = "stun"
 cd_s = 30
+situational = true  # a damage cooldown: credited when it stops a cast, never suggested as a stop
 aura_ids = [255941]  # seen in logs
 
 [[ability]]

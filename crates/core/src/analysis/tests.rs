@@ -750,3 +750,61 @@ fn observed_faster_reuse_counts_as_the_cooldown() {
     );
     assert_eq!(done.ready_kickers[0].ability, "Pummel");
 }
+
+#[test]
+fn ready_stoppers_for_stoppable_casts() {
+    use crate::season::{Knowledge, SpellEntry, Tag};
+    // A Windwalker monk who used Leg Sweep earlier has it ready again when a
+    // stoppable Bolt goes off; the mage never used a stop, and the Feral
+    // druid's Rake only stuns from stealth, so it's never offered.
+    let monk = player("Monk");
+    let mage = player("Mage");
+    let cat = player("Cat");
+    let mob = enemy("Caster", 1);
+    let mut log = Log::default();
+    log.combatant(0, &monk, 269)
+        .combatant(0, &mage, 62)
+        .combatant(0, &cat, 103)
+        .key_start(0, "Spire", 2000, 10);
+    log.damage(100, &monk, &mob, 100, "Strike", 1);
+    log.cast(1000, &monk, 119381, "Leg Sweep");
+    log.cast(1500, &cat, 1822, "Rake");
+    log.at(69_500, &monk, 0.0, 0.0)
+        .at(69_500, &mage, 30.0, 0.0)
+        .at(69_500, &cat, 2.0, 0.0)
+        .at(69_500, &mob, 3.0, 0.0);
+    log.cast_start(68_000, &mob, 500, "Bolt")
+        .cast(70_000, &mob, 500, "Bolt");
+    log.cast_start(71_000, &mob, 501, "Filler")
+        .cast(73_000, &mob, 501, "Filler");
+    log.key_end(80_000, 2000, true, 80_000);
+    let cfg = Config {
+        knowledge: Knowledge::build(
+            None,
+            &[SpellEntry {
+                ids: vec![500],
+                tags: vec![Tag::Stoppable],
+                ..Default::default()
+            }],
+        ),
+        ..Config::default()
+    };
+    let f = &analyze(&log, cfg)[0];
+    let bolt = f.casts.iter().find(|c| c.spell_id == 500).unwrap();
+    let stops: Vec<(&str, &str, Option<bool>)> = bolt
+        .ready_stoppers
+        .iter()
+        .map(|k| (k.player.as_str(), k.ability.as_str(), k.in_range))
+        .collect();
+    assert_eq!(stops, [("Monk-Realm", "Leg Sweep", Some(true))]);
+    let filler = f.casts.iter().find(|c| c.spell_id == 501).unwrap();
+    assert!(filler.ready_stoppers.is_empty(), "not tagged stoppable");
+}
+
+#[test]
+fn evidence_counts_stops() {
+    let (_, _, log) = outcomes_run();
+    let f = &analyze(&log, Config::default())[0];
+    let hex = f.spell_evidence.iter().find(|e| e.spell_id == 501).unwrap();
+    assert_eq!(hex.stopped, 1, "Asphyxiate stopped the Hex");
+}
