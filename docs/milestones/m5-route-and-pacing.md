@@ -83,7 +83,7 @@ Decisions (2026-11-27):
 1. **Data: forces in the pack.** *(done; see "PR 1 findings")* The `[[npc]]` / `forces_total` format and validation, `season forces --mdt` and `--check`.
    - Import all 8 dungeons, then run `--check` over your logs and propose the Den of Nalorakk and Kings' Rest fixes for review.
    - Credit MDT in the pack header. `CLAUDE.md` gets a note on the source and the licence.
-2. **Analysis: timed fix, pulls, segments, forces.** No new advice beyond the Timer fix.
+2. **Analysis: timed fix, pulls, segments, forces.** *(done; see "PR 2 findings")* No new advice beyond the Timer fix.
    - `timed` / `upgrades`, enemies and forces per pull (summons excluded), segments, and forces at each boss.
    - Synthetic log: a summon in a pull, a key over its timer, trash after the last boss.
    - The golden snapshot stays on `PackChoice::None` (no forces). A second snapshot runs the synthetic log with a small fixture pack that has forces and a timer.
@@ -101,6 +101,22 @@ Decisions (2026-11-27):
 - **Kings' Rest's Shadow of Zul** (30 forces) is beaten to 1 HP and scripted away without a `UNIT_DIED`, about a minute before King Dazar. The check now counts a hostile unit whose last known health was ≤ 1% and that never logs a death as killed (`DEFEATED_HP_FRAC`). That moves Kings' Rest from 96.5% to 101.5% and changes no other key. PR 2's kill counting uses the same rule.
 - **`season forces LOGS`** over the 13 local logs: all 18 completed keys reach 100.0% (Murder Row +2) to 115.3% (Murder Row +7, a Bargain key). No aliases are proposed and no NPC is missing.
 - **Alias proposals stay for the case the check was built for:** a forces NPC that never died in a short key, and a killed same-name NPC with no forces. `--write` adds them as `source = "log"` entries with a note, for review. Unit tests cover it; your logs don't need it.
+
+## PR 2 findings
+
+- **Timed:** the titles of your 19 keys now match the run scores. Exactly the three keys with lower scores say "Depleted":
+  - Voidscar Arena +13 (1805 s against 1800)
+  - Murder Row +7 (2072 against 2040)
+  - Kings' Rest +13 (2060 against 1980)
+
+  The rest read "Timed +1" / "+2" / "+3" ("+3 The Blinding Vale" in 871 s against a 1080 s +3 timer), and the abandoned keys read "Abandoned". On the WCL path, `success` now means completed as well (`kill` or a bonus), so a depleted public run isn't mistaken for an abandoned one.
+- **Forces at each boss** match the probe. The +14 Murder Row reads 35 / 39 / 76 / 104%. Segment ends equal the `ENCOUNTER_END` times to the millisecond (Kystia at 475.899 s).
+- **Busy pulls are mostly forces mobs:** Demon Fly ×20 (1 forces each) and Unleashed Imp ×24 (2 each) in Murder Row are in MDT's table. Summoned units worth nothing (Spire Totem in the synthetic log) stay out of `npcs` but still count in `enemies_killed`.
+- **Pulls across a boss kill:** in the +14 Murder Row, pull 9 starts in segment 3, runs through Xathuux and on into trash. It's listed in segment 3, and segment 4's combat time includes its tail. That's why `combat_s` comes from pull windows, not from pulls.
+- **Synthetic log:** mobs now share one NPC ID per kind (Shade Caster 210001, Spire Guardian 210002, Spire Totem 210003), as in the game, so forces work.
+  - The kick plan now sees the six Shade Caster pulls as one pack.
+  - The key is completed, and a trash pull follows the last boss.
+  - With no pack the title is "Completed". `tests/golden/mplus-route.json` runs the same log with `tests/fixtures/synthetic-pack.toml`, and the key is "Depleted", 34 s over a 540 s timer.
 
 ## Verification
 - CI as always, with the golden snapshots (without and with forces).

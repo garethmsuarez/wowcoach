@@ -462,7 +462,12 @@ pub fn html(r: &Report) -> String {
 
     for f in &r.fights {
         let ok = match &f.kind {
-            FightKind::Raid { success, .. } | FightKind::MythicPlus { success, .. } => *success,
+            FightKind::Raid { success, .. } => *success,
+            // Timed (beat the pack's timer); a completed key with no known
+            // timer counts as ok.
+            FightKind::MythicPlus {
+                success, upgrades, ..
+            } => upgrades.map_or(*success, |u| u > 0),
         };
         let high = f
             .suggestions

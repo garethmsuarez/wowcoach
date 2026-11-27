@@ -1,0 +1,249 @@
+{
+  "forces_pct": 104.0,
+  "kind": {
+    "affixes": [
+      10,
+      9,
+      147
+    ],
+    "bosses": [
+      {
+        "encounter_id": 3003,
+        "end_s": 244.0,
+        "forces_pct": 48.0,
+        "lust_ready": false,
+        "lust_used": false,
+        "name": "Spire Boss 3",
+        "start_s": 169.0,
+        "success": true
+      },
+      {
+        "encounter_id": 3007,
+        "end_s": 539.0,
+        "forces_pct": 96.0,
+        "lust_ready": false,
+        "lust_used": false,
+        "name": "Spire Boss 7",
+        "start_s": 464.0,
+        "success": true
+      }
+    ],
+    "level": 12,
+    "map_id": 2649,
+    "success": true,
+    "time_s": 574.0,
+    "timer_s": 540.0,
+    "type": "MythicPlus",
+    "upgrades": 0,
+    "zone": "Test Spire"
+  },
+  "pulls": [
+    {
+      "boss": null,
+      "end_s": 43.6,
+      "enemies_killed": 4,
+      "forces": 16,
+      "forces_pct": 16.0,
+      "index": 1,
+      "npcs": [
+        {
+          "count": 4,
+          "id": 210001,
+          "name": "Shade Caster"
+        }
+      ],
+      "start_s": 4.05
+    },
+    {
+      "boss": null,
+      "end_s": 98.6,
+      "enemies_killed": 4,
+      "forces": 16,
+      "forces_pct": 16.0,
+      "index": 2,
+      "npcs": [
+        {
+          "count": 4,
+          "id": 210001,
+          "name": "Shade Caster"
+        }
+      ],
+      "start_s": 59.05
+    },
+    {
+      "boss": null,
+      "end_s": 153.6,
+      "enemies_killed": 4,
+      "forces": 16,
+      "forces_pct": 16.0,
+      "index": 3,
+      "npcs": [
+        {
+          "count": 4,
+          "id": 210001,
+          "name": "Shade Caster"
+        }
+      ],
+      "start_s": 114.05
+    },
+    {
+      "boss": "Spire Boss 3",
+      "end_s": 243.5,
+      "enemies_killed": 1,
+      "forces": 0,
+      "forces_pct": 0.0,
+      "index": 4,
+      "npcs": [
+        {
+          "count": 1,
+          "id": 210002,
+          "name": "Spire Guardian"
+        }
+      ],
+      "start_s": 169.05
+    },
+    {
+      "boss": null,
+      "end_s": 298.6,
+      "enemies_killed": 4,
+      "forces": 16,
+      "forces_pct": 16.0,
+      "index": 5,
+      "npcs": [
+        {
+          "count": 4,
+          "id": 210001,
+          "name": "Shade Caster"
+        }
+      ],
+      "start_s": 259.05
+    },
+    {
+      "boss": null,
+      "end_s": 393.6,
+      "enemies_killed": 4,
+      "forces": 16,
+      "forces_pct": 16.0,
+      "index": 6,
+      "npcs": [
+        {
+          "count": 4,
+          "id": 210001,
+          "name": "Shade Caster"
+        }
+      ],
+      "start_s": 354.05
+    },
+    {
+      "boss": null,
+      "end_s": 448.6,
+      "enemies_killed": 5,
+      "forces": 16,
+      "forces_pct": 16.0,
+      "index": 7,
+      "npcs": [
+        {
+          "count": 4,
+          "id": 210001,
+          "name": "Shade Caster"
+        }
+      ],
+      "start_s": 409.05
+    },
+    {
+      "boss": "Spire Boss 7",
+      "end_s": 538.6,
+      "enemies_killed": 1,
+      "forces": 0,
+      "forces_pct": 0.0,
+      "index": 8,
+      "npcs": [
+        {
+          "count": 1,
+          "id": 210002,
+          "name": "Spire Guardian"
+        }
+      ],
+      "start_s": 464.05
+    },
+    {
+      "boss": null,
+      "end_s": 561.1,
+      "enemies_killed": 2,
+      "forces": 8,
+      "forces_pct": 8.0,
+      "index": 9,
+      "npcs": [
+        {
+          "count": 2,
+          "id": 210001,
+          "name": "Shade Caster"
+        }
+      ],
+      "start_s": 554.0
+    }
+  ],
+  "segments": [
+    {
+      "boss": "Spire Boss 3",
+      "boss_s": 75.0,
+      "combat_s": 197.5,
+      "death_penalty_s": 75.0,
+      "deaths": 5,
+      "downtime_s": 46.5,
+      "end_s": 244.0,
+      "forces_pct": 48.0,
+      "index": 1,
+      "pulls": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "start_s": 0.0
+    },
+    {
+      "boss": "Spire Boss 7",
+      "boss_s": 75.0,
+      "combat_s": 198.3,
+      "death_penalty_s": 105.0,
+      "deaths": 7,
+      "downtime_s": 96.7,
+      "end_s": 539.0,
+      "forces_pct": 96.0,
+      "index": 2,
+      "pulls": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "start_s": 244.0
+    },
+    {
+      "boss": null,
+      "boss_s": 0.0,
+      "combat_s": 9.3,
+      "death_penalty_s": 0.0,
+      "deaths": 0,
+      "downtime_s": 25.7,
+      "end_s": 574.0,
+      "forces_pct": 104.0,
+      "index": 3,
+      "pulls": [
+        9
+      ],
+      "start_s": 539.0
+    }
+  ],
+  "timer": [
+    {
+      "category": "Timer",
+      "evidence": "Biggest levers, in order: deaths, downtime, then damage output.",
+      "message": "Key depleted: 9:34 against a 9:00 timer, 0:34 over.",
+      "scope": "group",
+      "severity": "Medium"
+    }
+  ],
+  "title": "+12 Test Spire — Depleted"
+}

@@ -1,0 +1,21 @@
+# Season pack for the synthetic log (samples/mplus.txt): a timer and enemy
+# forces for "Test Spire", so the route snapshot (golden.rs) covers timed /
+# upgrades, forces per pull and segments. Made-up numbers.
+
+[season]
+key = "synthetic"
+name = "Synthetic"
+
+[[dungeon]]
+name = "Test Spire"
+keystone_id = 525
+map_id = 2649
+timer_s = [540, 432, 324]
+forces_total = 100
+
+[[npc]]
+id = 210001
+name = "Shade Caster"
+map_id = 2649
+forces = 4
+source = "manual"

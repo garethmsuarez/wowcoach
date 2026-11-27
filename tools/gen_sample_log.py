@@ -88,8 +88,14 @@ def player(i, name, spec, flags):
     return {"guid": f"Player-1305-0{i:07X}", "name": f"{name}-Realm", "flags": flags, "spec": spec, "hp": 600000, "maxhp": 600000}
 
 
+# One NPC ID per kind of mob, as in the game (forces are per NPC ID); the
+# spawn part of the GUID tells mobs apart.
+NPC_IDS = {"Shade Caster": 210001, "Spire Guardian": 210002, "Spire Totem": 210003}
+
+
 def npc(i, name, maxhp):
-    return {"guid": f"Creature-0-1-2-3-{100000 + i}-00{i:08X}", "name": name, "flags": "0xa48", "hp": maxhp, "maxhp": maxhp}
+    nid = NPC_IDS.get(name, 100000 + i)
+    return {"guid": f"Creature-0-1-2-3-{nid}-00{i:08X}", "name": name, "flags": "0xa48", "hp": maxhp, "maxhp": maxhp}
 
 
 # ---------------------------------------------------------------- M+
@@ -255,7 +261,20 @@ def mplus():
         if is_boss:
             line(t + dur, "ENCOUNTER_END", f'{3000 + pull},"Spire Boss {pull}",8,5,1,{int(dur * 1000)}')
         t += dur + (55 if pull == 4 else 15)  # one very long break
-    line(t, "CHALLENGE_MODE_END", f"2649,0,12,{int((t - 1) * 1000)},0.0,0.0")
+    # Trash after the last boss (M5), without random draws: two Shade
+    # Casters the tank kills in 8 s.
+    mobs = [npc(mob_id + k, "Shade Caster", 400_000) for k in range(2)]
+    for k, m in enumerate(mobs):
+        m["x"], m["y"] = 1.0 + k, 0.0
+    for s in range(8):
+        for m in mobs:
+            dmg(t + s, tank, m, 166, "Rotation Spell", 50_000)
+        swing(t + s + 0.1, mobs[0], tank, 8000)
+    for m in mobs:
+        died(t + 8.5, m)
+    t += 20
+    # Completed (the flag means completed, not timed).
+    line(t, "CHALLENGE_MODE_END", f"2649,1,12,{int((t - 1) * 1000)},300.0,2900.0")
 
 
 # ---------------------------------------------------------------- raid

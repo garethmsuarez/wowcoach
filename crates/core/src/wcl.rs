@@ -443,7 +443,9 @@ impl FightMeta {
         let kind = match self.keystone_level {
             Some(level) => Kind::ChallengeEnd {
                 map_id: self.map_id(),
-                success: self.keystone_bonus.map(|b| b > 0).unwrap_or(self.kill),
+                // Completed, like the raw log's flag; timed or not is
+                // judged from the time against the pack's timer.
+                success: self.kill || self.keystone_bonus.is_some_and(|b| b > 0),
                 level,
                 time_ms: self.keystone_time.unwrap_or(self.end - self.start),
             },
@@ -862,6 +864,20 @@ mod tests {
                 success: true,
                 ..
             }
+        ));
+
+        // Completed over time (bonus 0) is still completed: timed is judged
+        // later, from the time against the pack's timer.
+        let mut d = f.clone();
+        (d.kill, d.keystone_bonus) = (true, Some(0));
+        assert!(matches!(
+            d.end_event().kind,
+            Kind::ChallengeEnd { success: true, .. }
+        ));
+        (d.kill, d.keystone_bonus) = (false, None);
+        assert!(matches!(
+            d.end_event().kind,
+            Kind::ChallengeEnd { success: false, .. }
         ));
 
         // Without gameZone, the map ID is decoded from the keystone encounter ID.

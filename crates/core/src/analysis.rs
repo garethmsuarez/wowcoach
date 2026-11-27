@@ -11,11 +11,12 @@ pub use defensives::{
 mod casts;
 mod defensives;
 mod dispels;
+mod route;
 use crate::model::*;
 use crate::specs::{Role, spec_info};
 pub use dispels::{DebuffOutcome, DebuffRecord, ReadyDispeller, SHORT_DISPEL_CD_S};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 
 // ---------------------------------------------------------------- reports
 
@@ -35,8 +36,17 @@ pub enum FightKind {
         map_id: u32,
         level: u32,
         affixes: Vec<u32>,
+        /// The key was completed (not abandoned). Whether it was in time is
+        /// `upgrades`.
         success: bool,
+        /// Key time as logged, death penalties included.
         time_s: f64,
+        /// The pack's +1 timer.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        timer_s: Option<f64>,
+        /// Completed keys with a known timer: 0 depleted, else +1 to +3.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        upgrades: Option<u8>,
         bosses: Vec<BossMarker>,
     },
 }
@@ -55,6 +65,9 @@ pub struct BossMarker {
     pub lust_ready: bool,
     #[serde(default)]
     pub lust_used: bool,
+    /// Enemy forces killed by the end of this boss fight, % of the total.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub forces_pct: Option<f64>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -121,6 +134,46 @@ pub struct PullReport {
     /// were dispelled.
     pub priority_debuffs: u32,
     pub priority_dispelled: u32,
+    /// Enemies killed, by NPC, busiest first. Summoned units worth no forces
+    /// are left out.
+    pub npcs: Vec<PullNpc>,
+    /// Enemy forces from this pull's kills, and as % of the dungeon's total
+    /// (with a forces table in the pack).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub forces: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub forces_pct: Option<f64>,
+}
+
+#[derive(Serialize, Clone, Debug, Default, PartialEq)]
+pub struct PullNpc {
+    pub id: u32,
+    pub name: String,
+    pub count: u32,
+}
+
+/// A stretch of a key ending at a boss kill (or, for trash after the last
+/// boss, at the end of the key).
+#[derive(Serialize, Clone, Debug, Default, PartialEq)]
+pub struct Segment {
+    pub index: usize,
+    /// The boss killed at its end; None for trash after the last boss (or a
+    /// key with no boss kill).
+    pub boss: Option<String>,
+    pub start_s: f64,
+    pub end_s: f64,
+    /// Pull numbers that started in it.
+    pub pulls: Vec<usize>,
+    /// In combat (trash and boss), of which the boss fight, and out of combat.
+    pub combat_s: f64,
+    pub boss_s: f64,
+    pub downtime_s: f64,
+    pub deaths: u32,
+    /// Timer cost of those deaths (deaths × the key's penalty).
+    pub death_penalty_s: f64,
+    /// Enemy forces killed by its end, % of the total (with a forces table).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub forces_pct: Option<f64>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -257,6 +310,12 @@ pub struct FightReport {
     pub players: Vec<PlayerReport>,
     pub deaths: Vec<DeathReport>,
     pub pulls: Vec<PullReport>,
+    /// M+: the key split at boss kills.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub segments: Vec<Segment>,
+    /// M+: enemy forces killed by the end, % of the total (with a forces table).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub forces_pct: Option<f64>,
     pub downtime_s: f64,
     pub enemy_casts: Vec<EnemyCastReport>,
     pub enemy_damage: Vec<EnemySpellReport>,
@@ -411,6 +470,7 @@ struct FightBuilder {
     casts: casts::Tracker,
     defs: defensives::Tracker,
     dispels: dispels::Tracker,
+    route: route::Tracker,
     deaths: Vec<DeathReport>,
     /// (ts, guid) of each entry in `deaths`.
     death_at: Vec<(i64, String)>,
@@ -523,6 +583,7 @@ impl FightBuilder {
             casts: casts::Tracker::default(),
             defs: defensives::Tracker::default(),
             dispels: dispels::Tracker::default(),
+            route: route::Tracker::default(),
             deaths: vec![],
             death_at: vec![],
             enemy_pending: HashMap::new(),
@@ -621,6 +682,7 @@ impl FightBuilder {
             },
         );
         self.dispels.feed(e, &dispels::Ctx { owners });
+        self.route.feed(e);
         let tank_buster = |id: u32| cfg.has_tag(id, crate::season::Tag::TankBuster);
         self.defs.feed(
             e,
@@ -1212,6 +1274,61 @@ impl FightBuilder {
                 (ready_at_lead, ready_ms, used)
             })
             .collect();
+        // Kills, and enemy forces when the pack has a table for this dungeon.
+        let kills = self.route.finish();
+        let (forces_total, forces_of) = match &self.seed {
+            Seed::MPlus { map_id, .. } => cfg
+                .knowledge
+                .pack
+                .as_ref()
+                .and_then(|p| {
+                    let d = p.dungeon_by_map(*map_id)?;
+                    (d.forces_total > 0).then(|| (d.forces_total, p.forces(*map_id)))
+                })
+                .unwrap_or_default(),
+            Seed::Raid { .. } => Default::default(),
+        };
+        let has_forces = forces_total > 0;
+        let worth = |k: &route::Kill| forces_of.get(&k.npc).copied().unwrap_or(0);
+        let pct = |n: u32| 100.0 * n as f64 / forces_total.max(1) as f64;
+        let forces_by = |t: i64| kills.iter().filter(|k| k.ts <= t).map(worth).sum::<u32>();
+        // A kill belongs to the last pull that started before it (deaths can
+        // be logged just after the pull's last hit).
+        let kill_pull: Vec<Option<usize>> = kills
+            .iter()
+            .map(|k| {
+                self.pulls
+                    .iter()
+                    .rposition(|p| p.start <= k.ts)
+                    .map(|i| i + 1)
+            })
+            .collect();
+        let pull_npcs = |i: usize| -> Vec<PullNpc> {
+            let mut by: BTreeMap<u32, PullNpc> = BTreeMap::new();
+            for (k, _) in kills
+                .iter()
+                .zip(&kill_pull)
+                .filter(|(k, p)| **p == Some(i) && !(k.summoned && worth(k) == 0))
+            {
+                let n = by.entry(k.npc).or_insert_with(|| PullNpc {
+                    id: k.npc,
+                    name: k.name.clone(),
+                    count: 0,
+                });
+                n.count += 1;
+            }
+            let mut v: Vec<PullNpc> = by.into_values().collect();
+            v.sort_by(|a, b| b.count.cmp(&a.count).then(a.id.cmp(&b.id)));
+            v
+        };
+        let pull_forces = |i: usize| -> u32 {
+            kills
+                .iter()
+                .zip(&kill_pull)
+                .filter(|(_, p)| **p == Some(i))
+                .map(|(k, _)| worth(k))
+                .sum()
+        };
         let count = |i: usize, f: &dyn Fn(&CastRecord) -> bool| {
             cast_records
                 .iter()
@@ -1267,6 +1384,9 @@ impl FightBuilder {
                             && matches!(d.outcome, DebuffOutcome::Dispelled { .. })
                     })
                     .count() as u32,
+                npcs: pull_npcs(i + 1),
+                forces: has_forces.then(|| pull_forces(i + 1)),
+                forces_pct: has_forces.then(|| pct(pull_forces(i + 1))),
             })
             .collect();
         let mut deaths = std::mem::take(&mut self.deaths);
@@ -1333,29 +1453,46 @@ impl FightBuilder {
                 map_id,
                 level,
                 affixes,
-            } => FightKind::MythicPlus {
-                zone,
-                map_id,
-                level,
-                affixes,
-                success: end.success.unwrap_or(false),
-                time_s: end.time_ms.map(secs).unwrap_or(dur),
-                bosses: self
-                    .bosses
-                    .iter()
-                    .map(|b| {
-                        let at = start + (b.start_s * 1000.0).round() as i64;
-                        let until = start + (b.end_s * 1000.0).round() as i64;
-                        let lead = at - LUST_LEAD_MS;
-                        BossMarker {
-                            lust_ready: self.defs.lust_window(lead, until, specs, &self.lust).0,
-                            lust_used: self.lust.iter().any(|t| *t >= lead && *t <= until)
-                                || self.defs.sated_began(lead, until, specs),
-                            ..b.clone()
-                        }
-                    })
-                    .collect(),
-            },
+            } => {
+                let timer: Option<Vec<u32>> = cfg
+                    .knowledge
+                    .pack
+                    .as_ref()
+                    .and_then(|p| p.dungeon_by_map(map_id))
+                    .map(|d| d.timer_s.clone())
+                    .filter(|t| !t.is_empty());
+                let success = end.success.unwrap_or(false);
+                let time_s = end.time_ms.map(secs).unwrap_or(dur);
+                FightKind::MythicPlus {
+                    zone,
+                    map_id,
+                    level,
+                    affixes,
+                    success,
+                    time_s,
+                    timer_s: timer.as_ref().map(|t| t[0] as f64),
+                    upgrades: timer
+                        .as_ref()
+                        .filter(|_| success)
+                        .map(|t| upgrades(time_s, t)),
+                    bosses: self
+                        .bosses
+                        .iter()
+                        .map(|b| {
+                            let at = start + (b.start_s * 1000.0).round() as i64;
+                            let until = start + (b.end_s * 1000.0).round() as i64;
+                            let lead = at - LUST_LEAD_MS;
+                            BossMarker {
+                                lust_ready: self.defs.lust_window(lead, until, specs, &self.lust).0,
+                                lust_used: self.lust.iter().any(|t| *t >= lead && *t <= until)
+                                    || self.defs.sated_began(lead, until, specs),
+                                forces_pct: has_forces.then(|| pct(forces_by(until))),
+                                ..b.clone()
+                            }
+                        })
+                        .collect(),
+                }
+            }
         };
         let death_penalty_s = match &kind {
             FightKind::MythicPlus { affixes, .. } => Some(
@@ -1384,16 +1521,16 @@ impl FightBuilder {
                 zone,
                 level,
                 success,
+                upgrades,
                 ..
             } => {
-                format!(
-                    "+{level} {zone} — {}",
-                    if *success {
-                        "Timed"
-                    } else {
-                        "Depleted / abandoned"
-                    }
-                )
+                let how = match (success, upgrades) {
+                    (false, _) => "Abandoned".to_string(),
+                    (true, Some(0)) => "Depleted".to_string(),
+                    (true, Some(n)) => format!("Timed +{n}"),
+                    (true, None) => "Completed".to_string(),
+                };
+                format!("+{level} {zone} — {how}")
             }
         };
         let lust_at_s = self.lust.iter().map(|t| secs(t - start)).collect();
@@ -1455,6 +1592,21 @@ impl FightBuilder {
             })
             .collect();
         spell_evidence.sort_by_key(|e| e.spell_id);
+        let segments = if is_mplus {
+            segments(
+                &self.bosses,
+                &self.pulls,
+                &windows,
+                &deaths,
+                start,
+                dur,
+                death_penalty_s.unwrap_or(0.0),
+                &|t| has_forces.then(|| pct(forces_by(t))),
+            )
+        } else {
+            vec![]
+        };
+        let forces_pct = (is_mplus && has_forces).then(|| pct(forces_by(end_ts)));
         FightReport {
             start_ts: start,
             title,
@@ -1464,6 +1616,8 @@ impl FightBuilder {
             players,
             deaths,
             pulls,
+            segments,
+            forces_pct,
             downtime_s,
             enemy_casts,
             enemy_damage,
@@ -1479,6 +1633,73 @@ impl FightBuilder {
             enemy_summons: def_out.summons,
         }
     }
+}
+
+/// Upgrade levels for a completed key: how many of the timers (+1, +2, +3)
+/// its time beat.
+fn upgrades(time_s: f64, timers: &[u32]) -> u8 {
+    timers
+        .iter()
+        .take(3)
+        .filter(|t| time_s <= **t as f64)
+        .count() as u8
+}
+
+/// Split a key at boss kills; trash after the last kill is a final segment.
+#[allow(clippy::too_many_arguments)]
+fn segments(
+    bosses: &[BossMarker],
+    pulls: &[Pull],
+    windows: &[(i64, i64)],
+    deaths: &[DeathReport],
+    start: i64,
+    dur: f64,
+    penalty_s: f64,
+    forces_at: &dyn Fn(i64) -> Option<f64>,
+) -> Vec<Segment> {
+    let ms = |s: f64| start + (s * 1000.0).round() as i64;
+    let mut cuts: Vec<(f64, Option<String>)> = bosses
+        .iter()
+        .filter(|b| b.success)
+        .map(|b| (b.end_s, Some(b.name.clone())))
+        .collect();
+    let last = cuts.last().map_or(0.0, |c| c.0);
+    if pulls.iter().any(|p| secs(p.start - start) > last) {
+        cuts.push((dur, None));
+    }
+    let mut out = vec![];
+    let mut from = 0.0;
+    for (i, (to, boss)) in cuts.into_iter().enumerate() {
+        let (a, b) = (ms(from), ms(to));
+        let combat_ms = measure(&intersect(windows, &[(a, b)]));
+        let boss_ms: i64 = bosses
+            .iter()
+            .filter(|x| x.start_s >= from && x.end_s <= to)
+            .map(|x| ms(x.end_s) - ms(x.start_s))
+            .sum();
+        let in_seg = |t: f64| if i == 0 { t <= to } else { t > from && t <= to };
+        let n_deaths = deaths.iter().filter(|d| in_seg(d.at_s)).count() as u32;
+        out.push(Segment {
+            index: i + 1,
+            boss,
+            start_s: from,
+            end_s: to,
+            pulls: pulls
+                .iter()
+                .enumerate()
+                .filter(|(_, p)| p.start >= a && p.start <= b)
+                .map(|(j, _)| j + 1)
+                .collect(),
+            combat_s: secs(combat_ms),
+            boss_s: secs(boss_ms),
+            downtime_s: secs((b - a - combat_ms).max(0)),
+            deaths: n_deaths,
+            death_penalty_s: n_deaths as f64 * penalty_s,
+            forces_pct: forces_at(b),
+        });
+        from = to;
+    }
+    out
 }
 
 struct EndInfo {
@@ -1635,6 +1856,7 @@ impl Analyzer {
                                 success: *success,
                                 lust_ready: false,
                                 lust_used: false,
+                                forces_pct: None,
                             });
                         }
                     } else {

@@ -292,9 +292,16 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
 
     // --- M+ pacing
     if let FightKind::MythicPlus {
-        success, time_s, ..
+        success,
+        time_s,
+        timer_s,
+        upgrades,
+        ..
     } = &f.kind
     {
+        // Timed when it beat the pack's timer; with no timer known, a
+        // completed key counts as timed.
+        let timed = upgrades.map_or(*success, |u| u > 0);
         let down_frac = if f.duration_s > 0.0 {
             f.downtime_s / f.duration_s
         } else {
@@ -315,7 +322,7 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
                 .join(", ");
             out.push(sugg(
                 "group",
-                if !success { Severity::High } else { Severity::Medium },
+                if !timed { Severity::High } else { Severity::Medium },
                 "Pacing",
                 format!(
                     "{:.0}% of the run ({}) was spent out of combat. Chain pulls, pre-position, and drink less. Longest gaps: {list}.",
@@ -351,12 +358,22 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
                 String::new(),
             ));
         }
-        if !success {
+        if !timed {
+            let msg = match (success, timer_s) {
+                (false, _) => format!("Key abandoned after {}.", mmss(*time_s)),
+                (true, Some(t)) => format!(
+                    "Key depleted: {} against a {} timer, {} over.",
+                    mmss(*time_s),
+                    mmss(*t),
+                    mmss(time_s - t)
+                ),
+                (true, None) => format!("Key not timed ({}).", mmss(*time_s)),
+            };
             out.push(sugg(
                 "group",
                 Severity::Medium,
                 "Timer",
-                format!("Key not timed ({}).", mmss(*time_s)),
+                msg,
                 if death_penalty(f, cfg) > 0.0 {
                     "Biggest levers, in order: deaths, downtime, then damage output.".into()
                 } else {

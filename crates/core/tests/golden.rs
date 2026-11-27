@@ -13,17 +13,23 @@ fn repo_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
-fn check(sample: &str, config: &str, golden: &str) {
+fn report(sample: &str, config: &str, pack: PackChoice) -> wowcoach_core::report::Report {
     let root = repo_root();
-    // No season pack: the synthetic log uses made-up spell IDs, and the snapshot
-    // must not change whenever the real pack gains entries.
-    let cfg = Config::load_with(Some(&root.join(config)), PackChoice::None).expect("load config");
+    let cfg = Config::load_with(Some(&root.join(config)), pack).expect("load config");
     let file = std::fs::File::open(root.join(sample)).expect("open sample log");
     let (_, fights, cfg) =
         wowcoach_core::analyze_log(std::io::BufReader::new(file), cfg).expect("parse");
-    let report = wowcoach_core::build_report(sample.to_string(), fights, &cfg);
-    let actual = serde_json::to_string_pretty(&report).unwrap() + "\n";
+    wowcoach_core::build_report(sample.to_string(), fights, &cfg)
+}
 
+fn check(sample: &str, config: &str, golden: &str) {
+    // No season pack: the synthetic log uses made-up spell IDs, and the snapshot
+    // must not change whenever the real pack gains entries.
+    let r = report(sample, config, PackChoice::None);
+    compare(serde_json::to_string_pretty(&r).unwrap() + "\n", golden);
+}
+
+fn compare(actual: String, golden: &str) {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests/golden")
         .join(golden);
@@ -64,6 +70,43 @@ fn check(sample: &str, config: &str, golden: &str) {
 #[test]
 fn mplus_sample_report() {
     check("samples/mplus.txt", "samples/wowcoach.toml", "mplus.json");
+}
+
+/// The route fields with a pack that has a timer and enemy forces for the
+/// synthetic dungeon (tests/fixtures/synthetic-pack.toml): timed / upgrades,
+/// kills and forces per pull, segments, and the Timer advice.
+#[test]
+fn mplus_route_with_forces() {
+    let pack = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/synthetic-pack.toml");
+    let r = report(
+        "samples/mplus.txt",
+        "samples/wowcoach.toml",
+        PackChoice::File(pack),
+    );
+    let v = serde_json::to_value(&r).unwrap();
+    let f = &v["fights"][0];
+    let route = serde_json::json!({
+        "title": f["title"],
+        "kind": f["kind"],
+        "forces_pct": f["forces_pct"],
+        "pulls": f["pulls"].as_array().unwrap().iter().map(|p| serde_json::json!({
+            "index": p["index"],
+            "start_s": p["start_s"],
+            "end_s": p["end_s"],
+            "boss": p["boss"],
+            "enemies_killed": p["enemies_killed"],
+            "npcs": p["npcs"],
+            "forces": p["forces"],
+            "forces_pct": p["forces_pct"],
+        })).collect::<Vec<_>>(),
+        "segments": f["segments"],
+        "timer": f["suggestions"].as_array().unwrap().iter()
+            .filter(|s| s["category"] == "Timer").collect::<Vec<_>>(),
+    });
+    compare(
+        serde_json::to_string_pretty(&route).unwrap() + "\n",
+        "mplus-route.json",
+    );
 }
 
 /// The same knowledge expressed as a season pack must coach exactly like the
