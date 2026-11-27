@@ -188,6 +188,7 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
     if is_mplus {
         priority_kicks(f, out);
         priority_stops(f, out);
+        defensives::apply(f, cfg, out);
     }
 
     // --- Avoidable damage
@@ -837,6 +838,7 @@ pub fn apply_progression(p: &mut ProgressionReport) {
     p.suggestions = out;
 }
 
+mod defensives;
 pub mod kickplan;
 
 #[cfg(test)]

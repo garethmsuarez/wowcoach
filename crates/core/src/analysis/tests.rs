@@ -894,18 +894,25 @@ fn defensive_buff_logged_before_its_cast_is_one_use() {
 #[test]
 fn observed_reuse_shortens_a_defensive_cooldown() {
     // Fast reused Blur after 40 s (talents), so by 82.5 s it's ready again;
-    // Slow used it once at 41 s and the table's 60 s still applies.
+    // Slow used it once at 41 s and the table's 60 s still applies. Twice
+    // used both charges 9 s apart: that's no 9 s cooldown, so at 30 s it's
+    // still down.
     let fast = player("Fast");
     let slow = player("Slow");
+    let twice = player("Twice");
     let mob = enemy("Mob", 1);
     let mut log = Log::default();
     log.combatant(0, &fast, 577)
         .combatant(0, &slow, 577)
+        .combatant(0, &twice, 577)
         .key_start(0, "Spire", 2000, 10);
     keep_pull(&mut log, &fast, &mob, 100, 85_000);
     log.cast(1000, &fast, 198589, "Blur")
         .cast(41_000, &fast, 198589, "Blur")
         .cast(41_000, &slow, 198589, "Blur");
+    log.cast(11_000, &twice, 198589, "Blur")
+        .cast(20_000, &twice, 198589, "Blur")
+        .death(30_000, &twice);
     log.death(82_500, &fast).death(82_500, &slow);
     log.key_end(90_000, 2000, true, 90_000);
     let f = &analyze(&log, Config::default())[0];
@@ -919,6 +926,7 @@ fn observed_reuse_shortens_a_defensive_cooldown() {
     };
     assert!(ready("Fast-Realm"));
     assert!(!ready("Slow-Realm"));
+    assert!(!ready("Twice-Realm"));
 }
 
 #[test]
@@ -1071,6 +1079,20 @@ fn a_lust_cast_without_a_logged_sated_still_counts() {
     let f = &analyze(&log, Config::default())[0];
     let got: Vec<bool> = f.pulls.iter().map(|p| p.lust_ready_at_start).collect();
     assert_eq!(got, [true, false, true]);
+}
+
+#[test]
+fn a_sated_debuff_counts_as_a_lust_use() {
+    // Drums (not in lust_spell_ids) only show up as the Sated debuff.
+    let war = player("War");
+    let mob = enemy("Mob", 1);
+    let mut log = Log::default();
+    log.combatant(0, &war, 71).key_start(0, "Spire", 2000, 10);
+    keep_pull(&mut log, &war, &mob, 1000, 10_000);
+    log.debuff(3000, &war, &war, 57723, "Exhaustion");
+    log.key_end(20_000, 2000, true, 20_000);
+    let f = &analyze(&log, Config::default())[0];
+    assert!(f.pulls[0].lust_used);
 }
 
 #[test]

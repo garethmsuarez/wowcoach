@@ -654,3 +654,309 @@ fn stoppable_priority_casts_with_a_stop_ready() {
             .all(|x| x.category != "Stops")
     );
 }
+
+// ------------------------------------------------------------ defensives (M+)
+
+fn rd(player: &str, ability: &str, last: f64) -> ReadyDefensive {
+    ReadyDefensive {
+        player: player.into(),
+        ability: ability.into(),
+        last_used_s: last,
+    }
+}
+
+fn died_with(player: &str, at_s: f64, pull: usize, ready: Vec<ReadyDefensive>) -> DeathReport {
+    DeathReport {
+        pull: Some(pull),
+        damage_last_5s_frac: Some(0.9),
+        defensives_ready: ready,
+        ..death(player, at_s, "Slam", 5)
+    }
+}
+
+#[test]
+fn deaths_with_a_defensive_ready() {
+    let mut f = mplus(true, 1200.0);
+    f.deaths = vec![
+        died_with("Alpha", 100.0, 1, vec![rd("Alpha", "Blur", 30.0)]),
+        // Not a burst death: a defensive wasn't the answer.
+        DeathReport {
+            damage_last_5s_frac: Some(0.1),
+            ..died_with("Bravo", 110.0, 1, vec![rd("Bravo", "Barkskin", 30.0)])
+        },
+        died_with("Charlie", 120.0, 1, vec![]),
+        // A wiping pull: only its first two deaths are judged.
+        died_with("Tank", 300.0, 2, vec![rd("Tank", "Shield Wall", 10.0)]),
+        died_with("Healer", 301.0, 2, vec![]),
+        died_with("Alpha", 302.0, 2, vec![rd("Alpha", "Blur", 200.0)]),
+        died_with("Bravo", 303.0, 2, vec![rd("Bravo", "Barkskin", 200.0)]),
+    ];
+    let s = run(f, &Config::default());
+    let a = get(&s, "Alpha", "Defensives").unwrap();
+    assert_eq!(
+        a.message,
+        "Died at 1:40 with Blur ready (last used at 0:30). Press it when your health starts dropping, not after."
+    );
+    assert_eq!(a.severity, Severity::Medium);
+    assert_eq!(
+        get(&s, "Tank", "Defensives").unwrap().message,
+        "Died at 5:00 with Shield Wall ready (last used at 0:10). Press it when your health starts dropping, not after."
+    );
+    assert!(get(&s, "Bravo", "Defensives").is_none());
+    assert!(get(&s, "Charlie", "Defensives").is_none());
+    // Raid pulls keep their current rules until M7.
+    let mut raid = fight(
+        FightKind::Raid {
+            encounter_id: 1,
+            name: "Boss".into(),
+            difficulty: "Mythic".into(),
+            group_size: 20,
+            success: false,
+            boss_hp_pct: Some(50.0),
+        },
+        300.0,
+    );
+    raid.deaths = vec![died_with(
+        "Alpha",
+        100.0,
+        1,
+        vec![rd("Alpha", "Blur", 30.0)],
+    )];
+    assert!(get(&run(raid, &Config::default()), "Alpha", "Defensives").is_none());
+}
+
+fn spike(start: f64, peak: f64, top: &str, ready: Vec<ReadyDefensive>) -> Spike {
+    Spike {
+        pull: Some(1),
+        start_s: start,
+        end_s: start + 3.0,
+        damage: 1,
+        peak_frac: peak,
+        top: vec![SpikeSpell {
+            spell_id: 1,
+            name: top.into(),
+            source: "Brute".into(),
+            source_npc: 1,
+            damage: 1,
+            summoned_by: None,
+            summon_age_s: None,
+        }],
+        deaths: vec![],
+        group_used: vec![],
+        group_ready: ready,
+    }
+}
+
+#[test]
+fn spikes_with_a_group_defensive_ready() {
+    let mut f = mplus(true, 1200.0);
+    let answered = Spike {
+        group_used: vec![GroupDefensive {
+            player: "Tank".into(),
+            ability: "Rallying Cry".into(),
+            at_s: 50.0,
+        }],
+        ..spike(50.0, 0.9, "Slam", vec![rd("Healer", "Tranquility", 1.0)])
+    };
+    let led = Spike {
+        top: vec![SpikeSpell {
+            source: "Magma Totem".into(),
+            summoned_by: Some("Shaman".into()),
+            summon_age_s: Some(8.0),
+            ..spike(0.0, 0.0, "Searing Magma", vec![]).top[0].clone()
+        }],
+        ..spike(
+            400.0,
+            0.95,
+            "Searing Magma",
+            vec![rd("Tank", "Rallying Cry", 1.0)],
+        )
+    };
+    f.spikes = vec![
+        spike(100.0, 0.55, "Volley", vec![rd("Tank", "Rallying Cry", 1.0)]),
+        Spike {
+            deaths: vec!["Alpha".into()],
+            ..spike(200.0, 0.8, "Slam", vec![rd("Healer", "Tranquility", 1.0)])
+        },
+        answered,
+        led,
+    ];
+    let s = run(f, &Config::default());
+    let g = get(&s, "group", "Spikes").unwrap();
+    assert_eq!(g.severity, Severity::High, "a death followed one");
+    assert_eq!(
+        g.message,
+        "2 damage spike(s) went by without a group defensive while one was ready, worst first: 3:20 (pull 1, 80% of group HP, mostly Slam, 1 died): Tranquility (Healer); 1:40 (pull 1, 55% of group HP, mostly Volley): Rallying Cry (Tank). Agree before the key who covers which dangerous pull."
+    );
+    let mut none = mplus(true, 1200.0);
+    none.spikes = vec![spike(100.0, 0.55, "Volley", vec![])];
+    assert!(get(&run(none, &Config::default()), "group", "Spikes").is_none());
+}
+
+fn summon(name: &str, by: &str, start: f64, life: f64, killed: bool, dmg: u64) -> EnemySummon {
+    EnemySummon {
+        pull: Some(1),
+        name: name.into(),
+        npc: 1,
+        summoner: by.into(),
+        summoner_npc: 2,
+        spell: "Summon".into(),
+        start_s: start,
+        end_s: start + life,
+        killed,
+        damage_to_group: dmg,
+        healing_to_enemies: 0,
+    }
+}
+
+#[test]
+fn summons_that_lead_spikes_and_live_long() {
+    let mut f = mplus(true, 1200.0);
+    f.enemy_summons = vec![
+        summon("Magma Totem", "Shaman", 10.0, 10.0, true, 1_000_000),
+        summon("Magma Totem", "Shaman", 50.0, 12.0, true, 2_000_000),
+        summon("Magma Totem", "Shaman", 90.0, 3.0, true, 100_000),
+        summon("Magma Totem", "Shaman", 130.0, 90.0, false, 100_000),
+        // Long-lived, but never behind a spike: cleave adds.
+        summon("Hatchling", "Egg", 10.0, 30.0, true, 500_000),
+        // Killed quickly: fine.
+        summon("Volatile Totem", "Speaker", 10.0, 2.0, true, 400_000),
+        // Decorative: no damage.
+        summon("Spirit", "Shaman", 10.0, 99.0, false, 0),
+    ];
+    let mut s = spike(55.0, 0.7, "Searing Magma", vec![]);
+    s.top[0].source = "Magma Totem".into();
+    s.top[0].summoned_by = Some("Shaman".into());
+    let mut v = spike(56.0, 0.7, "Searing Magma", vec![]);
+    v.top[0].source = "Volatile Totem".into();
+    v.top[0].summoned_by = Some("Speaker".into());
+    f.spikes = vec![s, v];
+    let out = run(f, &Config::default());
+    let g = get(&out, "group", "Summons").unwrap();
+    assert_eq!(g.severity, Severity::High);
+    assert_eq!(
+        g.message,
+        "Enemy summons stayed up too long. Magma Totem (Shaman): 4 summoned, killed after a median 10 s (2 lived over 6 s, 1 not killed); 3.20M damage to the group, leading 1 damage spike(s). Kill them as soon as they drop."
+    );
+    // Spikes led by summons aren't defensive advice.
+    assert!(get(&out, "group", "Spikes").is_none());
+}
+
+fn tank_hit(name: &str, at: f64, mitigation: &[&str]) -> TankHit {
+    TankHit {
+        pull: Some(1),
+        at_s: at,
+        tank: "Tank".into(),
+        spell_id: 1,
+        name: name.into(),
+        school: 1,
+        amount: 1,
+        mitigation: mitigation.iter().map(|m| m.to_string()).collect(),
+        defensives: vec![],
+    }
+}
+
+#[test]
+fn tank_busters_without_mitigation() {
+    let mut f = mplus(true, 1200.0);
+    f.players[0].class = "Warrior".into();
+    f.players[0].spec = "Protection".into();
+    f.tank_hits = vec![
+        tank_hit("Brutalize", 10.0, &[]),
+        tank_hit("Brutalize", 30.0, &[]),
+        tank_hit("Head Bash", 50.0, &[]),
+        tank_hit("Head Bash", 70.0, &["Ignore Pain"]),
+    ];
+    let s = run(f, &Config::default());
+    let t = get(&s, "Tank", "Tank busters").unwrap();
+    assert_eq!(t.severity, Severity::High);
+    assert_eq!(
+        t.message,
+        "3 of 4 tank busters hit with no active mitigation or defensive up: Brutalize ×2, Head Bash ×1. Have Shield Block (physical only) or Ignore Pain up before they land."
+    );
+    // One bare hit in ten is noise.
+    let mut ok = mplus(true, 1200.0);
+    ok.tank_hits = (0..10)
+        .map(|i| {
+            tank_hit(
+                "Brutalize",
+                i as f64,
+                if i == 0 { &[] } else { &["Ignore Pain"] },
+            )
+        })
+        .collect();
+    assert!(get(&run(ok, &Config::default()), "Tank", "Tank busters").is_none());
+}
+
+fn mplus_with_bosses(bosses: Vec<BossMarker>) -> FightReport {
+    let mut f = mplus(true, 1800.0);
+    if let FightKind::MythicPlus { bosses: b, .. } = &mut f.kind {
+        *b = bosses;
+    }
+    f
+}
+
+fn boss(name: &str, at: f64, ready: bool, used: bool) -> BossMarker {
+    BossMarker {
+        name: name.into(),
+        encounter_id: 1,
+        start_s: at,
+        end_s: at + 90.0,
+        success: true,
+        lust_ready: ready,
+        lust_used: used,
+    }
+}
+
+#[test]
+fn lust_on_bosses_idle_trash_and_first_pull() {
+    let mut f = mplus_with_bosses(vec![
+        boss("First", 300.0, true, true),
+        boss("Second", 900.0, true, false),
+        boss("Third", 1500.0, false, false),
+    ]);
+    let p = |i: usize, spikes: u32, ready: f64, used: bool| PullReport {
+        lust_used: used,
+        lust_ready_s: ready,
+        spikes,
+        ..pull(i, 0.0, 1.0, 0)
+    };
+    f.pulls = vec![
+        p(1, 1, 0.0, true),
+        // Lust back after 10 min: 100 + 90 s ready on spiking trash, then a
+        // quiet pull that doesn't count.
+        p(2, 2, 100.0, false),
+        p(3, 0, 300.0, false),
+        p(4, 1, 90.0, false),
+        p(5, 1, 50.0, true),
+    ];
+    let s = run(f, &Config::default());
+    let lust: Vec<(&str, Severity)> = s
+        .iter()
+        .filter(|x| x.category == "Lust")
+        .map(|x| (x.message.as_str(), x.severity))
+        .collect();
+    assert_eq!(
+        lust,
+        [
+            (
+                "Lust was available and not used on: Second at 15:00.",
+                Severity::Medium
+            ),
+            (
+                "Lust sat unused through dangerous trash: 3:10 of combat over pulls 2–4. Using it on a pack that's spiking the group saves time and deaths.",
+                Severity::Medium
+            ),
+            (
+                "Lust went out on the first pull. That's a valid choice for a fast start; it means any boss in the next 10 minutes goes without it.",
+                Severity::Low
+            ),
+        ]
+    );
+    let quiet = mplus_with_bosses(vec![boss("First", 300.0, false, false)]);
+    assert!(
+        run(quiet, &Config::default())
+            .iter()
+            .all(|x| x.category != "Lust")
+    );
+}

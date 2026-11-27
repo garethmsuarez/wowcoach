@@ -4,7 +4,8 @@
 use crate::config::Config;
 pub use casts::{CastOutcome, CastRecord, ReadyKicker, missed_priority, wasted_kicks};
 pub use defensives::{
-    DefensiveUse, EnemySummon, GroupDefensive, ReadyDefensive, Spike, SpikeSpell, TankHit,
+    DEATH_REACTION_MS, DefensiveUse, EnemySummon, GroupDefensive, ReadyDefensive, Spike,
+    SpikeSpell, TankHit,
 };
 
 mod casts;
@@ -46,6 +47,12 @@ pub struct BossMarker {
     pub start_s: f64,
     pub end_s: f64,
     pub success: bool,
+    /// Lust available when the boss was engaged (judged up to `LUST_LEAD_MS`
+    /// before, like pulls), and cast in that lead-in or during the fight.
+    #[serde(default)]
+    pub lust_ready: bool,
+    #[serde(default)]
+    pub lust_used: bool,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -101,7 +108,8 @@ pub struct PullReport {
     /// Lust: available when the pull started (a lust class in the group, nobody
     /// Sated; judged up to `LUST_LEAD_MS` before the first hit, since lust goes
     /// out just before), seconds of the pull it was available, and whether it
-    /// was cast (in that lead-in or during the pull).
+    /// was used in that lead-in or during the pull (a listed lust cast, or a
+    /// Sated debuff landing on the group, which also catches drums).
     pub lust_ready_at_start: bool,
     pub lust_ready_s: f64,
     pub lust_used: bool,
@@ -1129,7 +1137,8 @@ impl FightBuilder {
                 let lead = (p.start - LUST_LEAD_MS).max(prev_end).min(p.start);
                 let (ready_at_lead, _) = self.defs.lust_window(lead, p.end, specs, &self.lust);
                 let (_, ready_ms) = self.defs.lust_window(p.start, p.end, specs, &self.lust);
-                let used = self.lust.iter().any(|t| *t >= lead && *t <= p.end);
+                let used = self.lust.iter().any(|t| *t >= lead && *t <= p.end)
+                    || self.defs.sated_began(lead, p.end, specs);
                 (ready_at_lead, ready_ms, used)
             })
             .collect();
@@ -1235,7 +1244,21 @@ impl FightBuilder {
                 affixes,
                 success: end.success.unwrap_or(false),
                 time_s: end.time_ms.map(secs).unwrap_or(dur),
-                bosses: self.bosses.clone(),
+                bosses: self
+                    .bosses
+                    .iter()
+                    .map(|b| {
+                        let at = start + (b.start_s * 1000.0).round() as i64;
+                        let until = start + (b.end_s * 1000.0).round() as i64;
+                        let lead = at - LUST_LEAD_MS;
+                        BossMarker {
+                            lust_ready: self.defs.lust_window(lead, until, specs, &self.lust).0,
+                            lust_used: self.lust.iter().any(|t| *t >= lead && *t <= until)
+                                || self.defs.sated_began(lead, until, specs),
+                            ..b.clone()
+                        }
+                    })
+                    .collect(),
             },
         };
         let title = match &kind {
@@ -1493,6 +1516,8 @@ impl Analyzer {
                                 start_s: secs(st - start),
                                 end_s: secs(ts - start),
                                 success: *success,
+                                lust_ready: false,
+                                lust_used: false,
                             });
                         }
                     } else {

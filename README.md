@@ -52,6 +52,9 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 | M+ priority kicks: each priority cast that went off, and who had a kick ready and in range | Priority casts you could have kicked; kicks wasted on filler while a priority cast went off |
 | M+ kick plan per dungeon: who should cover which priority casters, from all keys of that dungeon | |
 | M+ stops: priority casts that crowd control also stops (`stoppable`), that went off while someone had a stun, knock or incapacitate ready and in range | |
+| M+ spikes: the group losing half its HP within 5 s while a group defensive was ready and unused, naming who held it | M+: died with a personal defensive ready (used earlier in the key, off cooldown) |
+| M+ summons: enemy totems and adds that led a spike or healed enemies and lived too long | M+ tanks: tank busters taken with no active mitigation or defensive up |
+| M+ lust: a boss engaged with lust available and unused, lust idle through spiking trash, first-pull lust (info) | |
 | Avoidable damage (config) + uneven-hit heuristic | Estimated casting activity (GCD coverage while alive) |
 | Bloodlust missing / late | DPS vs group DPS median with likely causes |
 | M+ pacing: downtime %, longest gaps, near-wipe pulls | Healer overheal %, zero interrupts in M+ |
@@ -173,6 +176,17 @@ in [`docs/milestones/m1-season-data.md`](docs/milestones/m1-season-data.md).
   named. Stops the log can't judge are credited when they land but never named as
   available: damage cooldowns that happen to stun (`situational` in `data/classes.toml`)
   and Rake, which only stuns from stealth.
+- **Defensives ready:** like stops, a defensive only counts once its player used it in that key,
+  and its cooldown is the class table's (or the player's own faster reuse, ignoring reuse under
+  half the cooldown, which is a second charge). In a wiping pull only the first two deaths are
+  judged, and deaths without real burst (under 20% of max HP in the last 5 s) are skipped.
+- **Spikes** count damage after absorbs, so a spike a shield soaked isn't one. Spikes led by an
+  enemy summon get "kill it" advice, not a defensive. A summon that expires isn't logged as
+  killed, so "not killed" can mean "expired".
+- **Lust** counts as available when a lust class (Shaman, Mage, Evoker, Hunter) is in the group
+  and nobody is Sated; a lust cast with no Sated logged counts as 10 minutes of Sated, and a Sated
+  debuff with no listed cast (drums) counts as a use. A Marksmanship hunter without a pet can't
+  lust but still counts.
 - The WCL adapter supports public reports (client-credentials flow) only. Private
   reports need the user OAuth flow.
 
