@@ -239,7 +239,7 @@
   "timer": [
     {
       "category": "Timer",
-      "evidence": "Biggest levers, in order: deaths, downtime, then damage output.",
+      "evidence": "Biggest levers in this key: death penalty 3:00 (12 deaths), downtime 2:48.",
       "message": "Key depleted: 9:34 against a 9:00 timer, 0:34 over.",
       "scope": "group",
       "severity": "Medium"

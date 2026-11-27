@@ -89,7 +89,7 @@ Decisions (2026-11-27):
    - The golden snapshot stays on `PackChoice::None` (no forces). A second snapshot runs the synthetic log with a small fixture pack that has forces and a timer.
 3. **Top-run reference.** *(done; see "PR 3 findings")* `wcl::reference`, `--compare-top N` with cache and point budget, and `FightReport.reference`.
    - Offline tests on a trimmed saved response; one manual live run.
-4. **Rules + report.** Timer, Route, Segments and overshoot. The HTML route table and pull columns.
+4. **Rules + report.** *(done; see "PR 4 findings")* Timer, Route, Segments and overshoot. The HTML route table and pull columns.
    - Golden updated, then a smoke run over your logs with `--compare-top 5`. Hand-check the +14 Murder Row segment 3 claim against the raw log.
 
 ## PR 1 findings
@@ -126,6 +126,22 @@ Decisions (2026-11-27):
 - **Same route, slower execution, again:** in both +13 Kings' Rest keys, your forces at the bosses equal the top runs' (23.7 / 70.2 / 96.5%). The gap is combat time: segment 2 (to Mchimba) took 510–638 s of combat against the top runs' 372.
 - **Known limit:** public runs only log deaths, so Kings' Rest's Shadow of Zul is missing from their forces (96.5% at the end against your 101.5%). PR 4's overshoot rule should judge against 100%, not against the top runs' final forces.
 - **Segment matching:** segments line up by their bosses' encounter IDs. A boss the top runs never killed, or a trailing trash segment they don't have, gets no reference.
+
+## PR 4 findings
+
+- **Rules over your 19 keys** (`--compare-top 5`, from the cache, 22 points): Timer 22 (including the margin notes on timed keys), Segments 16, Overshoot 5, Route 2. Without top runs: Pull pace 10 and Overshoot 5.
+- **The +14 Murder Row reads as the probe did.** Worst segment Zaen → Xathuux: 9:42 against 5:06 (+4:35), with combat 8:58 against 4:30, 5 deaths, and pull 9 at 7:32 (28% forces, 3.7% a minute). It was timed +1 with 1:03 to spare, 5:44 short of +2.
+- **Depleted keys name their biggest lever:**
+  - +7 Murder Row: 13 deaths and a 4:30 pull with 4% forces between Kystia and Zaen, +9:36 against the top +7 runs. It also killed 115% forces, about 1:36 of extra trash.
+  - +13 Kings' Rest: Golden Serpent → Mchimba +4:07, with 6 deaths.
+- **Two fixes from the smoke run:**
+  - A +3 Blinding Vale was called "behind" at the last boss with 103% forces, because the top +3 runs over-pulled to 112%. A boss where you already have 100% is no longer flagged, and the target is capped at 100%.
+  - Overshoot is a separate category from Route, so each reads on its own.
+- **Low keys:** the top +2/+3 runs are less tightly played. The +3 Blinding Vale beat their segment times but trailed on forces at every boss. That Route advice (pull the trash earlier) still stands.
+- **HTML:**
+  - a "Route by segment" table: your time, the top median and range, the delta, forces at the end against the top runs, combat, downtime and deaths;
+  - a "Pulls" table: kills by NPC, forces and % a minute;
+  - % forces on the timeline's boss markers.
 
 ## Verification
 - CI as always, with the golden snapshots (without and with forces).

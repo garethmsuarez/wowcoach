@@ -410,6 +410,142 @@ fn dispels_html(f: &FightReport, o: &mut String) {
     o.push_str("</table>");
 }
 
+/// M+ route: one row per segment (boss to boss), against the top runs when
+/// `--compare-top` was used, then the pulls with their kills and forces pace.
+fn route_html(f: &FightReport, o: &mut String) {
+    if f.segments.is_empty() {
+        return;
+    }
+    let r = f.reference.as_ref();
+    let rng = |s: &crate::reference::Stat| {
+        format!(
+            "{} <span class=sub>({}–{})</span>",
+            mmss(s.median),
+            mmss(s.min),
+            mmss(s.max)
+        )
+    };
+    let _ = write!(
+        o,
+        "<h3>Route by segment</h3><div class=sub>Each segment runs from one boss kill to the next. {}</div><table><tr><th>Segment</th><th>Time</th>{}<th>Forces at end</th><th>Combat</th><th>Downtime</th><th>Deaths</th></tr>",
+        match r {
+            Some(t) => format!(
+                "Top = median (range) of {} top +{} public run(s) on Warcraft Logs.",
+                t.runs.len(),
+                t.level
+            ),
+            None => "Add --compare-top 5 to compare with top public runs.".into(),
+        },
+        if r.is_some() {
+            "<th>Top</th><th>Δ</th>"
+        } else {
+            ""
+        }
+    );
+    let mut prev: Option<&str> = None;
+    for s in &f.segments {
+        let label = match (prev, s.boss.as_deref()) {
+            (None, Some(b)) => format!("start → {}", esc(b)),
+            (Some(a), Some(b)) => format!("{} → {}", esc(a), esc(b)),
+            (Some(a), None) => format!("after {}", esc(a)),
+            (None, None) => "the key".into(),
+        };
+        prev = s.boss.as_deref();
+        let t = r.and_then(|t| {
+            t.segments
+                .iter()
+                .find(|x| x.index == s.index && x.boss == s.boss)
+        });
+        let mine = s.end_s - s.start_s;
+        let top_cols = match (r, t) {
+            (Some(_), Some(t)) => {
+                let d = mine - t.duration_s.median;
+                format!(
+                    "<td class=n>{}</td><td class=n><span{}>{}{}</span></td>",
+                    rng(&t.duration_s),
+                    if d > 60.0 { " class=bad" } else { "" },
+                    if d >= 0.0 { "+" } else { "−" },
+                    mmss(d.abs())
+                )
+            }
+            (Some(_), None) => "<td></td><td></td>".into(),
+            _ => String::new(),
+        };
+        let boss_forces = r.and_then(|t| {
+            let enc = match &f.kind {
+                FightKind::MythicPlus { bosses, .. } => bosses
+                    .iter()
+                    .find(|b| b.success && Some(&b.name) == s.boss.as_ref())
+                    .map(|b| b.encounter_id),
+                _ => None,
+            }?;
+            t.bosses.iter().find(|b| b.encounter_id == enc)?.forces_pct
+        });
+        let forces = match (s.forces_pct, boss_forces) {
+            (Some(m), Some(top)) => format!(
+                "<span{}>{m:.0}%</span> <span class=sub>(top {:.0}%)</span>",
+                if top.median - m > 5.0 {
+                    " class=bad"
+                } else {
+                    ""
+                },
+                top.median
+            ),
+            (Some(m), None) => format!("{m:.0}%"),
+            _ => String::new(),
+        };
+        let vs = |mine: f64, top: Option<f64>| match top {
+            Some(t) => format!("{} <span class=sub>(top {})</span>", mmss(mine), mmss(t)),
+            None => mmss(mine),
+        };
+        let _ = write!(
+            o,
+            "<tr><td>{label}</td><td class=n>{}</td>{top_cols}<td class=n>{forces}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td></tr>",
+            mmss(mine),
+            vs(s.combat_s, t.map(|t| t.combat_s.median)),
+            vs(s.downtime_s, t.map(|t| t.downtime_s.median)),
+            if s.deaths > 0 {
+                format!(
+                    "{} <span class=sub>({})</span>",
+                    s.deaths,
+                    mmss(s.death_penalty_s)
+                )
+            } else {
+                String::new()
+            }
+        );
+    }
+    o.push_str("</table>");
+
+    o.push_str("<h3>Pulls</h3><table><tr><th>Pull</th><th>Start</th><th>Length</th><th>Killed</th><th>Forces</th><th>%/min</th></tr>");
+    for p in &f.pulls {
+        let len = p.end_s - p.start_s;
+        let killed = match &p.boss {
+            Some(b) => format!("<b>{}</b>", esc(b)),
+            None => p
+                .npcs
+                .iter()
+                .take(4)
+                .map(|n| format!("{} ×{}", esc(&n.name), n.count))
+                .collect::<Vec<_>>()
+                .join(", "),
+        };
+        let _ = write!(
+            o,
+            "<tr><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td>{killed}</td><td class=n>{}</td><td class=n>{}</td></tr>",
+            p.index,
+            mmss(p.start_s),
+            mmss(len),
+            p.forces_pct.map(|x| format!("{x:.1}%")).unwrap_or_default(),
+            match p.forces_pct {
+                Some(x) if p.boss.is_none() && len > 0.0 => format!("{:.1}", x * 60.0 / len),
+                _ => String::new(),
+            }
+        );
+    }
+    o.push_str("</table>");
+}
+
 pub fn html(r: &Report) -> String {
     let mut o = String::new();
     let _ = write!(
@@ -517,8 +653,11 @@ pub fn html(r: &Report) -> String {
             for b in bosses {
                 let _ = write!(
                     o,
-                    "<b title='{}' style='left:{:.2}%'></b>",
+                    "<b title='{}{}' style='left:{:.2}%'></b>",
                     esc(&b.name),
+                    b.forces_pct
+                        .map(|p| format!(" · {p:.0}% forces at the kill"))
+                        .unwrap_or_default(),
                     100.0 * b.start_s / f.duration_s
                 );
             }
@@ -536,6 +675,7 @@ pub fn html(r: &Report) -> String {
             priority_casts_html(f, &mut o);
             defensives_html(f, &mut o);
             dispels_html(f, &mut o);
+            route_html(f, &mut o);
         }
 
         // players

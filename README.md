@@ -56,6 +56,9 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 | M+ summons: enemy totems and adds that led a spike or healed enemies and lived too long | M+ tanks: tank busters taken with no active mitigation or defensive up |
 | M+ lust: a boss engaged with lust available and unused, lust idle through spiking trash, first-pull lust (info) | |
 | M+ dispels: priority debuffs (`dispel_priority`) that expired or were up at a death while someone had a matching dispel ready and in range | M+ dispel speed: median time to dispel priority debuffs over `dispel_slow_s`; death recaps name a priority debuff that was up |
+| M+ timer: depleted by how much or +N with the margin to the next upgrade, with the biggest levers (death penalty, downtime, slowest segment) | |
+| M+ route: forces at each boss behind the top runs (`--compare-top`), overshoot past 100% costed in time, slow-paced pulls | |
+| M+ segments (`--compare-top`): boss-to-boss stretches much slower than the top runs, split into combat, downtime and deaths, with the longest pulls | |
 | Avoidable damage (config) + uneven-hit heuristic | Estimated casting activity (GCD coverage while alive) |
 | Bloodlust missing / late | DPS vs group DPS median with likely causes |
 | M+ pacing: downtime %, longest gaps, near-wipe pulls | Healer overheal %, zero interrupts in M+ |

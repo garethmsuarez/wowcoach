@@ -1175,7 +1175,7 @@ fn death_penalty_comes_from_the_key() {
     assert!(!d.contains("added to the timer"));
     assert_eq!(
         get(&s, "group", "Timer").unwrap().evidence,
-        "Biggest levers, in order: downtime, then damage output (deaths cost no time in this key)."
+        "Deaths cost no time in this key. Biggest levers, in order: downtime, then damage output."
     );
 }
 
@@ -1206,4 +1206,232 @@ fn timer_advice_follows_upgrades_not_the_completion_flag() {
         get(&with(false, None), "group", "Timer").unwrap().message,
         "Key abandoned after 19:32."
     );
+}
+
+// ------------------------------------------------------------ pacing (M5)
+
+use crate::reference::{RefBoss, RefSegment, Stat, TopRuns};
+
+fn st(median: f64) -> Stat {
+    Stat {
+        median,
+        min: median - 10.0,
+        max: median + 10.0,
+    }
+}
+
+fn segment(index: usize, boss: Option<&str>, start: f64, end: f64, pulls: Vec<usize>) -> Segment {
+    Segment {
+        index,
+        boss: boss.map(Into::into),
+        start_s: start,
+        end_s: end,
+        pulls,
+        ..Default::default()
+    }
+}
+
+/// Two bosses at 400 s and 1000 s; segment 2 has a 450 s trash pull with
+/// 30% forces. 108% forces at the end over 900 s of trash combat.
+fn route_fight() -> FightReport {
+    let mut f = mplus(true, 1100.0);
+    if let FightKind::MythicPlus { bosses, .. } = &mut f.kind {
+        *bosses = vec![
+            BossMarker {
+                forces_pct: Some(40.0),
+                ..boss("Kystia", 310.0, false, false)
+            },
+            BossMarker {
+                forces_pct: Some(60.0),
+                ..boss("Xathuux", 910.0, false, false)
+            },
+        ];
+        bosses[0].encounter_id = 1;
+        bosses[1].encounter_id = 2;
+    }
+    f.forces_pct = Some(108.0);
+    f.downtime_s = 150.0;
+    f.pulls = vec![
+        PullReport {
+            forces_pct: Some(40.0),
+            ..pull(1, 10.0, 300.0, 0)
+        },
+        PullReport {
+            boss: Some("Kystia".into()),
+            ..pull(2, 310.0, 400.0, 0)
+        },
+        PullReport {
+            forces_pct: Some(30.0),
+            ..pull(3, 420.0, 870.0, 2)
+        },
+        PullReport {
+            boss: Some("Xathuux".into()),
+            ..pull(4, 910.0, 1000.0, 0)
+        },
+        PullReport {
+            forces_pct: Some(38.0),
+            ..pull(5, 1010.0, 1090.0, 0)
+        },
+    ];
+    f.segments = vec![
+        Segment {
+            combat_s: 380.0,
+            boss_s: 90.0,
+            downtime_s: 20.0,
+            ..segment(1, Some("Kystia"), 0.0, 400.0, vec![1, 2])
+        },
+        Segment {
+            combat_s: 540.0,
+            boss_s: 90.0,
+            downtime_s: 60.0,
+            deaths: 2,
+            death_penalty_s: 30.0,
+            ..segment(2, Some("Xathuux"), 400.0, 1000.0, vec![3, 4])
+        },
+        Segment {
+            combat_s: 80.0,
+            downtime_s: 20.0,
+            ..segment(3, None, 1000.0, 1100.0, vec![5])
+        },
+    ];
+    f
+}
+
+fn top_runs() -> TopRuns {
+    TopRuns {
+        runs: vec!["a:1".into(), "b:1".into(), "c:1".into()],
+        level: 14,
+        time_s: st(900.0),
+        forces_pct: Some(st(102.0)),
+        bosses: vec![
+            RefBoss {
+                name: "Kystia".into(),
+                encounter_id: 1,
+                kill_s: st(380.0),
+                forces_pct: Some(st(42.0)),
+            },
+            RefBoss {
+                name: "Xathuux".into(),
+                encounter_id: 2,
+                kill_s: st(800.0),
+                forces_pct: Some(st(76.0)),
+            },
+        ],
+        segments: vec![
+            RefSegment {
+                index: 1,
+                boss: Some("Kystia".into()),
+                duration_s: st(380.0),
+                combat_s: st(340.0),
+                downtime_s: st(40.0),
+                forces_pct: Some(st(42.0)),
+            },
+            RefSegment {
+                index: 2,
+                boss: Some("Xathuux".into()),
+                duration_s: st(420.0),
+                combat_s: st(380.0),
+                downtime_s: st(40.0),
+                forces_pct: Some(st(34.0)),
+            },
+        ],
+    }
+}
+
+#[test]
+fn route_and_segments_against_top_runs() {
+    let mut f = route_fight();
+    f.reference = Some(top_runs());
+    let s = run(f, &Config::default());
+    // Kystia is 2% behind (under the 5% bar); Xathuux 16% behind.
+    let r = get(&s, "group", "Route").unwrap();
+    assert!(
+        r.message.starts_with(
+            "Behind the top runs on enemy forces at: Xathuux 60% (top runs 76%, 66–86%)."
+        ),
+        "{}",
+        r.message
+    );
+    assert!(!r.message.contains("Kystia"));
+
+    // Already at 100%: not behind, even if the top runs over-pulled.
+    let mut f = route_fight();
+    if let FightKind::MythicPlus { bosses, .. } = &mut f.kind {
+        bosses[1].forces_pct = Some(101.0);
+    }
+    let mut t = top_runs();
+    t.bosses[1].forces_pct = Some(st(112.0));
+    f.reference = Some(t);
+    assert!(get(&run(f, &Config::default()), "group", "Route").is_none());
+    // Only segment 2 is slow: 600 s against 420 s. Segment 1 is 20 s slower.
+    let seg = get(&s, "group", "Segments").unwrap();
+    assert_eq!(seg.severity, Severity::High);
+    assert_eq!(
+        seg.message,
+        "Slowest stretches against the top runs, worst first. Kystia → Xathuux: 10:00 against 7:00 (+3:00). \
+         Combat 9:00 vs 6:20, downtime 1:00 vs 0:40, 2 death(s) (0:30 penalty). \
+         Longest pulls: pull 3 7:30 (30% forces, 4.0%/min), pull 4 1:30 (Xathuux)."
+    );
+    // The overshoot is judged against 100%, not the top runs.
+    assert!(get(&s, "group", "Overshoot").is_some());
+    // The downtime advice is left to the segments.
+    assert!(get(&s, "group", "Pacing").is_none());
+}
+
+#[test]
+fn overshoot_and_pull_pace_without_top_runs() {
+    let s = run(route_fight(), &Config::default());
+    // 108% over 820 s of trash combat (1000 - 180 boss): 8% extra at 7.9%/min.
+    let o = get(&s, "group", "Overshoot").unwrap();
+    assert_eq!(
+        o.message,
+        "Killed 108% enemy forces, 8% more than needed: about 1:00 of trash at this key's pace (7.9% a minute). Skip a pack, or pull a smaller one instead."
+    );
+    assert_eq!(o.severity, Severity::Medium);
+    // Pull 3: 4.0%/min against a median of 8.3: under half.
+    let p = get(&s, "group", "Pull pace").unwrap();
+    assert!(
+        p.message.contains("pull 3 at 7:00 (7:30, 4.0%/min)"),
+        "{}",
+        p.message
+    );
+    assert!(get(&s, "group", "Segments").is_none());
+
+    // Within 5% over: nothing.
+    let mut f = route_fight();
+    f.forces_pct = Some(104.0);
+    assert!(get(&run(f, &Config::default()), "group", "Overshoot").is_none());
+}
+
+#[test]
+fn timed_keys_get_their_margin() {
+    let pack = crate::season::SeasonPack::parse(
+        r#"
+        [season]
+        key = "t"
+        name = "T"
+        [[dungeon]]
+        name = "Spire"
+        keystone_id = 1
+        map_id = 2000
+        timer_s = [1800, 1440, 1080]
+        "#,
+    )
+    .unwrap();
+    let cfg = Config {
+        knowledge: crate::season::Knowledge::build(Some(pack), &[]),
+        ..Default::default()
+    };
+    let with = |time: f64, u: u8| {
+        let mut f = mplus(true, time);
+        if let FightKind::MythicPlus { upgrades, .. } = &mut f.kind {
+            *upgrades = Some(u);
+        }
+        get(&run(f, &cfg), "group", "Timer").map(|s| s.message.clone())
+    };
+    assert_eq!(
+        with(1500.0, 1).unwrap(),
+        "+1 with 5:00 to spare; 1:00 short of +2."
+    );
+    assert_eq!(with(1000.0, 3).unwrap(), "+3 with 1:20 to spare.");
 }
