@@ -36,6 +36,7 @@ pub fn spell(id: u32, name: &str) -> Spell {
     Spell {
         id,
         name: name.to_string(),
+        school: 0,
     }
 }
 
@@ -189,6 +190,18 @@ impl Log {
             Kind::AuraApplied {
                 spell: spell(id, name),
                 is_buff: false,
+            },
+        )
+    }
+    /// Helpful aura (buff) from `src` on `dst`.
+    pub fn buff(&mut self, ts: i64, src: &Unit, dst: &Unit, id: u32, name: &str) -> &mut Self {
+        self.push(
+            ts,
+            Some(src),
+            Some(dst),
+            Kind::AuraApplied {
+                spell: spell(id, name),
+                is_buff: true,
             },
         )
     }

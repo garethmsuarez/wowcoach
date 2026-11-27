@@ -286,7 +286,6 @@ fn ranges_and_stop_auras_are_validated() {
             "NoRange (Monk, Interrupt): an interrupt needs `range_yd`",
             "Huge (Monk, Interrupt): range_yd 500 is out of 1..100",
             "Wall (Monk, Defensive): range_yd is for interrupts and stops",
-            "Wall (Monk, Defensive): aura_ids is for stops",
         ]
     );
     // Stops resolve by their aura, falling back to the cast IDs.
@@ -394,5 +393,137 @@ fn audit_measures_kick_distance_and_discovers_stops() {
     assert_eq!(r.stop_candidates.len(), 1, "{:?}", r.stop_candidates);
     assert!(
         r.stop_candidates[0].starts_with("Stomp (777): during 5 silent endings, 0 completed casts")
+    );
+}
+
+#[test]
+fn buff_fields_and_mitigation_are_validated() {
+    let p = table(
+        r#"
+        [[ability]]
+        ids = [1]
+        name = "Cure"
+        class = "Monk"
+        kind = "dispel"
+        types = ["poison"]
+        target = "friendly"
+        cd_s = 8
+        aura_ids = [9]
+        dur_s = 4
+        school = "magic"
+        [[ability]]
+        ids = [2]
+        name = "Brew"
+        class = "Monk"
+        specs = ["Windwalker"]
+        kind = "mitigation"
+        cd_s = 1
+        [[ability]]
+        ids = [3]
+        name = "Heal"
+        class = "Monk"
+        kind = "defensive"
+        scope = "personal"
+        cd_s = 60
+        instant = true
+        dur_s = 0
+        "#,
+    );
+    assert_eq!(
+        p,
+        [
+            "Cure (Monk, Dispel): aura_ids is for stops, defensives and mitigation",
+            "Cure (Monk, Dispel): dur_s is for defensives and mitigation",
+            "Cure (Monk, Dispel): school is for defensives and mitigation",
+            "Brew (Monk, Mitigation): mitigation needs `specs`, all tank specs",
+            "Heal (Monk, Defensive): dur_s must be positive",
+            "Heal (Monk, Defensive): an instant defensive has no aura_ids or dur_s",
+        ]
+    );
+    let d = ClassData::embedded();
+    // Every tank spec has active mitigation; the buff is what counts.
+    for (id, _, spec, role) in crate::specs::SPECS {
+        if *role == Role::Tank {
+            assert!(
+                !d.for_spec(*id, AbilityKind::Mitigation).is_empty(),
+                "{spec} has no mitigation"
+            );
+        }
+    }
+    let block = d
+        .for_spec(73, AbilityKind::Mitigation)
+        .into_iter()
+        .find(|a| a.name == "Shield Block")
+        .unwrap();
+    assert_eq!(block.auras(), [132404]);
+    let fire = crate::testutil::spell(1, "Fire");
+    let fire = Spell { school: 4, ..fire };
+    let slam = Spell {
+        school: 1,
+        ..crate::testutil::spell(2, "Slam")
+    };
+    let unknown = crate::testutil::spell(3, "?");
+    assert!(block.protects_against(&slam) && !block.protects_against(&fire));
+    assert!(
+        block.protects_against(&unknown),
+        "unknown school never blames"
+    );
+}
+
+#[test]
+fn audit_discovers_defensive_buffs() {
+    // Blur-like: cast 100, buff 200 logged just *before* the cast event (as
+    // the raw log does) on three casts. A proc buff 300 follows every cast
+    // the player makes, so it's no candidate. Wall (cast 110) never shows a
+    // buff and has no dur_s.
+    let dh = player("Dh");
+    let mut log = Log::default();
+    log.combatant(0, &dh, 577);
+    for k in 0..3 {
+        let t = 10_000 + k * 70_000;
+        log.buff(t - 50, &dh, &dh, 200, "Blurred");
+        log.cast(t, &dh, 100, "Blur");
+        log.buff(t + 100, &dh, &dh, 300, "Proc");
+        // Enough other casts that a buff following only Blur stands out.
+        for j in 1..=30 {
+            log.cast(t + j * 1500, &dh, 162794, "Chaos Strike");
+            log.buff(t + j * 1500 + 100, &dh, &dh, 300, "Proc");
+        }
+        log.cast(t + 30_000, &dh, 110, "Wall");
+    }
+    let data: ClassData = toml::from_str(
+        r#"
+        [[ability]]
+        ids = [100]
+        name = "Blur"
+        class = "Demon Hunter"
+        kind = "defensive"
+        scope = "personal"
+        cd_s = 60
+        [[ability]]
+        ids = [110]
+        name = "Wall"
+        class = "Demon Hunter"
+        kind = "defensive"
+        scope = "personal"
+        cd_s = 60
+        "#,
+    )
+    .unwrap();
+    let mut a = Audit::default();
+    for e in &log.events {
+        a.feed(e);
+    }
+    let r = a.report(&data);
+    assert_eq!(r.buff_candidates.len(), 1, "{:?}", r.buff_candidates);
+    assert!(
+        r.buff_candidates[0]
+            .starts_with("Blur (Demon Hunter): Blurred (200) followed 3 of 3 casts"),
+        "{:?}",
+        r.buff_candidates
+    );
+    assert_eq!(
+        r.no_buff,
+        ["Wall (Demon Hunter): cast 3x, no listed buff followed"]
     );
 }

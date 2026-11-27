@@ -48,7 +48,7 @@ Decisions (2026-11-26):
 
 ## PRs
 
-1. **Data: defensive auras, active mitigation, spell school.**
+1. **Data: defensive auras, active mitigation, spell school.** *(done; see "PR 1 findings")*
    - `Spell` (or the damage `Kind`s) gains `school`, from both adapters: raw log fields, and WCL `masterData.abilities.type`.
    - Class table:
      - `aura_ids` and `dur_s` on defensives
@@ -81,6 +81,24 @@ Decisions (2026-11-26):
    - `season suggest` gains spike evidence ("in N spike windows, M players hit per cast"). Damage from enemy summons is attributed to the summon, not proposed as a `dangerous_cast` of the caster.
    - `promote_suggestions.py` gains a `dangerous_cast` criterion.
    - Re-run over the logs and top keys, and draft tags for review, as in M2 PR 5.
+
+## PR 1 findings
+
+- **School:** `Spell.school` is the raw log's spell school field. WCL sends `masterData.abilities.type` as a decimal string of the same bitmask ("1" Melee, "32" Anti-Magic Shell), checked on a public key.
+- **Buff discovery:** the raw log often writes a defensive's `SPELL_AURA_APPLIED` *before* its `SPELL_CAST_SUCCESS` at the same timestamp. Without a 200 ms look-back, 31 defensives looked buff-less. With it, discovery over the 13 local logs found these buff IDs, now in `aura_ids`:
+  - Blur 212800, Fiery Brand 207771 (a buff on the Demon Hunter and a debuff on the target), Alter Time 342246, Greater Invisibility 110960
+  - Fortifying Brew 120954, Touch of Karma 125174, Divine Hymn 64844, Spirit Link Totem 325174 (applied by the totem), Rallying Cry 97463, Spell Reflection 385391
+- **Left for review:** 25 more candidates are talent procs that fire with a defensive, which the table shouldn't list: Matted Fur, Refreshing Drink, Soul Leech, Healing Elixir, Enrage, Renewing Blaze (a separate button pressed alongside Obsidian Scales).
+- **Durations and instant heals:**
+  - Darkness logs no buff, so it gets `dur_s = 8`. Anti-Magic Zone also gets `dur_s = 8`, since only 4 casts and no buff were seen.
+  - Lay on Hands, Revival and Exhilaration are `instant = true`: heals that are used but never active.
+- **Mitigation:** one or more entries per tank spec, all seen in logs:
+  - Shield of the Righteous 132403, Shield Block 132404 (`school = physical`), Ignore Pain 190456
+  - Ironfur 192081, Demon Spikes 203819, Shuffle 215479 (never cast; a passive from Keg Smash), Celestial Infusion 1241059 (Midnight's Celestial Brew)
+  - Bone Shield 195181 and Blood Shield 77535
+  - Demon Spikes, Shield Block and Celestial Infusion use charges, so they're `cdr = true`.
+- **School-limited defensives:** Anti-Magic Shell, Anti-Magic Zone, Cloak of Shadows, Diffuse Magic and Spell Reflection are `magic`; Evasion and Shield Block are `physical`.
+- **Sated:** 264689 Fatigued, 80354 Temporal Displacement, 57724 Sated and 57723 Exhaustion are seen right after lust casts. The evoker's 390435 is listed but not yet seen.
 
 ## Verification
 - CI as always. The golden test covers the new spike, defensive and tank-buster scenarios in the synthetic log.

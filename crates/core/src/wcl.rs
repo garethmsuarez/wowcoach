@@ -56,7 +56,8 @@ pub struct BossPull {
 #[derive(Default)]
 pub struct Master {
     pub actors: HashMap<i64, Actor>,
-    pub abilities: HashMap<i64, String>,
+    /// Ability game ID -> (name, school bitmask; 0 when WCL gives no type).
+    pub abilities: HashMap<i64, (String, u32)>,
 }
 
 fn i(v: &Value, k: &str) -> Option<i64> {
@@ -84,8 +85,13 @@ impl Master {
         }
         for a in md["abilities"].as_array().into_iter().flatten() {
             if let Some(id) = i(a, "gameID") {
+                // `type` is the spell school bitmask, sent as a string ("32").
+                let school = match &a["type"] {
+                    Value::String(s) => s.parse().unwrap_or(0),
+                    v => v.as_u64().unwrap_or(0) as u32,
+                };
                 m.abilities
-                    .insert(id, a["name"].as_str().unwrap_or("?").to_string());
+                    .insert(id, (a["name"].as_str().unwrap_or("?").to_string(), school));
             }
         }
         m
@@ -146,13 +152,15 @@ impl Master {
         if id == 1 {
             return Spell::melee();
         }
+        let (name, school) = self
+            .abilities
+            .get(&id)
+            .cloned()
+            .unwrap_or_else(|| (format!("Spell {id}"), 0));
         Spell {
             id: id.max(0) as u32,
-            name: self
-                .abilities
-                .get(&id)
-                .cloned()
-                .unwrap_or_else(|| format!("Spell {id}")),
+            name,
+            school,
         }
     }
 
@@ -170,6 +178,7 @@ impl Master {
                         spell: Spell {
                             id: 0,
                             name: "owner".into(),
+                            school: 0,
                         },
                     },
                 })
@@ -615,7 +624,7 @@ pub mod net {
 
     const META_Q: &str = r#"query($code:String!){ reportData{ report(code:$code){
         title startTime
-        masterData{ actors{ id name type subType petOwner gameID } abilities{ gameID name } }
+        masterData{ actors{ id name type subType petOwner gameID } abilities{ gameID name type } }
         fights{ id encounterID name startTime endTime kill bossPercentage difficulty size keystoneLevel keystoneTime keystoneBonus keystoneAffixes
                 gameZone{ id } dungeonPulls{ encounterID name startTime endTime kill } }
     }}}"#;
@@ -742,7 +751,7 @@ mod tests {
                 {"id": 2, "name": "Boss", "type": "NPC", "gameID": 424242},
                 {"id": 3, "name": "Wolf", "type": "Pet", "petOwner": 1}
             ],
-            "abilities": [{"gameID": 999, "name": "Big Slam"}]
+            "abilities": [{"gameID": 999, "name": "Big Slam", "type": "32"}]
         }))
     }
 
@@ -760,7 +769,7 @@ mod tests {
                 info,
                 ..
             } => {
-                assert_eq!(spell.name, "Big Slam");
+                assert_eq!((spell.name.as_str(), spell.school), ("Big Slam", 32));
                 assert_eq!((amount, absorbed), (100, 20));
                 let info = info.unwrap();
                 assert_eq!(info.max_hp, 100);
