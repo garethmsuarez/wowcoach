@@ -21,7 +21,7 @@ Decisions (2026-11-27):
 | Question | Finding | Consequence |
 |---|---|---|
 | Does `CHALLENGE_MODE_END`'s flag mean timed? | No, it means completed. Field 5 is the run's rating score. Kings' Rest +13 in 1652 s scored 386.2, but in 2060 s it scored 318.5. Voidscar Arena +13: 386.0 against 319.9. **3 of your keys labelled "Timed" depleted** (Kings' Rest 2060/1980, Murder Row +7 2072/2040, Voidscar Arena 1805/1800) | Timed and upgrades come from key time against the pack timer, which the score drops confirm are right. `success` keeps meaning completed |
-| Forces from MDT | The `Midnight/*.lua` files have `count` per NPC ID and `dungeonTotalCount`. Summing kills in completed keys: Murder Row 100.0–115.3%, Altar of Fangs 105.5%, Blinding Vale 102.6–102.9%, Voidscar Arena 105.8–106.0%. **Den of Nalorakk 87–90%** and **Kings' Rest 96.5%** come up short | The table needs a check against logs. Den: Grizzled Warbringer is logged as 245148 (0 forces in MDT) while MDT's 25-forces Warbringer, 245146, never appears. Kings' Rest: Shadow of Zul (30) never dies in the log. `--check` finds these by name |
+| Forces from MDT | The `Midnight/*.lua` files have `count` per NPC ID and `dungeonTotalCount`. Summing kills in completed keys: Murder Row 100.0–115.3%, Altar of Fangs 105.5%, Blinding Vale 102.6–102.9%, Voidscar Arena 105.8–106.0%. **Den of Nalorakk 87–90%** and **Kings' Rest 96.5%** come up short | The table needs a check against logs. *(PR 1: Den's shortfall came from the probe's regex, and Kings' Rest's Shadow of Zul is defeated at 1 HP with no death logged. See "PR 1 findings".)* |
 | Kills | `UNIT_DIED` once per unique hostile GUID. Enemy counts per pull are inflated by summons: 48 Wild Imps in one Murder Row pull, 24 Unleashed Imps in another | Count kills, and keep summoned units (`SPELL_SUMMON`, or owned by another NPC) out of enemy counts. They carry 0 forces anyway |
 | Top runs from WCL | `dungeonPulls` (pull times, boss kills, enemy NPCs) costs ~2–3 points per run. `enemyNPCs` instance ranges count *engaged* enemies: 109–129% at the end. Enemy death events (`dataType: Deaths, hostilityType: Enemies`, one page) plus the NPC actor map are exact: 100–104% (Kings' Rest 97%, the same MDT gap), ~2 more points per run | About 5 points per run, cached. No raw events kept: only splits, forces and pull times |
 | Is the comparison meaningful? | Your +14 Murder Row: 35 / 39 / 76 / 104% forces at the four bosses, against the top +14s' 36 / 40 / 76 / 102%. **The same route, but 1850 s against about 1170 s.** Boss kills at 476 / 776 / 1358 / 1850 s against roughly 350 / 550 / 860 / 1170 s: segment 3 (Zaen → Xathuux) lost ~280 s, the others 100–180 s. One pull in segment 3 lasted 453 s | Forces at each boss separate route problems from execution problems. Then the segment breakdown (combat / downtime / deaths) and the slowest pulls say where the time went |
@@ -80,7 +80,7 @@ Decisions (2026-11-27):
 
 ## PRs
 
-1. **Data: forces in the pack.** The `[[npc]]` / `forces_total` format and validation, `season forces --mdt` and `--check`.
+1. **Data: forces in the pack.** *(done; see "PR 1 findings")* The `[[npc]]` / `forces_total` format and validation, `season forces --mdt` and `--check`.
    - Import all 8 dungeons, then run `--check` over your logs and propose the Den of Nalorakk and Kings' Rest fixes for review.
    - Credit MDT in the pack header. `CLAUDE.md` gets a note on the source and the licence.
 2. **Analysis: timed fix, pulls, segments, forces.** No new advice beyond the Timer fix.
@@ -91,6 +91,16 @@ Decisions (2026-11-27):
    - Offline tests on a trimmed saved response; one manual live run.
 4. **Rules + report.** Timer, Route, Segments and overshoot. The HTML route table and pull columns.
    - Golden updated, then a smoke run over your logs with `--compare-top 5`. Hand-check the +14 Murder Row segment 3 claim against the raw log.
+
+## PR 1 findings
+
+- **Import:** `season forces --mdt DIR` imports from MDT commit `e87130bb`. All 8 dungeons have data: 145 NPCs worth forces, with totals from 551 (Ruby Life Pools) to 817 (Altar of Fangs). A second import changes nothing. The pack header credits MDT and names the commit.
+- **The probe was wrong about Den of Nalorakk.** Its regex paired names, IDs and counts across neighbouring MDT entries. With a proper parser for MDT's Lua tables, Den's four completed keys reach 102–105%.
+  - The 245148 Grizzled Warbringer really is a 0-forces add (606k health), not a mislabelled trash mob.
+  - No ID fix is needed, and `--check` proposes none.
+- **Kings' Rest's Shadow of Zul** (30 forces) is beaten to 1 HP and scripted away without a `UNIT_DIED`, about a minute before King Dazar. The check now counts a hostile unit whose last known health was ≤ 1% and that never logs a death as killed (`DEFEATED_HP_FRAC`). That moves Kings' Rest from 96.5% to 101.5% and changes no other key. PR 2's kill counting uses the same rule.
+- **`season forces LOGS`** over the 13 local logs: all 18 completed keys reach 100.0% (Murder Row +2) to 115.3% (Murder Row +7, a Bargain key). No aliases are proposed and no NPC is missing.
+- **Alias proposals stay for the case the check was built for:** a forces NPC that never died in a short key, and a killed same-name NPC with no forces. `--write` adds them as `source = "log"` entries with a note, for review. Unit tests cover it; your logs don't need it.
 
 ## Verification
 - CI as always, with the golden snapshots (without and with forces).

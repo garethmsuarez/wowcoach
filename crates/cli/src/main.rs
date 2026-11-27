@@ -94,6 +94,86 @@ enum SeasonCmd {
     /// Learn spell and boss encounter IDs from logs and propose tags for review.
     /// Proposals go to `suggested`; tags are never set.
     Suggest(SuggestArgs),
+    /// Enemy forces per NPC: import them from a Mythic Dungeon Tools checkout
+    /// (--mdt), and/or check them against completed keys in your logs
+    Forces {
+        /// Raw combat logs to check the table against
+        logs: Vec<PathBuf>,
+        /// Mythic Dungeon Tools checkout (or its Midnight folder) to import from
+        #[arg(long, value_name = "DIR")]
+        mdt: Option<PathBuf>,
+        /// Pack file to update
+        #[arg(long, default_value = "data/seasons/midnight-s2.toml")]
+        pack: PathBuf,
+        /// Write the pack: the import, and the check's proposed aliases
+        /// (default: only print what would change)
+        #[arg(long)]
+        write: bool,
+    },
+}
+
+fn season_forces(
+    logs: &[PathBuf],
+    mdt: Option<&std::path::Path>,
+    path: &std::path::Path,
+    write: bool,
+) -> anyhow::Result<()> {
+    use wowcoach_core::forces;
+    if logs.is_empty() && mdt.is_none() {
+        anyhow::bail!("nothing to do: pass --mdt DIR to import, and/or logs to check");
+    }
+    let previous =
+        std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+    let mut pack = SeasonPack::parse(&previous)
+        .with_context(|| format!("{} is not a valid pack", path.display()))?;
+    if let Some(dir) = mdt {
+        let data = forces::load_mdt(dir)?;
+        let r = forces::import(&mut pack, &data);
+        for (name, total, n) in &r.dungeons {
+            println!("{name}: {total} forces, {n} NPCs worth forces");
+        }
+        for name in &r.missing {
+            println!("{name}: no MDT data");
+        }
+        println!(
+            "MDT: {} NPC(s) added, {} updated, {} removed.",
+            r.added, r.updated, r.removed
+        );
+    }
+    if !logs.is_empty() {
+        let mut audit = forces::Audit::default();
+        for log in logs {
+            let file =
+                std::fs::File::open(log).with_context(|| format!("opening {}", log.display()))?;
+            wowcoach_core::combatlog::stream(
+                std::io::BufReader::with_capacity(1 << 20, file),
+                |e| audit.feed(&e),
+            )?;
+        }
+        let check = audit.report(&pack);
+        print!("\n{}", check.render());
+        if write {
+            let n = check.apply(&mut pack);
+            println!("Aliases added: {n}.");
+        }
+    }
+    let problems = pack.problems();
+    if !problems.is_empty() {
+        anyhow::bail!(
+            "the updated pack is invalid, nothing written:\n  - {}",
+            problems.join("\n  - ")
+        );
+    }
+    let text = wowcoach_core::season::render(&pack, &previous)?;
+    if text == previous {
+        println!("{} is already up to date.", path.display());
+    } else if write {
+        std::fs::write(path, text).with_context(|| format!("writing {}", path.display()))?;
+        println!("Wrote {}.", path.display());
+    } else {
+        println!("Review only: pass --write to update {}.", path.display());
+    }
+    Ok(())
 }
 
 #[derive(Subcommand)]
@@ -803,6 +883,15 @@ fn main() -> anyhow::Result<()> {
         Cmd::Season {
             cmd: SeasonCmd::Suggest(args),
         } => season_suggest(args)?,
+        Cmd::Season {
+            cmd:
+                SeasonCmd::Forces {
+                    logs,
+                    mdt,
+                    pack,
+                    write,
+                },
+        } => season_forces(&logs, mdt.as_deref(), &pack, write)?,
         Cmd::Classes {
             cmd:
                 ClassesCmd::Check {

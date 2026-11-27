@@ -9,6 +9,7 @@ pub mod classes;
 pub mod combatlog;
 pub mod config;
 pub mod dotenv;
+pub mod forces;
 pub mod model;
 #[cfg(any(feature = "wcl", feature = "blizzard"))]
 pub mod net;

@@ -12,6 +12,12 @@
 #   measured from logged key times (docs/milestones/m4-dispels-and-affixes.md).
 # Spells may carry `dispel = [types]` (data written by `season suggest`) and
 #   `affixes = [ids]` (with map_id = 0) for affix mechanics.
+# [[npc]] and each dungeon's `forces_total`: enemy forces (the % bar), from
+#   Mythic Dungeon Tools by Nnoggie (https://github.com/Nnoggie/MythicDungeonTools,
+#   GPL-2.0), imported with `wowcoach season forces --mdt DIR` at commit
+#   e87130bb520534398467ee6feed66e8de2f9124d. Only NPCs worth forces are listed.
+#   `source = "mdt"` entries are rewritten by the import; `log` and `manual`
+#   entries never are. Checked against completed keys with `season forces LOGS`.
 # Format and workflow: docs/milestones/m1-season-data.md
 # Validate with: wowcoach season check data/seasons/midnight-s2.toml
 
@@ -27,6 +33,7 @@ keystone_id = 588
 map_id = 2993
 journal_id = 1322
 timer_s = [1800, 1440, 1080]
+forces_total = 817
 
 [[dungeon.bosses]]
 name = "Rav'i"
@@ -49,6 +56,7 @@ keystone_id = 586
 map_id = 2825
 journal_id = 1311
 timer_s = [1920, 1536, 1152]
+forces_total = 729
 
 [[dungeon.bosses]]
 name = "The Hoardmonger"
@@ -71,6 +79,7 @@ keystone_id = 249
 map_id = 1762
 journal_id = 1041
 timer_s = [1980, 1584, 1188]
+forces_total = 608
 
 [[dungeon.bosses]]
 name = "The Golden Serpent"
@@ -98,6 +107,7 @@ keystone_id = 587
 map_id = 2813
 journal_id = 1304
 timer_s = [2040, 1632, 1224]
+forces_total = 655
 
 [[dungeon.bosses]]
 name = "Kystia Manaheart"
@@ -125,6 +135,7 @@ keystone_id = 399
 map_id = 2521
 journal_id = 1202
 timer_s = [1680, 1344, 1008]
+forces_total = 551
 
 [[dungeon.bosses]]
 name = "Melidrussa Chillworn"
@@ -147,6 +158,7 @@ keystone_id = 250
 map_id = 1877
 journal_id = 1030
 timer_s = [1920, 1536, 1152]
+forces_total = 687
 
 [[dungeon.bosses]]
 name = "Adderis and Aspix"
@@ -174,6 +186,7 @@ keystone_id = 584
 map_id = 2859
 journal_id = 1309
 timer_s = [1800, 1440, 1080]
+forces_total = 686
 
 [[dungeon.bosses]]
 name = "Lightblossom Trinity"
@@ -201,6 +214,7 @@ keystone_id = 585
 map_id = 2923
 journal_id = 1313
 timer_s = [1800, 1440, 1080]
+forces_total = 738
 
 [[dungeon.bosses]]
 name = "Taz'Rah"
@@ -6973,3 +6987,1018 @@ sources = ["log"]
 tags = ["affix"]
 affixes = [160]
 evidence = "yours (1 fight): kicked 0/16; affix 160: in 1 of 1 key with it, its casters in none of 11 keys without it in the same dungeon"
+
+[[npc]]
+id = 261573
+name = "Ascendant Serpent"
+map_id = 2993
+forces = 30
+source = "mdt"
+
+[[npc]]
+id = 271453
+name = "Blade of the Altar"
+map_id = 2993
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 261552
+name = "Bloodletter"
+map_id = 2993
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 261557
+name = "High Evolutionist"
+map_id = 2993
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 263112
+name = "Living Venom"
+map_id = 2993
+forces = 1
+source = "mdt"
+
+[[npc]]
+id = 261560
+name = "Primal Serpent"
+map_id = 2993
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 262011
+name = "Rattling Writhe"
+map_id = 2993
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 261553
+name = "Ravenous Descendant"
+map_id = 2993
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 270306
+name = "Ritual Chieftain"
+map_id = 2993
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 261554
+name = "Twinfang Harrower"
+map_id = 2993
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 263109
+name = "Ula'tek's Chosen"
+map_id = 2993
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 261550
+name = "Venom Leech"
+map_id = 2993
+forces = 1
+source = "mdt"
+
+[[npc]]
+id = 241869
+name = "Avatar of Determination"
+map_id = 2825
+forces = 28
+source = "mdt"
+
+[[npc]]
+id = 245145
+name = "Bonded Beasttamer"
+map_id = 2825
+forces = 6
+source = "mdt"
+
+[[npc]]
+id = 241814
+name = "Earthwhisper Tender"
+map_id = 2825
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 241872
+name = "Frigid Mauler"
+map_id = 2825
+forces = 9
+source = "mdt"
+
+[[npc]]
+id = 241874
+name = "Frostfang"
+map_id = 2825
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 241876
+name = "Glacial Revenant"
+map_id = 2825
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 245146
+name = "Grizzled Warbringer"
+map_id = 2825
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 241816
+name = "Keen-Eyed Striker"
+map_id = 2825
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 245752
+name = "Keen-Eyed Striker"
+map_id = 2825
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 244889
+name = "Loa Speaker Nanea"
+map_id = 2825
+forces = 35
+source = "mdt"
+
+[[npc]]
+id = 245190
+name = "Loyal Saberfang"
+map_id = 2825
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 245143
+name = "Ruthless Totemcaller"
+map_id = 2825
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 245855
+name = "Spirit of Hunger"
+map_id = 2825
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 245139
+name = "Stormbound Mystic"
+map_id = 2825
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 241911
+name = "Terra Rumbler"
+map_id = 2825
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 241808
+name = "Territorial Matriarch"
+map_id = 2825
+forces = 8
+source = "mdt"
+
+[[npc]]
+id = 250478
+name = "The Winter Squall"
+map_id = 2825
+forces = 50
+source = "mdt"
+
+[[npc]]
+id = 241813
+name = "Thornclaw Gatherer"
+map_id = 2825
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 133935
+name = "Animated Guardian"
+map_id = 1762
+forces = 22
+source = "mdt"
+
+[[npc]]
+id = 137485
+name = "Bloodsworn Assassin"
+map_id = 1762
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 137989
+name = "Embalming Fluid"
+map_id = 1762
+forces = 1
+source = "mdt"
+
+[[npc]]
+id = 135231
+name = "Ghostly Brute"
+map_id = 1762
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 137473
+name = "Guard Captain Atu"
+map_id = 1762
+forces = 10
+source = "mdt"
+
+[[npc]]
+id = 270502
+name = "Half-Finished Mummy"
+map_id = 1762
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 135192
+name = "Honored Raptor"
+map_id = 1762
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 137969
+name = "Interment Construct"
+map_id = 1762
+forces = 15
+source = "mdt"
+
+[[npc]]
+id = 137484
+name = "King A'akul"
+map_id = 1762
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 134331
+name = "King Rahu'ai"
+map_id = 1762
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 137474
+name = "King Timalji"
+map_id = 1762
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 135204
+name = "Phantom Hex Priest"
+map_id = 1762
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 134739
+name = "Purification Construct"
+map_id = 1762
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 137486
+name = "Queen Patlaa"
+map_id = 1762
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 137478
+name = "Queen Wasi"
+map_id = 1762
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 134174
+name = "Risen Hexer"
+map_id = 1762
+forces = 20
+source = "mdt"
+
+[[npc]]
+id = 135167
+name = "Royal Berserker"
+map_id = 1762
+forces = 22
+source = "mdt"
+
+[[npc]]
+id = 134251
+name = "Seneschal M'bara"
+map_id = 1762
+forces = 10
+source = "mdt"
+
+[[npc]]
+id = 138489
+name = "Shadow of Zul"
+map_id = 1762
+forces = 30
+source = "mdt"
+
+[[npc]]
+id = 134158
+name = "Shadow-Borne Champion"
+map_id = 1762
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 137487
+name = "Skeletal Hunting Raptor"
+map_id = 1762
+forces = 10
+source = "mdt"
+
+[[npc]]
+id = 135239
+name = "Spectral Shaman"
+map_id = 1762
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 134157
+name = "Umbral Warrior"
+map_id = 1762
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 252529
+name = "Bribed Captain"
+map_id = 2813
+forces = 35
+source = "mdt"
+
+[[npc]]
+id = 236071
+name = "Bribed Guard"
+map_id = 2813
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 235265
+name = "Corrupted Warlock"
+map_id = 2813
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 235322
+name = "Defiled Golem"
+map_id = 2813
+forces = 35
+source = "mdt"
+
+[[npc]]
+id = 235257
+name = "Demon Fly"
+map_id = 2813
+forces = 1
+source = "mdt"
+
+[[npc]]
+id = 235268
+name = "Fel Invoker"
+map_id = 2813
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 236905
+name = "Felmaster Lucsei"
+map_id = 2813
+forces = 30
+source = "mdt"
+
+[[npc]]
+id = 236084
+name = "Felonious Mage"
+map_id = 2813
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 236085
+name = "Felwyrm"
+map_id = 2813
+forces = 1
+source = "mdt"
+
+[[npc]]
+id = 236897
+name = "Keen Taskmaster"
+map_id = 2813
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 236902
+name = "Massive Felwyrm"
+map_id = 2813
+forces = 12
+source = "mdt"
+
+[[npc]]
+id = 236073
+name = "Row Hooligan"
+map_id = 2813
+forces = 3
+source = "mdt"
+
+[[npc]]
+id = 236082
+name = "Seductive Sayaad"
+map_id = 2813
+forces = 6
+source = "mdt"
+
+[[npc]]
+id = 255604
+name = "Seductive Sayaad"
+map_id = 2813
+forces = 6
+source = "mdt"
+
+[[npc]]
+id = 235465
+name = "Shivan Punisher"
+map_id = 2813
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 236091
+name = "Street Sneak"
+map_id = 2813
+forces = 3
+source = "mdt"
+
+[[npc]]
+id = 235261
+name = "Trained Felhunter"
+map_id = 2813
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 234849
+name = "Unleashed Imp"
+map_id = 2813
+forces = 2
+source = "mdt"
+
+[[npc]]
+id = 236893
+name = "Warehouse Worker"
+map_id = 2813
+forces = 2
+source = "mdt"
+
+[[npc]]
+id = 235267
+name = "Wrathguard Flayer"
+map_id = 2813
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 190206
+name = "Ashseer Flamelasher"
+map_id = 2521
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 190034
+name = "Blazebound Destroyer"
+map_id = 2521
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 187969
+name = "Deepstone Earthshaper"
+map_id = 2521
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 187897
+name = "Defier Draghar"
+map_id = 2521
+forces = 30
+source = "mdt"
+
+[[npc]]
+id = 188011
+name = "Earthbound Guardian"
+map_id = 2521
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 197697
+name = "Flamegullet"
+map_id = 2521
+forces = 40
+source = "mdt"
+
+[[npc]]
+id = 188067
+name = "Flashfrost Chillweaver"
+map_id = 2521
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 197535
+name = "High Channeler Ryvati"
+map_id = 2521
+forces = 30
+source = "mdt"
+
+[[npc]]
+id = 188244
+name = "Primal Juggernaut"
+map_id = 2521
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 190207
+name = "Primalist Cinderweaver"
+map_id = 2521
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 195119
+name = "Ruinous Stormbringer"
+map_id = 2521
+forces = 10
+source = "mdt"
+
+[[npc]]
+id = 197982
+name = "Storm Warrior"
+map_id = 2521
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 198047
+name = "Tempest Channeler"
+map_id = 2521
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 197698
+name = "Thunderhead"
+map_id = 2521
+forces = 48
+source = "mdt"
+
+[[npc]]
+id = 136076
+name = "Agitated Nimbus"
+map_id = 1877
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 134616
+name = "Barbed Krolusk"
+map_id = 1877
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 139425
+name = "Brood Tender"
+map_id = 1877
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 139422
+name = "Dutiful Tamer"
+map_id = 1877
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 134364
+name = "Faithless Subjugator"
+map_id = 1877
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 268317
+name = "Faithless Tormentor"
+map_id = 1877
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 134599
+name = "Imbued Stormcaller"
+map_id = 1877
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 134686
+name = "Krolusk Matriarch"
+map_id = 1877
+forces = 16
+source = "mdt"
+
+[[npc]]
+id = 135846
+name = "Lightning Serpent"
+map_id = 1877
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 135007
+name = "Orb Watcher"
+map_id = 1877
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 135562
+name = "Poisonous Viper"
+map_id = 1877
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 134629
+name = "Sand-Sworn Rider"
+map_id = 1877
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 134991
+name = "Sandfury Stonefist"
+map_id = 1877
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 134600
+name = "Sandswept Hunter"
+map_id = 1877
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 134602
+name = "Shrouded Fang"
+map_id = 1877
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 139110
+name = "Spark Channeler"
+map_id = 1877
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 265057
+name = "Spark Channeler"
+map_id = 1877
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 134691
+name = "Static Anomaly"
+map_id = 1877
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 134990
+name = "Storm Adept"
+map_id = 1877
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 269227
+name = "Temple Disruptor"
+map_id = 1877
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 136250
+name = "Twisted Hexxer"
+map_id = 1877
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 245410
+name = "Lasher"
+map_id = 2859
+forces = 1
+source = "mdt"
+
+[[npc]]
+id = 245460
+name = "Leafy Grovecrawler"
+map_id = 2859
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 245484
+name = "Lightfeather Petalwing"
+map_id = 2859
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 245345
+name = "Lightgorged Lasher"
+map_id = 2859
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 246871
+name = "Luminous Thornmaw"
+map_id = 2859
+forces = 22
+source = "mdt"
+
+[[npc]]
+id = 245513
+name = "Overgrown Hydra"
+map_id = 2859
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 249756
+name = "Potatoad Matriarch"
+map_id = 2859
+forces = 60
+source = "mdt"
+
+[[npc]]
+id = 245336
+name = "Radiant Spellsower"
+map_id = 2859
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 245527
+name = "Spineshield Beetle"
+map_id = 2859
+forces = 1
+source = "mdt"
+
+[[npc]]
+id = 254850
+name = "Sporeblight Belcher"
+map_id = 2859
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 245473
+name = "Thorny Saptor"
+map_id = 2859
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 245339
+name = "Underbrush Stalker"
+map_id = 2859
+forces = 6
+source = "mdt"
+
+[[npc]]
+id = 245346
+name = "Virid Grovekeeper"
+map_id = 2859
+forces = 20
+source = "mdt"
+
+[[npc]]
+id = 249461
+name = "Abducted Drakonid"
+map_id = 2923
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 267545
+name = "Aegyra the Unyielding"
+map_id = 2923
+forces = 40
+source = "mdt"
+
+[[npc]]
+id = 263228
+name = "Agitated Voidscythe"
+map_id = 2923
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 249590
+name = "Angry Krolusk"
+map_id = 2923
+forces = 8
+source = "mdt"
+
+[[npc]]
+id = 243736
+name = "Blistercreep"
+map_id = 2923
+forces = 1
+source = "mdt"
+
+[[npc]]
+id = 252053
+name = "Brutal Overseer"
+map_id = 2923
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 244309
+name = "Brutok"
+map_id = 2923
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 244260
+name = "Chitigoth"
+map_id = 2923
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 268184
+name = "Devouring Brutalizer"
+map_id = 2923
+forces = 30
+source = "mdt"
+
+[[npc]]
+id = 238883
+name = "Dominated Brawler"
+map_id = 2923
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 241496
+name = "Enthralled Shaman"
+map_id = 2923
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 243988
+name = "Feral Saberon"
+map_id = 2923
+forces = 4
+source = "mdt"
+
+[[npc]]
+id = 243766
+name = "Kilivore Screamer"
+map_id = 2923
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 243985
+name = "Longtooth Tuskarr"
+map_id = 2923
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 243996
+name = "Lost Sethrak"
+map_id = 2923
+forces = 4
+source = "mdt"
+
+[[npc]]
+id = 249603
+name = "Protective Turtle"
+map_id = 2923
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 249608
+name = "Raging Raptor"
+map_id = 2923
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 267546
+name = "Raj'kess the Spellstorm"
+map_id = 2923
+forces = 40
+source = "mdt"
+
+[[npc]]
+id = 243835
+name = "Savage Shredclaw"
+map_id = 2923
+forces = 5
+source = "mdt"
+
+[[npc]]
+id = 252508
+name = "Scavenging Siphoid"
+map_id = 2923
+forces = 1
+source = "mdt"
+
+[[npc]]
+id = 243983
+name = "Sycophantic Tarasek"
+map_id = 2923
+forces = 4
+source = "mdt"
+
+[[npc]]
+id = 244708
+name = "Voidminder"
+map_id = 2923
+forces = 7
+source = "mdt"
+
+[[npc]]
+id = 252072
+name = "Voidtouched Magi"
+map_id = 2923
+forces = 25
+source = "mdt"
+
+[[npc]]
+id = 245950
+name = "Watchful Harrower"
+map_id = 2923
+forces = 65
+source = "mdt"

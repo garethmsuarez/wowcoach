@@ -39,7 +39,9 @@ pub enum Tag {
 }
 
 /// Where a spell entry's IDs were learned from.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize, Serialize)]
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize, Serialize,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum Source {
     /// Blizzard Encounter Journal.
@@ -49,7 +51,10 @@ pub enum Source {
     /// Public Warcraft Logs reports.
     Wcl,
     /// Added by hand.
+    #[default]
     Manual,
+    /// Mythic Dungeon Tools addon data (`season forces --mdt`).
+    Mdt,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -90,8 +95,31 @@ pub struct Dungeon {
     /// Seconds for +1, +2, +3.
     #[serde(default)]
     pub timer_s: Vec<u32>,
+    /// Enemy forces needed to complete the key (100%), from MDT. 0 = unknown.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub forces_total: u32,
     #[serde(default)]
     pub bosses: Vec<Boss>,
+}
+
+fn is_zero(n: &u32) -> bool {
+    *n == 0
+}
+
+/// Enemy forces one NPC is worth when killed. Only NPCs worth forces are
+/// listed. `season forces --mdt` writes `source = "mdt"` entries and only
+/// ever changes those; `--check` adds `log` entries (IDs the game logs for an
+/// NPC that MDT lists under another ID) for review.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct Npc {
+    pub id: u32,
+    pub name: String,
+    pub map_id: u32,
+    pub forces: u32,
+    pub source: Source,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub note: String,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -178,6 +206,8 @@ pub struct SeasonPack {
     pub affixes: Vec<Affix>,
     #[serde(default, rename = "spell")]
     pub spells: Vec<SpellEntry>,
+    #[serde(default, rename = "npc", skip_serializing_if = "Vec::is_empty")]
+    pub npcs: Vec<Npc>,
 }
 
 impl SeasonPack {
@@ -280,6 +310,23 @@ impl SeasonPack {
             }
         }
 
+        let mut npc_ids = HashSet::new();
+        for n in &self.npcs {
+            let label = format!("npc {} {:?}", n.id, n.name);
+            if n.id == 0 {
+                out.push(format!("{label} has id 0"));
+            }
+            if !self.dungeons.iter().any(|d| d.map_id == n.map_id) {
+                out.push(format!(
+                    "{label}: map_id {} is not a dungeon in this pack",
+                    n.map_id
+                ));
+            }
+            if !npc_ids.insert((n.map_id, n.id)) {
+                out.push(format!("{label} is listed twice for map {}", n.map_id));
+            }
+        }
+
         let mut seen: HashMap<u32, &str> = HashMap::new();
         for s in &self.spells {
             let label = if s.name.is_empty() {
@@ -344,6 +391,15 @@ impl SeasonPack {
             }
         }
         out
+    }
+
+    /// Forces per NPC ID in one instance.
+    pub fn forces(&self, map_id: u32) -> HashMap<u32, u32> {
+        self.npcs
+            .iter()
+            .filter(|n| n.map_id == map_id)
+            .map(|n| (n.id, n.forces))
+            .collect()
     }
 
     /// Dungeon for a `CHALLENGE_MODE_START` map ID.
@@ -517,6 +573,13 @@ pub fn sort(pack: &mut SeasonPack) {
         inst_order.insert(map, (i, bosses.iter().map(|b| b.name.clone()).collect()));
     }
     pack.affixes.sort_by_key(|a| a.id);
+    pack.npcs.sort_by(|a, b| {
+        let inst = |m: u32| inst_order.get(&m).map_or(usize::MAX, |x| x.0);
+        inst(a.map_id)
+            .cmp(&inst(b.map_id))
+            .then(a.name.cmp(&b.name))
+            .then(a.id.cmp(&b.id))
+    });
     for s in pack.spells.iter_mut() {
         s.ids.sort_unstable();
         s.ids.dedup();

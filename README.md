@@ -144,6 +144,23 @@ uses more than `--max-points` (default 3000) of the hourly limit.
   It's proposed with the `affix` tag. A per-dungeon entry a reviewer has worked on
   (tags, note or dismissed) is never moved.
 
+### Enemy forces
+
+Enemy forces (the % bar) aren't in the log or any API. `season forces` imports
+them from a local checkout of [Mythic Dungeon Tools](https://github.com/Nnoggie/MythicDungeonTools)
+(GPL-2.0) into the pack, and checks them against your completed keys. A
+completed key reached 100%, so a shortfall points at an NPC logged under an ID
+the table doesn't have:
+
+```bash
+git clone --depth 1 https://github.com/Nnoggie/MythicDungeonTools /tmp/mdt
+wowcoach season forces --mdt /tmp/mdt --write        # import forces per NPC
+wowcoach season forces ~/WoW/_retail_/Logs/WoWCombatLog-*.txt          # check against your keys
+```
+
+A kill counts when the enemy dies, or when its last known health was 1% or
+less and it never died (some enemies are scripted away at 1 HP).
+
 ### Class abilities
 
 `data/classes.toml` lists each class's interrupts, crowd control that stops
