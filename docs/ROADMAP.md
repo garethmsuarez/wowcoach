@@ -80,6 +80,12 @@ Detailed plan: [`docs/milestones/m5-route-and-pacing.md`](milestones/m5-route-an
 - Fix "Timed": the log's flag means completed. Judge key time against the timer, with upgrade levels.
 - Compare against your own earlier runs once M6 lands.
 
+## Season cleanup (before M6)
+Detailed plan: [`docs/milestones/season-cleanup.md`](milestones/season-cleanup.md). In short:
+- Kick tiers: `priority_kick` (must kick) and a new `kick` (kick when free), so a filler bolt is never advised over a heal from the same pack.
+- Avoidable damage: proposals from hit evidence in top public keys against your own, then human review.
+- A review pass over the pending proposals in the pack, with notes.
+
 ## M6: Persistent history
 - `crates/store` using rusqlite (bundled).
 - `wowcoach ingest <log|wcl code>` stores fight summaries, per-player metrics, and suggestions, keyed by player GUID, dungeon or encounter, and date.
