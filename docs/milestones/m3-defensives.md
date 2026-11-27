@@ -66,7 +66,7 @@ Decisions (2026-11-26):
      - a tank buster with mitigation, and a magic hit that Shield Block doesn't cover
      - Sated gating lust
      - an enemy totem summoned, damaging the group, and killed late
-3. **Rules + report.** Players are named only when every check passes.
+3. **Rules + report.** Players are named only when every check passes. *(done; see "PR 3 findings")*
    - Player: "Died with a defensive ready": the ability, and when it was last used.
    - Group: "Spikes": spikes with no group defensive used while one was ready, worst first, naming the holders. When a spike's top spell comes from an enemy summon, the advice is to kill it ("Magma Totem alive 10 s, 3.1 M Searing Magma") instead of using a defensive.
    - Group: "Summons": enemy summons that dealt group damage or healed enemies and lived longer than `summon_alive_max_s` (default 6 s; your keys that handled totems well had medians of 2.4–3.7 s), or were never killed. Summons that do neither (decorative or untargetable units) are ignored.
@@ -114,6 +114,21 @@ Decisions (2026-11-26):
 - **Deaths:** the probe's hunter "deaths" with ~0% damage in their last 5 s were Feign Death, which the parser already skips.
   - Two claims were checked by hand against the raw events. Spell Reflection was last used 93 s before an Arms warrior's death (25 s cooldown), and Die by the Sword (120 s) is correctly not listed. Survival of the Fittest was last used 330 s before a hunter's death (90 s cooldown).
 - **Golden snapshot:** only the new `PullReport` and `DeathReport` fields were added. The synthetic log has no Sated debuffs, so its lust comes from the inferred Sated: lust is used on pull 1 and unavailable after.
+
+## PR 3 findings
+
+- **Charges:** a Demon Hunter's Blur has two charges in Midnight. Two casts 9 s apart made the "observed reuse" 9 s, and Blur looked ready 15 s after use. Reuse under half the table cooldown is now treated as a charge, not cooldown reduction, so a spare charge just isn't counted.
+- **Summons:** flagging every long-lived summon named adds the group cleaves anyway (egg Hatchlings with a 30 s median, Wild Imps and Legion Axes that despawn). Only summons that *led* a spike or healed enemies count. Across the 13 logs that leaves the Magma Totems (10 s median, leading 3 spikes in each of two keys) and Atroxus' Toxic Creepers.
+- **Lust:**
+  - Boss lust is judged at the boss's own start (`BossMarker.lust_ready` / `lust_used`), which fixes Charonus.
+  - A Sated debuff landing counts as a use: one Murder Row group lusted with something not in `lust_spell_ids`.
+  - Flagged across 13 logs: 3 keys with bosses where lust was available and unused (one +13 group lusted only on the last boss), 3 idle stretches, and 11 first-pull lusts as information.
+- **Smoke run** over the 13 local logs: 17 "Defensives", 10 "Spikes", 4 "Summons" and 1 "Tank busters" suggestions. One Spikes claim was checked by hand: Anti-Magic Zone was last used 4:12 before Xathuux's Infernal Crush spike (120 s cooldown).
+- **Synthetic log:**
+  - Added: a Tranquility, Blur and its death, Shield of the Righteous around four tank busters, and a Spire Totem. None of these draw random numbers.
+  - Trash melee is down from 45k to 8k per swing, so melee alone no longer makes every pull a spike.
+  - The Demon Hunter's new death is on the boss pull's last tick, so no rotation draws are skipped and the rest of the log, including the kick scenarios, is unchanged.
+  - Golden diff: the five new suggestions, the extra death, and the order of two tied 0:15 gaps.
 
 ## Verification
 - CI as always. The golden test covers the new spike, defensive and tank-buster scenarios in the synthetic log.

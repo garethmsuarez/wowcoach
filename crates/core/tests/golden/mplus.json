@@ -22,14 +22,18 @@
             "encounter_id": 3003,
             "start_s": 169.0,
             "end_s": 244.0,
-            "success": true
+            "success": true,
+            "lust_ready": false,
+            "lust_used": false
           },
           {
             "name": "Spire Boss 7",
             "encounter_id": 3007,
             "start_s": 464.0,
             "end_s": 539.0,
-            "success": true
+            "success": true,
+            "lust_ready": false,
+            "lust_used": false
           }
         ]
       },
@@ -49,26 +53,36 @@
           "absorbs_done": 0,
           "hps": 0.0,
           "overheal_pct": 0.0,
-          "damage_taken": 102180000,
+          "damage_taken": 22800000,
           "avoidable_taken": 0,
           "likely_avoidable_taken": 0,
           "interrupts": 7,
           "dispels": 0,
           "deaths": 0,
-          "casts": 430,
-          "activity_pct": 0.8591229838709677,
+          "casts": 431,
+          "activity_pct": 0.8598437106125536,
           "healthstones": 0,
           "potions": 0,
           "top_damage_taken": [
             [
               "Melee",
-              99900000,
+              17760000,
               2220
             ],
             [
               "Shadow Volley",
               2280000,
               19
+            ],
+            [
+              "Searing Lava",
+              1760000,
+              11
+            ],
+            [
+              "Crushing Blow",
+              1000000,
+              4
             ]
           ],
           "wcl_rank_percent": null,
@@ -89,14 +103,14 @@
           "absorbs_done": 0,
           "hps": 42202.166064981946,
           "overheal_pct": 0.355390129583678,
-          "damage_taken": 4320000,
+          "damage_taken": 6080000,
           "avoidable_taken": 1260000,
           "likely_avoidable_taken": 0,
           "interrupts": 0,
           "dispels": 0,
           "deaths": 1,
-          "casts": 404,
-          "activity_pct": 0.8643617021276596,
+          "casts": 405,
+          "activity_pct": 0.8659217877094972,
           "healthstones": 0,
           "potions": 0,
           "top_damage_taken": [
@@ -104,6 +118,11 @@
               "Shadow Volley",
               2160000,
               18
+            ],
+            [
+              "Searing Lava",
+              1760000,
+              11
             ],
             [
               "Void Pool",
@@ -134,14 +153,14 @@
           "absorbs_done": 0,
           "hps": 0.0,
           "overheal_pct": 0.0,
-          "damage_taken": 3760000,
+          "damage_taken": 6220000,
           "avoidable_taken": 700000,
           "likely_avoidable_taken": 0,
           "interrupts": 5,
           "dispels": 0,
-          "deaths": 1,
-          "casts": 402,
-          "activity_pct": 0.8590425531914894,
+          "deaths": 2,
+          "casts": 404,
+          "activity_pct": 0.8588203896450494,
           "healthstones": 0,
           "potions": 0,
           "top_damage_taken": [
@@ -151,8 +170,18 @@
               18
             ],
             [
+              "Searing Lava",
+              1760000,
+              11
+            ],
+            [
               "Cataclysmic Slam",
               900000,
+              1
+            ],
+            [
+              "Shadow Burst",
+              700000,
               1
             ],
             [
@@ -179,14 +208,14 @@
           "absorbs_done": 0,
           "hps": 0.0,
           "overheal_pct": 0.0,
-          "damage_taken": 3900000,
+          "damage_taken": 5660000,
           "avoidable_taken": 840000,
           "likely_avoidable_taken": 0,
           "interrupts": 0,
           "dispels": 0,
           "deaths": 1,
           "casts": 312,
-          "activity_pct": 0.7422872340425531,
+          "activity_pct": 0.7424847033785581,
           "healthstones": 0,
           "potions": 0,
           "top_damage_taken": [
@@ -194,6 +223,11 @@
               "Shadow Volley",
               2160000,
               18
+            ],
+            [
+              "Searing Lava",
+              1760000,
+              11
             ],
             [
               "Cataclysmic Slam",
@@ -224,7 +258,7 @@
           "absorbs_done": 0,
           "hps": 0.0,
           "overheal_pct": 0.0,
-          "damage_taken": 7040000,
+          "damage_taken": 8800000,
           "avoidable_taken": 5600000,
           "likely_avoidable_taken": 0,
           "interrupts": 0,
@@ -239,6 +273,11 @@
               "Void Pool",
               5600000,
               40
+            ],
+            [
+              "Searing Lava",
+              1760000,
+              11
             ],
             [
               "Shadow Volley",
@@ -423,6 +462,35 @@
           "defensives_active": []
         },
         {
+          "player": "Glaive-Realm",
+          "at_s": 243.6,
+          "killing_blow": "Shadow Burst (Spire Guardian)",
+          "killing_spell_id": 99002,
+          "recap": [
+            {
+              "at_s": 243.5,
+              "spell": "Shadow Burst",
+              "source": "Spire Guardian",
+              "amount": 700000,
+              "hp_pct_after": 0.0
+            }
+          ],
+          "damage_last_5s": 700000,
+          "healthstone_used_before": false,
+          "potion_used_before": false,
+          "pull": 4,
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 1.1666666666666667,
+          "defensives_ready": [
+            {
+              "player": "Glaive-Realm",
+              "ability": "Blur",
+              "last_used_s": 178.99
+            }
+          ],
+          "defensives_active": []
+        },
+        {
           "player": "Pyro-Realm",
           "at_s": 279.4,
           "killing_blow": "Void Pool (Shade Caster)",
@@ -553,7 +621,13 @@
           "pull": 6,
           "wipe_cascade": false,
           "damage_last_5s_frac": 1.5,
-          "defensives_ready": [],
+          "defensives_ready": [
+            {
+              "player": "Glaive-Realm",
+              "ability": "Blur",
+              "last_used_s": 178.99
+            }
+          ],
           "defensives_active": []
         },
         {
@@ -593,10 +667,10 @@
           "killing_spell_id": 88888,
           "recap": [
             {
-              "at_s": 419.3,
-              "spell": "Void Pool",
-              "source": "Shade Caster",
-              "amount": 140000,
+              "at_s": 423.0,
+              "spell": "Searing Lava",
+              "source": "Spire Totem",
+              "amount": 160000,
               "hp_pct_after": 30.0
             },
             {
@@ -607,10 +681,24 @@
               "hp_pct_after": 6.666666666666667
             },
             {
+              "at_s": 424.0,
+              "spell": "Searing Lava",
+              "source": "Spire Totem",
+              "amount": 160000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
               "at_s": 427.1,
               "spell": "Shadow Volley",
               "source": "Shade Caster",
               "amount": 120000,
+              "hp_pct_after": 6.666666666666667
+            },
+            {
+              "at_s": 425.0,
+              "spell": "Searing Lava",
+              "source": "Spire Totem",
+              "amount": 160000,
               "hp_pct_after": 6.666666666666667
             },
             {
@@ -621,12 +709,12 @@
               "hp_pct_after": 0.0
             }
           ],
-          "damage_last_5s": 260000,
+          "damage_last_5s": 420000,
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 7,
           "wipe_cascade": false,
-          "damage_last_5s_frac": 0.43333333333333335,
+          "damage_last_5s_frac": 0.7,
           "defensives_ready": [],
           "defensives_active": []
         },
@@ -680,7 +768,7 @@
           "casts_stopped": 0,
           "casters_killed": 0,
           "priority_completed": 3,
-          "spikes": 1,
+          "spikes": 0,
           "tank_hits": 0,
           "tank_hits_unmitigated": 0,
           "lust_ready_at_start": true,
@@ -698,7 +786,7 @@
           "casts_stopped": 0,
           "casters_killed": 0,
           "priority_completed": 6,
-          "spikes": 1,
+          "spikes": 0,
           "tank_hits": 0,
           "tank_hits_unmitigated": 0,
           "lust_ready_at_start": false,
@@ -716,7 +804,7 @@
           "casts_stopped": 1,
           "casters_killed": 0,
           "priority_completed": 3,
-          "spikes": 1,
+          "spikes": 0,
           "tank_hits": 0,
           "tank_hits_unmitigated": 0,
           "lust_ready_at_start": false,
@@ -726,8 +814,8 @@
         {
           "index": 4,
           "start_s": 169.05,
-          "end_s": 243.6,
-          "deaths": 1,
+          "end_s": 243.5,
+          "deaths": 2,
           "enemies_killed": 1,
           "boss": "Spire Boss 3",
           "casts_kicked": 0,
@@ -735,8 +823,8 @@
           "casters_killed": 0,
           "priority_completed": 0,
           "spikes": 0,
-          "tank_hits": 0,
-          "tank_hits_unmitigated": 0,
+          "tank_hits": 4,
+          "tank_hits_unmitigated": 3,
           "lust_ready_at_start": false,
           "lust_ready_s": 0.0,
           "lust_used": false
@@ -752,7 +840,7 @@
           "casts_stopped": 0,
           "casters_killed": 0,
           "priority_completed": 3,
-          "spikes": 1,
+          "spikes": 0,
           "tank_hits": 0,
           "tank_hits_unmitigated": 0,
           "lust_ready_at_start": false,
@@ -782,7 +870,7 @@
           "start_s": 409.05,
           "end_s": 448.6,
           "deaths": 1,
-          "enemies_killed": 4,
+          "enemies_killed": 5,
           "boss": null,
           "casts_kicked": 3,
           "casts_stopped": 0,
@@ -814,7 +902,7 @@
           "lust_used": false
         }
       ],
-      "downtime_s": 157.2,
+      "downtime_s": 157.3,
       "enemy_casts": [
         {
           "spell_id": 77777,
@@ -837,7 +925,7 @@
         {
           "spell_id": 1,
           "name": "Melee",
-          "total": 99900000,
+          "total": 17760000,
           "hits": 2220,
           "players_hit": 1,
           "non_tank_hit_frac": 0.0,
@@ -848,7 +936,7 @@
           "per_player": [
             [
               "Shieldy-Realm",
-              99900000,
+              17760000,
               2220
             ]
           ]
@@ -889,6 +977,45 @@
               "Pyro-Realm",
               1440000,
               12
+            ]
+          ]
+        },
+        {
+          "spell_id": 99100,
+          "name": "Searing Lava",
+          "total": 8800000,
+          "hits": 55,
+          "players_hit": 5,
+          "non_tank_hit_frac": 1.0,
+          "max_hits_per_player": 11,
+          "median_hits_per_player": 11.0,
+          "configured_avoidable": false,
+          "likely_avoidable": false,
+          "per_player": [
+            [
+              "Glaive-Realm",
+              1760000,
+              11
+            ],
+            [
+              "Leafy-Realm",
+              1760000,
+              11
+            ],
+            [
+              "Pyro-Realm",
+              1760000,
+              11
+            ],
+            [
+              "Shieldy-Realm",
+              1760000,
+              11
+            ],
+            [
+              "Slacky-Realm",
+              1760000,
+              11
             ]
           ]
         },
@@ -954,6 +1081,44 @@
               1
             ]
           ]
+        },
+        {
+          "spell_id": 99001,
+          "name": "Crushing Blow",
+          "total": 1000000,
+          "hits": 4,
+          "players_hit": 1,
+          "non_tank_hit_frac": 0.0,
+          "max_hits_per_player": 4,
+          "median_hits_per_player": 4.0,
+          "configured_avoidable": false,
+          "likely_avoidable": false,
+          "per_player": [
+            [
+              "Shieldy-Realm",
+              1000000,
+              4
+            ]
+          ]
+        },
+        {
+          "spell_id": 99002,
+          "name": "Shadow Burst",
+          "total": 700000,
+          "hits": 1,
+          "players_hit": 1,
+          "non_tank_hit_frac": 0.25,
+          "max_hits_per_player": 1,
+          "median_hits_per_player": 1.0,
+          "configured_avoidable": false,
+          "likely_avoidable": false,
+          "per_player": [
+            [
+              "Glaive-Realm",
+              700000,
+              1
+            ]
+          ]
         }
       ],
       "lust_at_s": [
@@ -979,7 +1144,7 @@
           "severity": "High",
           "category": "Avoidable damage",
           "message": "Took 5.60M avoidable damage, more than the group median (1.05M).",
-          "evidence": "Void Pool 5.60M (40 hits), Shadow Volley 1.44M (12 hits)"
+          "evidence": "Void Pool 5.60M (40 hits), Searing Lava 1.76M (11 hits), Shadow Volley 1.44M (12 hits)"
         },
         {
           "scope": "Pyro-Realm",
@@ -987,6 +1152,13 @@
           "category": "Priority kicks",
           "message": "Counterspell ready and in range for 12 priority cast(s) that went off: Shadow Volley at 0:14, Shadow Volley at 0:22, Shadow Volley at 1:01, Shadow Volley at 1:09, ….",
           "evidence": "Distances when the casts finished: 29 yd, 29 yd, 29 yd, 29 yd."
+        },
+        {
+          "scope": "Shieldy-Realm",
+          "severity": "High",
+          "category": "Tank busters",
+          "message": "3 of 4 tank busters hit with no active mitigation or defensive up: Crushing Blow ×3. Have Shield of the Righteous up before they land.",
+          "evidence": "Tank busters are the season pack's `tank_buster` spells. Mitigation only counts against the damage it works on."
         },
         {
           "scope": "Shieldy-Realm",
@@ -1006,7 +1178,7 @@
           "scope": "group",
           "severity": "High",
           "category": "Deaths",
-          "message": "11 death(s). Most common killing blows: Void Pool ×8, Cataclysmic Slam ×3. At 15s per death that's roughly 2:45 added to the timer.",
+          "message": "12 death(s). Most common killing blows: Void Pool ×8, Cataclysmic Slam ×3, Shadow Burst ×1. At 15s per death that's roughly 3:00 added to the timer.",
           "evidence": "See the death recaps below for what hit each player in their last seconds."
         },
         {
@@ -1026,6 +1198,20 @@
         {
           "scope": "group",
           "severity": "High",
+          "category": "Spikes",
+          "message": "1 damage spike(s) went by without a group defensive while one was ready, worst first: 6:09 (pull 6, 110% of group HP, mostly Cataclysmic Slam, 4 died): Tranquility (Leafy-Realm). Agree before the key who covers which dangerous pull.",
+          "evidence": "A spike = the group losing 50% of its summed max HP within 5 s (after absorbs). Ready = used earlier in this key and off cooldown. Spikes driven by enemy summons are under Summons."
+        },
+        {
+          "scope": "group",
+          "severity": "High",
+          "category": "Summons",
+          "message": "Enemy summons stayed up too long. Spire Totem (Shade Caster): 1 summoned, killed after a median 12 s (1 lived over 6 s); 8.80M damage to the group, leading 1 damage spike(s). Kill them as soon as they drop.",
+          "evidence": "Units enemies summoned (totems, adds) that led a damage spike or healed enemies. Flagged when the typical one lived over 6 s, or none were killed (a summon that expires isn't logged as killed)."
+        },
+        {
+          "scope": "group",
+          "severity": "High",
           "category": "Avoidable damage",
           "message": "The group took avoidable damage from: Void Pool (8.40M over 60 hits).",
           "evidence": "These spells are listed as avoidable in your config."
@@ -1034,7 +1220,7 @@
           "scope": "group",
           "severity": "High",
           "category": "Pacing",
-          "message": "28% of the run (2:37) was spent out of combat. Chain pulls, pre-position, and drink less. Longest gaps: 0:55 gap at 4:58, 0:15 gap at 2:33, 0:15 gap at 4:03.",
+          "message": "28% of the run (2:37) was spent out of combat. Chain pulls, pre-position, and drink less. Longest gaps: 0:55 gap at 4:58, 0:15 gap at 4:03, 0:15 gap at 2:33.",
           "evidence": "8 pulls detected (a gap of 5s or more with no combat counts as a break)."
         },
         {
@@ -1047,8 +1233,15 @@
         {
           "scope": "Glaive-Realm",
           "severity": "Medium",
+          "category": "Defensives",
+          "message": "Died at 4:03 with Blur ready (last used at 2:58). Press it when your health starts dropping, not after.",
+          "evidence": "Ready = used earlier in this key, and off cooldown (the class table's, or your own faster reuse) 1 s before the death. In a wiping pull only the first 2 deaths count."
+        },
+        {
+          "scope": "Glaive-Realm",
+          "severity": "Medium",
           "category": "Death",
-          "message": "Died at 6:14 to Cataclysmic Slam (Shade Caster). No healthstone or potion was used before dying. Use a defensive or healthstone earlier in the damage window.",
+          "message": "Died 2 times (4:03, 6:14). Killing blows: Shadow Burst ×1, Cataclysmic Slam ×1. No healthstone or potion was used before dying. Use a defensive or healthstone earlier in the damage window.",
           "evidence": "Last death, final hits: 6:04 Shadow Volley 120.0K → 6:14 Cataclysmic Slam 900.0K. Damage taken in the final 5s: 900.0K."
         },
         {
@@ -1092,6 +1285,13 @@
           "category": "Activity",
           "message": "Estimated casting activity was 74% (group median 86%). Look for gaps in your GCD usage: keep casting while moving, and pre-cast before pulls.",
           "evidence": "This estimate comes from cast events plus one GCD each. Channelled spells are undercounted, so compare it against your own previous logs."
+        },
+        {
+          "scope": "group",
+          "severity": "Low",
+          "category": "Lust",
+          "message": "Lust went out on the first pull. That's a valid choice for a fast start; it means any boss in the next 10 minutes goes without it.",
+          "evidence": ""
         }
       ]
     }

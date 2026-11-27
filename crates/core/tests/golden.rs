@@ -103,6 +103,10 @@ fn season_pack_matches_legacy_config() {
         ids = [77777]
         name = "Shadow Volley"
         tags = ["priority_kick"]
+        [[spell]]
+        ids = [99001]
+        name = "Crushing Blow"
+        tags = ["tank_buster"]
         "#,
     )
     .unwrap();

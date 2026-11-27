@@ -236,6 +236,103 @@ fn priority_casts_html(f: &FightReport, o: &mut String) {
     o.push_str("</table>");
 }
 
+/// One row per M+ pull with something defensive to look at: damage spikes
+/// (and group defensives ready but unused), tank busters taken bare, deaths
+/// with a personal defensive ready, and lust.
+fn defensives_html(f: &FightReport, o: &mut String) {
+    let rows: Vec<String> = f
+        .pulls
+        .iter()
+        .filter_map(|p| {
+            let i = Some(p.index);
+            let spikes: Vec<&Spike> = f.spikes.iter().filter(|s| s.pull == i).collect();
+            let deaths: Vec<&DeathReport> = f
+                .deaths
+                .iter()
+                .filter(|d| d.pull == i && !d.defensives_ready.is_empty())
+                .collect();
+            if spikes.is_empty() && p.tank_hits_unmitigated == 0 && deaths.is_empty() && !p.lust_used {
+                return None;
+            }
+            let spike_cell = spikes
+                .iter()
+                .map(|s| {
+                    let answer = if !s.group_used.is_empty() {
+                        format!(
+                            "used {}",
+                            s.group_used
+                                .iter()
+                                .map(|g| esc(&g.ability))
+                                .collect::<Vec<_>>()
+                                .join(", ")
+                        )
+                    } else if s.top.first().is_some_and(|t| t.summoned_by.is_some()) {
+                        format!("<b class=bad>{} up</b>", esc(&s.top[0].source))
+                    } else if !s.group_ready.is_empty() {
+                        format!(
+                            "<b class=bad>ready: {}</b>",
+                            s.group_ready
+                                .iter()
+                                .map(|r| format!("{} ({})", esc(&r.ability), esc(&r.player)))
+                                .collect::<Vec<_>>()
+                                .join(", ")
+                        )
+                    } else {
+                        "none ready".into()
+                    };
+                    format!(
+                        "{} {:.0}% · {} · {answer}",
+                        mmss(s.start_s),
+                        s.peak_frac * 100.0,
+                        s.top.first().map(|t| esc(&t.name)).unwrap_or_default()
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("<br>");
+            let tank = if p.tank_hits > 0 {
+                let cls = if p.tank_hits_unmitigated > 0 { " class=bad" } else { "" };
+                format!("<span{cls}>{} of {} bare</span>", p.tank_hits_unmitigated, p.tank_hits)
+            } else {
+                String::new()
+            };
+            let death_cell = deaths
+                .iter()
+                .map(|d| {
+                    format!(
+                        "{} {} ({})",
+                        mmss(d.at_s),
+                        esc(&d.player),
+                        d.defensives_ready
+                            .iter()
+                            .map(|r| esc(&r.ability))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("<br>");
+            let lust = match (p.lust_used, p.lust_ready_at_start) {
+                (true, _) => "used",
+                (false, true) => "ready",
+                _ => "",
+            };
+            Some(format!(
+                "<tr><td class=n>{}</td><td>{}</td><td>{spike_cell}</td><td>{tank}</td><td>{death_cell}</td><td>{lust}</td></tr>",
+                p.index,
+                p.boss.as_deref().map(esc).unwrap_or_default()
+            ))
+        })
+        .collect();
+    if rows.is_empty() {
+        return;
+    }
+    o.push_str("<h3>Defensives by pull</h3><div class=sub>Spikes: the group losing half its HP within a few seconds, and the answer · tank busters with no mitigation up · deaths with a personal defensive ready</div><table><tr><th>Pull</th><th>Boss</th><th>Spikes</th><th>Tank busters</th><th>Died with a defensive ready</th><th>Lust</th></tr>");
+    for r in rows {
+        o.push_str(&r);
+    }
+    o.push_str("</table>");
+}
+
 pub fn html(r: &Report) -> String {
     let mut o = String::new();
     let _ = write!(
@@ -355,6 +452,7 @@ pub fn html(r: &Report) -> String {
         suggestions_html(&f.suggestions, &mut o);
         if matches!(f.kind, FightKind::MythicPlus { .. }) {
             priority_casts_html(f, &mut o);
+            defensives_html(f, &mut o);
         }
 
         // players

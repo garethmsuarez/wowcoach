@@ -527,11 +527,14 @@ impl Tracker {
     /// observed reuse if that's shorter (talents, procs).
     fn cd_ms(&self, guid: &str, ab: usize) -> i64 {
         let table = (ability(ab).cd_s * 1000.0) as i64;
+        // Reuse faster than half the table is a second charge (Blur has two
+        // in Midnight), not a shorter cooldown: talents rarely cut that much.
+        let floor = MIN_OBSERVED_CD_MS.max(table / 2);
         self.uses
             .get(&(guid.to_string(), ab))
             .into_iter()
             .flat_map(|u| u.windows(2).map(|w| w[1] - w[0]))
-            .filter(|g| *g >= MIN_OBSERVED_CD_MS)
+            .filter(|g| *g >= floor)
             .min()
             .unwrap_or(table)
             .min(table)
@@ -610,6 +613,15 @@ impl Tracker {
         active.sort();
         active.dedup();
         (ready, active)
+    }
+
+    /// Did a Sated debuff land on the group within [start, end]? Catches
+    /// lusts not in `lust_spell_ids` (drums, new spells).
+    pub(super) fn sated_began(&self, start: i64, end: i64, specs: &HashMap<String, u32>) -> bool {
+        let group = self.group(specs);
+        self.sated
+            .iter()
+            .any(|(g, s, _)| *s >= start && *s <= end && group.contains(g))
     }
 
     /// Lust over [start, end]: was it available at `start`, for how many ms,
@@ -753,20 +765,23 @@ impl Tracker {
         if ghp == 0 || self.hits.is_empty() {
             return vec![];
         }
+        // The window needs time order; logs are, but don't rely on it.
+        let mut hits: Vec<&Hit> = self.hits.iter().collect();
+        hits.sort_by_key(|h| h.ts);
         let thr = fin.spike_frac * ghp as f64;
         // Sliding window over group damage taken; windows over the threshold
         // become (start, end, peak) and overlapping ones merge.
         let mut found: Vec<(usize, usize, u64)> = vec![];
         let (mut l, mut sum) = (0usize, 0u64);
-        for r in 0..self.hits.len() {
-            sum += self.hits[r].amount;
-            while self.hits[l].ts < self.hits[r].ts - fin.spike_window_ms {
-                sum -= self.hits[l].amount;
+        for r in 0..hits.len() {
+            sum += hits[r].amount;
+            while hits[l].ts < hits[r].ts - fin.spike_window_ms {
+                sum -= hits[l].amount;
                 l += 1;
             }
             if sum as f64 >= thr {
                 match found.last_mut() {
-                    Some(f) if self.hits[l].ts <= self.hits[f.1].ts => {
+                    Some(f) if hits[l].ts <= hits[f.1].ts => {
                         f.1 = r;
                         f.2 = f.2.max(sum);
                     }
@@ -779,8 +794,8 @@ impl Tracker {
         found
             .into_iter()
             .map(|(l, r, peak)| {
-                let (s, e) = (self.hits[l].ts, self.hits[r].ts);
-                let hits = &self.hits[l..=r];
+                let (s, e) = (hits[l].ts, hits[r].ts);
+                let hits = &hits[l..=r];
                 // Top spells by (spell, source name); remember summons among the sources.
                 let mut by: BTreeMap<(u32, String), (u64, String, Option<usize>)> = BTreeMap::new();
                 for h in hits {

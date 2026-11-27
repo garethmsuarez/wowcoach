@@ -25,6 +25,8 @@ early_death_frac = 0.30     # raid wipe: first death in the first 30% of the pul
 heuristic_min_share = 0.02  # enemy spell must be >=2% of group damage taken to be considered
 spike_window_ms = 5000      # a damage spike: the group takes at least spike_frac of its
 spike_frac = 0.50           #   summed max HP within this window
+summon_alive_max_s = 6      # M+: enemy totems/adds that hurt the group should die within this
+lust_idle_max_s = 180       # M+: lust left available this long in combat on spike pulls is flagged
 
 # Bloodlust / Heroism / Time Warp / Primal Rage (+ hunter pet version) / Fury of the Aspects
 lust_spell_ids = [2825, 32182, 80353, 264667, 272678, 390386]
@@ -78,6 +80,8 @@ pub struct General {
     pub heuristic_min_share: f64,
     pub spike_window_ms: i64,
     pub spike_frac: f64,
+    pub summon_alive_max_s: f64,
+    pub lust_idle_max_s: f64,
     pub lust_spell_ids: Vec<u32>,
     pub sated_aura_ids: Vec<u32>,
     pub healthstone_spell_ids: Vec<u32>,
@@ -99,6 +103,8 @@ impl Default for General {
             heuristic_min_share: 0.02,
             spike_window_ms: 5000,
             spike_frac: 0.50,
+            summon_alive_max_s: 6.0,
+            lust_idle_max_s: 180.0,
             lust_spell_ids: vec![2825, 32182, 80353, 264667, 272678, 390386],
             sated_aura_ids: vec![57723, 57724, 80354, 264689, 390435],
             healthstone_spell_ids: vec![6262, 452930],
@@ -323,6 +329,10 @@ mod tests {
         assert_eq!(
             (c.general.spike_window_ms, c.general.spike_frac),
             (d.spike_window_ms, d.spike_frac)
+        );
+        assert_eq!(
+            (c.general.summon_alive_max_s, c.general.lust_idle_max_s),
+            (d.summon_alive_max_s, d.lust_idle_max_s)
         );
         let none = Config::load_with(None, PackChoice::None).unwrap();
         assert!(none.knowledge.pack_key.is_none());

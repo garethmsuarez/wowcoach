@@ -36,11 +36,20 @@ def line(t, ev, rest):
     out.append(f"{ts(t)}  {ev},{rest}")
 
 
-def dmg(t, src, dst, sid, sname, amt, periodic=False, dst_hp=None):
+def dmg(t, src, dst, sid, sname, amt, periodic=False, dst_hp=None, school=0x20):
     ev = "SPELL_PERIODIC_DAMAGE" if periodic else "SPELL_DAMAGE"
     if dst_hp is not None:
         dst["hp"] = max(0, dst_hp)
-    line(t, ev, f'{unit(src)},{unit(dst)},{sid},"{sname}",0x20,{adv(dst)},{amt},{amt},-1,32,0,0,0,nil,nil,nil,ST')
+    line(t, ev, f'{unit(src)},{unit(dst)},{sid},"{sname}",{school:#x},{adv(dst)},{amt},{amt},-1,{school},0,0,0,nil,nil,nil,ST')
+
+
+def buff(t, src, dst, sid, sname, removed=False):
+    ev = "SPELL_AURA_REMOVED" if removed else "SPELL_AURA_APPLIED"
+    line(t, ev, f'{unit(src)},{unit(dst)},{sid},"{sname}",0x1,BUFF')
+
+
+def summon(t, src, dst, sid, sname):
+    line(t, "SPELL_SUMMON", f'{unit(src)},{unit(dst)},{sid},"{sname}",0x1')
 
 
 def swing(t, src, dst, amt):
@@ -128,7 +137,7 @@ def mplus():
                         who = random.choice(group)
                         heal(now + 0.05, heal_, who, 8936, "Regrowth", 90000, random.choice([0, 0, 40000, 90000]))
             for m in mobs:
-                swing(now + 0.1, m, tank, 45000)
+                swing(now + 0.1, m, tank, 8000)
             # caster volley every 8s, sometimes kicked
             if not is_boss and int(s) % 8 == 0 and abs(s - int(s)) < 1e-6:
                 caster = mobs[0]
@@ -168,7 +177,46 @@ def mplus():
                 line(now + 0.5, "SPELL_AURA_APPLIED", f'{unit(dh)},{unit(mobs[0])},179057,"Chaos Nova",0x40,DEBUFF')
                 line(now + 3.0, "SPELL_CAST_START", f'{unit(mobs[0])},{unit(None)},77001,"Shadow Bolt",0x20')
                 line(now + 5.0, "SPELL_CAST_SUCCESS", f'{unit(mobs[0])},{unit(None)},77001,"Shadow Bolt",0x20,{adv(mobs[0])}')
-            # pull 5: overpull, three people die to a big hit
+            # Defensives (M3). None of this draws random numbers, so the rest
+            # of the log stays as it was.
+            # pull 1: the healer's Tranquility, a group defensive, so it's
+            # known to be ready later.
+            if pull == 0 and abs(s - 10.0) < 1e-6:
+                cast(now, heal_, 740, "Tranquility")
+            # pull 4 (boss): the demon hunter's Blur (buff logged just before
+            # the cast, as raw logs do), and a tank buster every 15 s with
+            # Shield of the Righteous up only for the first.
+            # Then, 64 s after Blur, the demon hunter dies to a big hit with
+            # Blur ready again (60 s cooldown). On the pull's last tick, so no
+            # random draws are skipped and the rest of the log is unchanged.
+            if pull == 3 and abs(s - 10.0) < 1e-6:
+                buff(now - 0.01, dh, dh, 212800, "Blur")
+                cast(now, dh, 198589, "Blur")
+            if pull == 3 and abs(s - 20.0) < 1e-6:
+                buff(now, dh, dh, 212800, "Blur", removed=True)
+            if pull == 3 and abs(s - 14.0) < 1e-6:
+                cast(now, tank, 53600, "Shield of the Righteous")
+                buff(now, tank, tank, 132403, "Shield of the Righteous")
+            if pull == 3 and abs(s - 18.5) < 1e-6:
+                buff(now, tank, tank, 132403, "Shield of the Righteous", removed=True)
+            if pull == 3 and s in (15.0, 30.0, 45.0, 60.0):
+                dmg(now, mobs[0], tank, 99001, "Crushing Blow", 250000, school=0x1)
+            if pull == 3 and abs(s - 74.5) < 1e-6 and dh["name"] not in dead:
+                dmg(now, mobs[0], dh, 99002, "Shadow Burst", 700000, dst_hp=0)
+                died(now + 0.1, dh)
+                dead.add(dh["name"])
+            # pull 7: a caster drops a Spire Totem that burns the group until
+            # it's killed 12 s later (a spike led by an enemy summon).
+            if pull == 6 and abs(s - 5.0) < 1e-6:
+                totem = npc(990, "Spire Totem", 200000)
+                summon(now, mobs[0], totem, 99099, "Spire Totem")
+            if pull == 6 and 6.0 <= s <= 16.0 and abs(s - int(s)) < 1e-6:
+                for p in group:
+                    if p["name"] not in dead:
+                        dmg(now, totem, p, 99100, "Searing Lava", 160000, school=0x4)
+            if pull == 6 and abs(s - 17.0) < 1e-6:
+                died(now, totem)
+            # pull 6: overpull, three people die to a big hit
             if pull == 5 and abs(s - 20.0) < 1e-6:
                 for p in (heal_, dh, ret):
                     dmg(now, mobs[1], p, 99999, "Cataclysmic Slam", 900000, dst_hp=0)
