@@ -285,6 +285,8 @@ kind = "dispel"
 types = ["magic"]
 target = "friendly"
 cd_s = 8         # seen in logs (Havoc); new in Midnight, types/cooldown unconfirmed
+# Not magic-only: it removed Insatiable Hunger (1238801), which Remove Corruption
+# (curse, poison) also removes. The spell API has no entry yet; `classes check` flags it.
 
 [[ability]]
 ids = [203720]

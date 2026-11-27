@@ -1,0 +1,16 @@
+{
+  "_links": {
+    "self": {
+      "href": "https://us.api.blizzard.com/data/wow/keystone-affix/147?namespace=static-12.1.5_70077-us"
+    }
+  },
+  "id": 147,
+  "name": "Xal'atath's Guile",
+  "description": "Xal'atath betrays players, revoking her bargains while making deaths subtract 15 seconds from time remaining.",
+  "media": {
+    "key": {
+      "href": "https://us.api.blizzard.com/data/wow/media/keystone-affix/147?namespace=static-12.1.5_70077-us"
+    },
+    "id": 147
+  }
+}

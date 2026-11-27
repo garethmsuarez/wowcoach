@@ -7,6 +7,11 @@
 #
 # Tags: priority_kick, stoppable, avoidable, dispel_priority, tank_buster,
 #       dangerous_cast, affix
+# [[affix]]: keystone affixes by logged ID. `name` comes from `season sync`;
+#   `death_penalty_s` (seconds a death costs the timer) is set by a reviewer,
+#   measured from logged key times (docs/milestones/m4-dispels-and-affixes.md).
+# Spells may carry `dispel = [types]` (data written by `season suggest`) and
+#   `affixes = [ids]` (with map_id = 0) for affix mechanics.
 # Format and workflow: docs/milestones/m1-season-data.md
 # Validate with: wowcoach season check data/seasons/midnight-s2.toml
 
@@ -276,6 +281,34 @@ encounter_id = 3429
 name = "Ula'tek"
 journal_id = 2895
 encounter_id = 3492
+
+[[affix]]
+id = 9
+name = "Tyrannical"
+
+[[affix]]
+id = 10
+name = "Fortified"
+
+[[affix]]
+id = 147
+name = "Xal'atath's Guile"
+death_penalty_s = 15.0
+
+[[affix]]
+id = 158
+name = "Xal'atath's Bargain: Voidbound"
+death_penalty_s = 5.0
+
+[[affix]]
+id = 160
+name = "Xal'atath's Bargain: Devour"
+death_penalty_s = 5.0
+
+[[affix]]
+id = 165
+name = "Lindormi's Guidance"
+death_penalty_s = 0.0
 
 [[spell]]
 ids = [1307700]

@@ -575,7 +575,8 @@ fn season_sync(
     eprintln!("Connecting to Battle.net ({region})...");
     let client = blizzard::net::Client::connect(client_id, client_secret, region)?;
     eprintln!("Scanning keystone dungeons for the current pool...");
-    let synced = blizzard::fetch(&client, &raids, |line| eprintln!("  {line}"))?;
+    let affixes: Vec<u32> = pack.affixes.iter().map(|a| a.id).collect();
+    let synced = blizzard::fetch(&client, &raids, &affixes, |line| eprintln!("  {line}"))?;
     let wcl = wcl_encounters();
 
     let summary = blizzard::merge(&mut pack, &synced, &wcl);

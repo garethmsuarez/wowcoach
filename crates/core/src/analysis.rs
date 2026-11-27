@@ -224,6 +224,10 @@ pub struct SpellEvidence {
     /// summons, which belong to the summon).
     #[serde(default)]
     pub spikes: u32,
+    /// Friendly dispel abilities (spell IDs) that removed it from group
+    /// players: the types they share are the debuff's dispel types.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dispelled_by: Vec<u32>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -328,6 +332,7 @@ struct EX {
     instant: u32,
     applied: u32,
     dispelled: u32,
+    dispelled_by: std::collections::BTreeSet<u32>,
     /// Boss context (None = trash) -> times seen.
     ctx: HashMap<Option<String>, u32>,
 }
@@ -795,13 +800,15 @@ impl FightBuilder {
                     self.seen(extra.id, &extra.name);
                 }
             }
-            Kind::Dispel { extra, .. } => {
+            Kind::Dispel { spell, extra } => {
                 if let Some((pg, pn)) = Self::attrib(&e.src, owners)
                     && e.dst.as_ref().is_some_and(|d| !d.is_hostile())
                 {
                     self.ps(&pg, pn.as_deref()).dispels += 1;
                     if e.dst.as_ref().is_some_and(|d| d.is_group_player()) {
-                        self.seen(extra.id, &extra.name).dispelled += 1;
+                        let x = self.seen(extra.id, &extra.name);
+                        x.dispelled += 1;
+                        x.dispelled_by.insert(spell.id);
                     }
                 }
             }
@@ -1340,6 +1347,7 @@ impl FightBuilder {
                             c.spell_id == *id && matches!(c.outcome, CastOutcome::Stopped { .. })
                         })
                         .count() as u32,
+                    dispelled_by: x.dispelled_by.iter().copied().collect(),
                     spikes: def_out
                         .spikes
                         .iter()

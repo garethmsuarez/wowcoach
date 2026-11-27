@@ -59,7 +59,7 @@ pub enum Scope {
     Group,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Deserialize, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DispelType {
     Magic,
@@ -422,6 +422,8 @@ pub struct Audit {
     buff_after: HashMap<(u32, u32), u32>,
     buff_after_any: HashMap<u32, u32>,
     buff_names: HashMap<u32, String>,
+    /// Debuff (id, name) on group players -> friendly dispel spell IDs that removed it.
+    removed_by: BTreeMap<(u32, String), BTreeSet<u32>>,
     /// Player guid -> buffs they applied in the last `BUFF_BEFORE_MS`: the
     /// raw log often writes a defensive's buff just before its cast event.
     recent_buffs: HashMap<String, Vec<(i64, u32)>>,
@@ -451,6 +453,9 @@ pub struct AuditReport {
     /// Defensives and mitigation cast often, whose listed aura never followed
     /// the cast and without `dur_s`: the analysis can't tell when they're active.
     pub no_buff: Vec<String>,
+    /// Debuffs removed by dispels whose listed types have nothing in common:
+    /// one of those dispels' `types` is probably wrong.
+    pub dispel_type_conflicts: Vec<String>,
     /// Silently-ended cast bars, and how many a listed stop explains.
     pub silent_casts: u32,
     pub silent_explained: u32,
@@ -672,7 +677,17 @@ impl Audit {
                     self.players.insert(guid, (c, s));
                 }
             }
-            Kind::Dispel { spell, .. } => {
+            Kind::Dispel { spell, extra } => {
+                if self.player(&e.src).is_some()
+                    && e.dst
+                        .as_ref()
+                        .is_some_and(|d| d.is_player() && !d.is_hostile())
+                {
+                    self.removed_by
+                        .entry((extra.id, extra.name.clone()))
+                        .or_default()
+                        .insert(spell.id);
+                }
                 if let Some((guid, (c, s))) = self.player(&e.src) {
                     *self
                         .dispels
@@ -821,6 +836,46 @@ impl Audit {
             }
         }
 
+        // Dispel types: what removed each debuff must share a type.
+        for ((id, name), dispels) in &self.removed_by {
+            let listed: Vec<&Ability> = dispels
+                .iter()
+                .filter_map(|d| {
+                    data.by_id(*d)
+                        .into_iter()
+                        .find(|a| a.kind == AbilityKind::Dispel)
+                })
+                .collect();
+            let Some(first) = listed.first() else {
+                continue;
+            };
+            let common: BTreeSet<DispelType> =
+                listed
+                    .iter()
+                    .fold(first.types.iter().copied().collect(), |acc, a| {
+                        acc.intersection(&a.types.iter().copied().collect())
+                            .copied()
+                            .collect()
+                    });
+            if common.is_empty() {
+                let by = listed
+                    .iter()
+                    .map(|a| {
+                        let t: Vec<String> = a
+                            .types
+                            .iter()
+                            .map(|t| format!("{t:?}").to_lowercase())
+                            .collect();
+                        format!("{} ({})", a.name, t.join(", "))
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                r.dispel_type_conflicts.push(format!(
+                    "{name} ({id}): removed by {by}, which share no type"
+                ));
+            }
+        }
+
         // Kick distances against listed ranges. Positions are the last ones
         // logged, and units have hitboxes, so allow a few yards.
         let mut kick_ids: Vec<&u32> = self.kick_dist.keys().collect();
@@ -921,6 +976,11 @@ impl std::fmt::Display for AuditReport {
             f,
             "Interrupts used from further than their listed range (check range_yd)",
             &self.kick_ranges,
+        )?;
+        section(
+            f,
+            "Debuffs removed by dispels with no type in common (check those dispels' types)",
+            &self.dispel_type_conflicts,
         )?;
         section(
             f,

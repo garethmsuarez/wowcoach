@@ -208,3 +208,71 @@ fn knowledge_indexes_every_id_of_a_mechanic() {
     );
     assert!(k.has_tag(600, Tag::Affix));
 }
+
+#[test]
+fn affixes_dispel_types_and_death_penalties() {
+    let problems = with(
+        r#"
+[[affix]]
+id = 147
+name = "Xal'atath's Guile"
+death_penalty_s = 15
+[[affix]]
+id = 165
+death_penalty_s = 0
+[[affix]]
+id = 147
+[[affix]]
+id = 9
+death_penalty_s = -1
+[[spell]]
+ids = [700]
+name = "Devouring Rift"
+affixes = [160]
+[[spell]]
+ids = [701]
+name = "Rift on a map"
+map_id = 2923
+affixes = [147]
+"#,
+    );
+    assert_eq!(
+        problems,
+        [
+            "affix 147 is listed twice",
+            "affix 9: death_penalty_s must be 0 or more",
+            "spell \"Devouring Rift\": affix 160 is not in the pack's [[affix]] list",
+            "spell \"Rift on a map\": an affix mechanic applies to every dungeon (map_id = 0)",
+        ]
+    );
+
+    let pack = SeasonPack::parse(&format!(
+        "{GOOD}{}",
+        r#"
+[[affix]]
+id = 147
+death_penalty_s = 15
+[[affix]]
+id = 158
+death_penalty_s = 5
+[[affix]]
+id = 165
+death_penalty_s = 0
+[[affix]]
+id = 9
+[[spell]]
+ids = [800]
+name = "Melt Armor"
+dispel = ["magic"]
+"#
+    ))
+    .unwrap();
+    let k = Knowledge::build(Some(pack), &[]);
+    assert_eq!(k.death_penalty_s(&[9, 10, 147]), Some(15.0));
+    assert_eq!(k.death_penalty_s(&[158, 9]), Some(5.0));
+    // The lowest wins, so a death's cost is never overstated.
+    assert_eq!(k.death_penalty_s(&[165, 147]), Some(0.0));
+    assert_eq!(k.death_penalty_s(&[9, 10]), None, "no affix sets one");
+    assert_eq!(k.dispel_types(800), [DispelType::Magic]);
+    assert!(k.dispel_types(1).is_empty());
+}
