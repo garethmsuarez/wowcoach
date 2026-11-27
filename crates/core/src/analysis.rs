@@ -316,6 +316,10 @@ pub struct FightReport {
     /// M+: enemy forces killed by the end, % of the total (with a forces table).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub forces_pct: Option<f64>,
+    /// M+: top public runs of the same dungeon and level, lined up with this
+    /// key (`analyze --compare-top N`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reference: Option<crate::reference::TopRuns>,
     pub downtime_s: f64,
     pub enemy_casts: Vec<EnemyCastReport>,
     pub enemy_damage: Vec<EnemySpellReport>,
@@ -1618,6 +1622,7 @@ impl FightBuilder {
             pulls,
             segments,
             forces_pct,
+            reference: None,
             downtime_s,
             enemy_casts,
             enemy_damage,

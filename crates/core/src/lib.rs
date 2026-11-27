@@ -13,6 +13,7 @@ pub mod forces;
 pub mod model;
 #[cfg(any(feature = "wcl", feature = "blizzard"))]
 pub mod net;
+pub mod reference;
 pub mod report;
 pub mod rules;
 pub mod season;

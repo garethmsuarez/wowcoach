@@ -60,6 +60,7 @@ fn fight(kind: FightKind, duration_s: f64) -> FightReport {
         pulls: vec![],
         segments: vec![],
         forces_pct: None,
+        reference: None,
         downtime_s: 0.0,
         enemy_casts: vec![],
         enemy_damage: vec![],

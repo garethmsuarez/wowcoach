@@ -521,6 +521,57 @@ pub fn parse_fight_rankings(v: &Value) -> (Vec<RankedKey>, bool) {
     (keys, v["hasMorePages"].as_bool().unwrap_or(false))
 }
 
+/// One public keystone run, reduced to game data for `analyze --compare-top`:
+/// `fight` is an entry of a report's `fights` (with `dungeonPulls`), `actors`
+/// the report's `masterData.actors` (NPCs, for their game IDs), `deaths` the
+/// enemy death events. None for fights that aren't keystone runs.
+pub fn ref_run(
+    code: &str,
+    fight: &Value,
+    actors: &Value,
+    deaths: &[Value],
+) -> Option<crate::reference::RefRun> {
+    use crate::reference::{RefPull, RefRun};
+    let meta = FightMeta::from_json(fight)?;
+    let level = meta.keystone_level?;
+    let game: HashMap<i64, u32> = actors
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|a| Some((i(a, "id")?, i(a, "gameID")? as u32)))
+        .collect();
+    let rel = |t: i64| t - meta.start;
+    let mut kills: Vec<(i64, u32)> = deaths
+        .iter()
+        .filter(|e| e["type"] == "death")
+        .filter_map(|e| Some((rel(i(e, "timestamp")?), *game.get(&i(e, "targetID")?)?)))
+        .collect();
+    kills.sort();
+    Some(RefRun {
+        code: code.to_string(),
+        fight_id: meta.id,
+        map_id: meta.map_id(),
+        level,
+        affixes: meta.affixes.clone(),
+        time_ms: meta.keystone_time.unwrap_or(meta.end - meta.start),
+        bonus: meta.keystone_bonus.map(|b| b.clamp(0, 3) as u8),
+        pulls: fight["dungeonPulls"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|p| {
+                Some(RefPull {
+                    start_ms: rel(i(p, "startTime")?),
+                    end_ms: rel(i(p, "endTime")?),
+                    encounter_id: i(p, "encounterID").unwrap_or(0).max(0) as u32,
+                    kill: p["kill"].as_bool().unwrap_or(false),
+                })
+            })
+            .collect(),
+        kills,
+    })
+}
+
 /// Order for events sharing a timestamp: boss start first, boss end last.
 fn boss_order(e: &Event) -> u8 {
     match e.kind {
@@ -637,6 +688,16 @@ pub mod net {
 
     const RANK_Q: &str = r#"query($code:String!,$fid:[Int]!){ reportData{ report(code:$code){ rankings(fightIDs:$fid) } } }"#;
 
+    const REF_Q: &str = r#"query($code:String!,$fid:[Int]!){ reportData{ report(code:$code){
+        masterData{ actors(type:"NPC"){ id gameID } }
+        fights(fightIDs:$fid){ id encounterID name startTime endTime kill keystoneLevel keystoneTime keystoneBonus keystoneAffixes
+                gameZone{ id } dungeonPulls{ encounterID startTime endTime kill } }
+    }}}"#;
+
+    const DEATHS_Q: &str = r#"query($code:String!,$fid:[Int]!,$s:Float!,$e:Float!){ reportData{ report(code:$code){
+        events(fightIDs:$fid,startTime:$s,endTime:$e,dataType:Deaths,hostilityType:Enemies,limit:10000){ data nextPageTimestamp }
+    }}}"#;
+
     const RATE_Q: &str = r#"{ rateLimitData{ limitPerHour pointsSpentThisHour pointsResetIn } }"#;
 
     const TOP_Q: &str = r#"query($id:Int!,$page:Int!){ worldData{ encounter(id:$id){ fightRankings(page:$page) } } }"#;
@@ -651,6 +712,33 @@ pub mod net {
         pub fn zone_encounters(&self) -> anyhow::Result<Vec<(String, u32)>> {
             Ok(super::zone_encounters(&self.query(ZONES_Q, json!({}))?))
         }
+    }
+
+    /// One public keystone run for `analyze --compare-top`: its pulls and its
+    /// enemy deaths only (a few points; no player events).
+    pub fn ref_run(c: &Client, code: &str, fight: i64) -> anyhow::Result<crate::reference::RefRun> {
+        let d = c.query(REF_Q, json!({ "code": code, "fid": [fight] }))?;
+        let report = &d["reportData"]["report"];
+        let f = &report["fights"][0];
+        let (Some(start), Some(end)) = (f["startTime"].as_f64(), f["endTime"].as_f64()) else {
+            bail!("fight {fight} not found in {code}");
+        };
+        let mut deaths: Vec<Value> = vec![];
+        let mut s = start;
+        loop {
+            let p = c.query(
+                DEATHS_Q,
+                json!({ "code": code, "fid": [fight], "s": s, "e": end }),
+            )?;
+            let page = &p["reportData"]["report"]["events"];
+            deaths.extend(page["data"].as_array().into_iter().flatten().cloned());
+            match page["nextPageTimestamp"].as_f64() {
+                Some(n) if n > s => s = n,
+                _ => break,
+            }
+        }
+        super::ref_run(code, f, &report["masterData"]["actors"], &deaths)
+            .ok_or_else(|| anyhow::anyhow!("{code}:{fight} is not a keystone run"))
     }
 
     pub struct Fetched {
@@ -830,6 +918,43 @@ mod tests {
             )
             .unwrap();
         assert_eq!(guid(&a, true), guid(&d, true));
+    }
+
+    #[test]
+    fn reference_run_from_pulls_and_enemy_deaths() {
+        let v: Value =
+            serde_json::from_str(include_str!("../tests/fixtures/wcl-reference.json")).unwrap();
+        let deaths: Vec<Value> = v["deaths"].as_array().unwrap().clone();
+        let r = ref_run(
+            "abc",
+            &v["report"]["fights"][0],
+            &v["report"]["masterData"]["actors"],
+            &deaths,
+        )
+        .unwrap();
+        assert_eq!(
+            (r.map_id, r.level, r.time_ms, r.bonus, r.fight_id),
+            (2813, 14, 1_135_000, Some(3), 7)
+        );
+        // Times from the run's start; actors mapped to NPC IDs; deaths of
+        // unknown actors and other event types dropped.
+        assert_eq!(
+            r.kills,
+            [(50_000, 234849), (51_000, 235257), (310_000, 234998)]
+        );
+        assert_eq!(
+            r.pulls[1],
+            crate::reference::RefPull {
+                start_ms: 200_000,
+                end_ms: 312_000,
+                encounter_id: 3101,
+                kill: true
+            }
+        );
+        // Not a keystone run.
+        let mut raid = v["report"]["fights"][0].clone();
+        raid["keystoneLevel"] = Value::Null;
+        assert!(ref_run("abc", &raid, &Value::Null, &[]).is_none());
     }
 
     #[test]

@@ -144,6 +144,19 @@ uses more than `--max-points` (default 3000) of the hourly limit.
   It's proposed with the `affix` tag. A per-dungeon entry a reviewer has worked on
   (tags, note or dismissed) is never moved.
 
+### Comparing with top runs
+
+With Warcraft Logs credentials, `--compare-top N` lines each completed key up
+with the top N public runs of the same dungeon and level. It compares boss kill
+times, % forces at each boss, and each boss-to-boss segment's time, combat and
+downtime (median and range). A run costs about 4 points the first time; runs
+are cached in `~/.cache/wowcoach/compare`, so later reports are nearly free.
+`--compare-max-points` (default 1000) caps a run's spend.
+
+```bash
+wowcoach analyze ~/WoW/_retail_/Logs/WoWCombatLog-*.txt --compare-top 5
+```
+
 ### Enemy forces
 
 Enemy forces (the % bar) aren't in the log or any API. `season forces` imports
@@ -236,6 +249,8 @@ in [`docs/milestones/m1-season-data.md`](docs/milestones/m1-season-data.md).
   plus enemies left at 1% health or less. A pull's kills include enemies that die just after its
   last hit. Segments split a key at boss kills; the first one includes the start countdown, and a
   pull that runs across a boss kill is listed in the segment it started in.
+- **Top runs** only log enemy deaths, so enemies scripted away at 1 HP don't count toward their
+  forces (Kings' Rest's Shadow of Zul: top runs show ~96.5% at the end).
 - The WCL adapter supports public reports (client-credentials flow) only. Private
   reports need the user OAuth flow.
 

@@ -1,0 +1,38 @@
+{
+  "report": {
+    "masterData": {
+      "actors": [
+        { "id": 41, "gameID": 234849 },
+        { "id": 42, "gameID": 235257 },
+        { "id": 43, "gameID": 234998 }
+      ]
+    },
+    "fights": [
+      {
+        "id": 7,
+        "encounterID": 12813,
+        "name": "Murder Row",
+        "startTime": 100000,
+        "endTime": 1300000,
+        "kill": true,
+        "keystoneLevel": 14,
+        "keystoneTime": 1135000,
+        "keystoneBonus": 3,
+        "keystoneAffixes": [10, 9, 147],
+        "gameZone": { "id": 2813 },
+        "dungeonPulls": [
+          { "encounterID": 0, "startTime": 112000, "endTime": 190000, "kill": true },
+          { "encounterID": 3101, "startTime": 300000, "endTime": 412000, "kill": true },
+          { "encounterID": 0, "startTime": 430000, "endTime": 470000, "kill": true }
+        ]
+      }
+    ]
+  },
+  "deaths": [
+    { "timestamp": 150000, "type": "death", "targetID": 41 },
+    { "timestamp": 151000, "type": "death", "targetID": 42 },
+    { "timestamp": 410000, "type": "death", "targetID": 43 },
+    { "timestamp": 460000, "type": "death", "targetID": 999 },
+    { "timestamp": 465000, "type": "applybuff", "targetID": 41 }
+  ]
+}
