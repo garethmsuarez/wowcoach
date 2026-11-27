@@ -1220,6 +1220,8 @@ fn evidence_records_which_dispels_removed_a_debuff() {
         (e.dispelled, e.dispelled_by.as_slice()),
         (3, &[475, 527][..])
     );
+    // The unit that applied it, for affix discovery.
+    assert_eq!(e.npcs, vec![npc_id(&mob)]);
 }
 
 // ------------------------------------------------------------ dispels

@@ -530,8 +530,8 @@ fn audit_discovers_defensive_buffs() {
 
 #[test]
 fn audit_flags_dispels_with_no_type_in_common() {
-    // Hunger is removed by Soul Cleanse (magic) and Remove Corruption (curse,
-    // poison): one of those types is wrong. Spores, removed by Nature's Cure
+    // Hunger is removed by Purify (magic, disease) and Remove Corruption
+    // (curse, poison): one of those types is wrong. Spores, removed by Nature's Cure
     // and Purify, is magic: fine.
     let dh = player("Dh");
     let cat = player("Cat");
@@ -542,7 +542,7 @@ fn audit_flags_dispels_with_no_type_in_common() {
         .combatant(0, &cat, 103)
         .combatant(0, &tree, 105)
         .combatant(0, &priest, 256);
-    log.dispel_with(1000, &dh, &cat, 1266617, "Soul Cleanse", 900, "Hunger")
+    log.dispel_with(1000, &priest, &cat, 527, "Purify", 900, "Hunger")
         .dispel_with(2000, &cat, &dh, 2782, "Remove Corruption", 900, "Hunger")
         .dispel_with(3000, &tree, &dh, 88423, "Nature's Cure", 901, "Spores")
         .dispel_with(4000, &priest, &tree, 527, "Purify", 901, "Spores");
@@ -554,7 +554,7 @@ fn audit_flags_dispels_with_no_type_in_common() {
     assert_eq!(
         r.dispel_type_conflicts,
         [
-            "Hunger (900): removed by Remove Corruption (curse, poison), Soul Cleanse (magic), which share no type"
+            "Hunger (900): removed by Purify (magic, disease), Remove Corruption (curse, poison), which share no type"
         ]
     );
 }

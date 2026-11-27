@@ -239,6 +239,10 @@ pub struct SpellEvidence {
     /// players: the types they share are the debuff's dispel types.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub dispelled_by: Vec<u32>,
+    /// NPC IDs of the hostile units it came from (affix discovery: an affix's
+    /// units only appear in keys with that affix).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub npcs: Vec<u32>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -352,6 +356,8 @@ struct EX {
     applied: u32,
     dispelled: u32,
     dispelled_by: std::collections::BTreeSet<u32>,
+    /// NPC IDs of the hostile units that cast, applied or hit with it.
+    npcs: std::collections::BTreeSet<u32>,
     /// Boss context (None = trash) -> times seen.
     ctx: HashMap<Option<String>, u32>,
 }
@@ -574,7 +580,7 @@ impl FightBuilder {
     }
 
     /// Note a hostile spell for the evidence table, with the boss context.
-    fn seen(&mut self, id: u32, name: &str) -> &mut EX {
+    fn seen(&mut self, id: u32, name: &str, src: Option<&Unit>) -> &mut EX {
         let ctx = match (&self.seed, &self.open_boss) {
             (Seed::Raid { name, .. }, _) => Some(name.clone()),
             (Seed::MPlus { .. }, Some(b)) => Some(b.0.clone()),
@@ -585,6 +591,9 @@ impl FightBuilder {
             x.name = name.to_string();
         }
         *x.ctx.entry(ctx).or_default() += 1;
+        if let Some(n) = src.map(|u| casts::npc_id(&u.guid)).filter(|n| *n != 0) {
+            x.npcs.insert(n);
+        }
         x
     }
 
@@ -697,7 +706,7 @@ impl FightBuilder {
                         p.recent.pop_front();
                     }
                     if src_hostile && spell.id > 1 {
-                        self.seen(spell.id, &spell.name);
+                        self.seen(spell.id, &spell.name, e.src.as_ref());
                     }
                     if src_hostile || e.src.is_none() {
                         let es = self.enemy_dmg.entry(spell.id).or_default();
@@ -753,7 +762,7 @@ impl FightBuilder {
                         ec.name.clone_from(&spell.name);
                         ec.started += 1;
                         self.enemy_pending.insert((s.guid.clone(), spell.id), ts);
-                        self.seen(spell.id, &spell.name);
+                        self.seen(spell.id, &spell.name, Some(s));
                     }
                 }
             }
@@ -797,7 +806,7 @@ impl FightBuilder {
                             ec.name.clone_from(&spell.name);
                             ec.success += 1;
                         } else {
-                            self.seen(spell.id, &spell.name).instant += 1;
+                            self.seen(spell.id, &spell.name, Some(s)).instant += 1;
                         }
                     }
                 }
@@ -819,7 +828,7 @@ impl FightBuilder {
                     let ec = self.enemy_casts.entry(extra.id).or_default();
                     ec.name.clone_from(&extra.name);
                     ec.interrupted += 1;
-                    self.seen(extra.id, &extra.name);
+                    self.seen(extra.id, &extra.name, Some(d));
                 }
             }
             Kind::Dispel { spell, extra } => {
@@ -828,7 +837,7 @@ impl FightBuilder {
                 {
                     self.ps(&pg, pn.as_deref()).dispels += 1;
                     if e.dst.as_ref().is_some_and(|d| d.is_group_player()) {
-                        let x = self.seen(extra.id, &extra.name);
+                        let x = self.seen(extra.id, &extra.name, None);
                         x.dispelled += 1;
                         x.dispelled_by.insert(spell.id);
                     }
@@ -841,7 +850,7 @@ impl FightBuilder {
                 if e.src.as_ref().is_some_and(|s| s.is_hostile_npc())
                     && e.dst.as_ref().is_some_and(|d| d.is_group_player())
                 {
-                    self.seen(spell.id, &spell.name).applied += 1;
+                    self.seen(spell.id, &spell.name, e.src.as_ref()).applied += 1;
                 }
             }
             Kind::Death => {
@@ -1432,6 +1441,7 @@ impl FightBuilder {
                         })
                         .count() as u32,
                     dispelled_by: x.dispelled_by.iter().copied().collect(),
+                    npcs: x.npcs.iter().copied().collect(),
                     spikes: def_out
                         .spikes
                         .iter()

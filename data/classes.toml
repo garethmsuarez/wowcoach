@@ -282,11 +282,12 @@ ids = [1266617]
 name = "Soul Cleanse"
 class = "Demon Hunter"
 kind = "dispel"
-types = ["magic"]
+types = ["magic", "curse"]
 target = "friendly"
 cd_s = 8         # seen in logs (Havoc); new in Midnight, types/cooldown unconfirmed
-# Not magic-only: it removed Insatiable Hunger (1238801), which Remove Corruption
-# (curse, poison) also removes. The spell API has no entry yet; `classes check` flags it.
+# Curse from logs: it removed Insatiable Hunger (1238801), which Remove Corruption
+# (curse, poison) also removes, and Curse of Doom (1217973) in a top key. Magic is
+# the original assumption, not yet seen. The spell API has no entry for it.
 
 [[ability]]
 ids = [203720]

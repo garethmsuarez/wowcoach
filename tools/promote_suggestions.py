@@ -22,6 +22,9 @@ prints a review table of what was promoted and what was left for a human:
                    bar (predictable, so a group defensive can be planned for
                    it), < 50% of its damage on tanks, and not tagged avoidable
                    (that answer is to move, not a defensive)
+  affix            seen in every key with the affix in its dungeon(s), and
+                   its casters in none of >= 3 keys of those dungeons
+                   without it (`season suggest` asks for >= 50% and >= 2)
   avoidable        never: the uneven-hit heuristic alone is too weak
 
 EXCEPTIONS lists spells that pass the numbers but are judged otherwise.
@@ -86,11 +89,18 @@ def decide(name, tag, ev, tags=()):
         if "avoidable" in tags:
             return False, why + ", but tagged avoidable"
         return (spikes >= 5 and per >= 3 and rate >= 0.25 and bars > 0 and tank < 0.5), why
+    if tag == "affix":
+        m = re.search(r"affix ([\d+]+): in (\d+) of (\d+) keys? with it, its casters in none of (\d+) keys?", ev)
+        if not m:
+            return False, "no affix evidence"
+        seen, with_, control = int(m[2]), int(m[3]), int(m[4])
+        return (seen == with_ and control >= 3), f"affix {m[1]}: in {seen} of {with_} keys with it, casters absent from {control} keys without it"
     return False, "not promoted: " + ("uneven-hit heuristic only" if tag == "avoidable" else "no rule")
 
 text = open(PACK).read()
 pack = tomllib.loads(text)
 inst = {d["map_id"]: d["name"] for d in pack["dungeon"] + pack["raid"]}
+inst[0] = "every dungeon (affix)"
 
 if CHECK:
     # Reviewed tags against the latest evidence. Tags set by hand without
