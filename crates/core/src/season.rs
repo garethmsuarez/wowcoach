@@ -7,6 +7,7 @@
 //! directly: they ask [`crate::config::Config`] (`has_tag`, `avoidable_note`).
 //! See `docs/milestones/m1-season-data.md`.
 
+use crate::classes::DispelType;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap, HashSet};
 
@@ -104,6 +105,23 @@ pub struct Raid {
     pub bosses: Vec<Boss>,
 }
 
+/// A keystone affix, keyed by the ID logged in `CHALLENGE_MODE_START`.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct Affix {
+    pub id: u32,
+    /// From the Blizzard API (`season sync`).
+    #[serde(default)]
+    pub name: String,
+    /// Seconds a player death costs the timer in a key with this affix. When
+    /// several of a key's affixes set it, the lowest wins (so the cost of a
+    /// death is never overstated). Unset: `general.death_penalty_s`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub death_penalty_s: Option<f64>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub note: String,
+}
+
 /// One enemy mechanic. A mechanic is often logged under several spell IDs
 /// (different casters, or the cast vs. the damage), so `ids` is a list.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
@@ -126,6 +144,13 @@ pub struct SpellEntry {
     /// Tags proposed by `season suggest`, waiting for review. Ignored by rules.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub suggested: Vec<Tag>,
+    /// Debuffs: the types a dispel can remove it as. Data, not a tag: `season
+    /// suggest` writes it from which dispels removed it (the types they share).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dispel: Vec<DispelType>,
+    /// Affix IDs the mechanic comes from (with `map_id = 0`: every dungeon).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub affixes: Vec<u32>,
     /// Short advice shown to players, e.g. "Step out of the line".
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub note: String,
@@ -149,6 +174,8 @@ pub struct SeasonPack {
     pub dungeons: Vec<Dungeon>,
     #[serde(default, rename = "raid")]
     pub raids: Vec<Raid>,
+    #[serde(default, rename = "affix", skip_serializing_if = "Vec::is_empty")]
+    pub affixes: Vec<Affix>,
     #[serde(default, rename = "spell")]
     pub spells: Vec<SpellEntry>,
 }
@@ -241,6 +268,18 @@ impl SeasonPack {
             }
         }
 
+        let mut affix_ids = HashSet::new();
+        for a in &self.affixes {
+            if a.id == 0 {
+                out.push(format!("affix {:?} has id 0", a.name));
+            } else if !affix_ids.insert(a.id) {
+                out.push(format!("affix {} is listed twice", a.id));
+            }
+            if a.death_penalty_s.is_some_and(|d| d.is_nan() || d < 0.0) {
+                out.push(format!("affix {}: death_penalty_s must be 0 or more", a.id));
+            }
+        }
+
         let mut seen: HashMap<u32, &str> = HashMap::new();
         for s in &self.spells {
             let label = if s.name.is_empty() {
@@ -282,6 +321,18 @@ impl SeasonPack {
                 }
             } else if s.boss.is_some() {
                 out.push(format!("{label}: a boss needs a map_id"));
+            }
+            for a in &s.affixes {
+                if !affix_ids.contains(a) {
+                    out.push(format!(
+                        "{label}: affix {a} is not in the pack's [[affix]] list"
+                    ));
+                }
+            }
+            if !s.affixes.is_empty() && s.map_id != 0 {
+                out.push(format!(
+                    "{label}: an affix mechanic applies to every dungeon (map_id = 0)"
+                ));
             }
             for t in &s.suggested {
                 if s.tags.contains(t) {
@@ -368,6 +419,7 @@ pub struct KnownSpell {
     pub name: String,
     pub note: String,
     pub tags: Vec<Tag>,
+    pub dispel: Vec<DispelType>,
 }
 
 impl Knowledge {
@@ -382,6 +434,7 @@ impl Knowledge {
                     name: s.name.clone(),
                     note: s.note.clone(),
                     tags: s.tags.clone(),
+                    dispel: s.dispel.clone(),
                 };
                 for id in &s.ids {
                     by_id.insert(*id, k.clone());
@@ -400,6 +453,9 @@ impl Knowledge {
                 }
                 if !o.note.is_empty() {
                     k.note.clone_from(&o.note);
+                }
+                if !o.dispel.is_empty() {
+                    k.dispel.clone_from(&o.dispel);
                 }
                 for t in &o.tags {
                     if !k.tags.contains(t) {
@@ -422,6 +478,27 @@ impl Knowledge {
     pub fn has_tag(&self, id: u32, tag: Tag) -> bool {
         self.by_id.get(&id).is_some_and(|k| k.tags.contains(&tag))
     }
+
+    /// Dispel types of a debuff, when the pack (or an override) knows them.
+    pub fn dispel_types(&self, id: u32) -> &[DispelType] {
+        self.by_id
+            .get(&id)
+            .map(|k| k.dispel.as_slice())
+            .unwrap_or(&[])
+    }
+
+    pub fn affix(&self, id: u32) -> Option<&Affix> {
+        self.pack.as_ref()?.affixes.iter().find(|a| a.id == id)
+    }
+
+    /// The death penalty a key's affixes set: the lowest of those that set
+    /// one, or None (use `general.death_penalty_s`).
+    pub fn death_penalty_s(&self, affixes: &[u32]) -> Option<f64> {
+        affixes
+            .iter()
+            .filter_map(|id| self.affix(*id)?.death_penalty_s)
+            .min_by(f64::total_cmp)
+    }
 }
 
 /// Deterministic order so re-syncing gives clean diffs: instances by name,
@@ -439,11 +516,16 @@ pub fn sort(pack: &mut SeasonPack) {
     {
         inst_order.insert(map, (i, bosses.iter().map(|b| b.name.clone()).collect()));
     }
+    pack.affixes.sort_by_key(|a| a.id);
     for s in pack.spells.iter_mut() {
         s.ids.sort_unstable();
         s.ids.dedup();
         s.sources.sort();
         s.sources.dedup();
+        s.dispel.sort();
+        s.dispel.dedup();
+        s.affixes.sort_unstable();
+        s.affixes.dedup();
     }
     pack.spells.sort_by_cached_key(|s| {
         let (inst, bosses) = inst_order

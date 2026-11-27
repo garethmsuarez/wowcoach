@@ -63,6 +63,12 @@ impl Api for FakeApi {
             "/data/wow/journal-encounter/2849" => {
                 (fixture!("journal-encounter-2849.json"), Namespace::Static)
             }
+            "/data/wow/keystone-affix/147" => {
+                (fixture!("keystone-affix-147.json"), Namespace::Static)
+            }
+            "/data/wow/keystone-affix/165" => {
+                (fixture!("keystone-affix-165.json"), Namespace::Static)
+            }
             _ => anyhow::bail!("unexpected request {path}"),
         };
         assert_eq!(ns, want_ns, "wrong namespace for {path}");
@@ -71,7 +77,7 @@ impl Api for FakeApi {
 }
 
 fn synced() -> Synced {
-    fetch(&FakeApi::new(), &[1317], |_| {}).unwrap()
+    fetch(&FakeApi::new(), &[1317], &[147, 165], |_| {}).unwrap()
 }
 
 fn wcl() -> Vec<(String, u32)> {
@@ -152,7 +158,7 @@ fn build_version_needs_a_static_namespace() {
 fn fetch_keeps_only_tracked_dungeons() {
     let api = FakeApi::new();
     let mut lines = vec![];
-    let s = fetch(&api, &[1317], |l| lines.push(l.to_string())).unwrap();
+    let s = fetch(&api, &[1317], &[], |l| lines.push(l.to_string())).unwrap();
     assert_eq!(
         (s.season_id, s.season_name.as_str()),
         (18, "Mythic+ Dungeons (Midnight Season 2)")
@@ -186,7 +192,7 @@ impl Api for NoTracked {
 
 #[test]
 fn empty_pool_is_an_error_not_a_wipe() {
-    let e = fetch(&NoTracked, &[], |_| {}).unwrap_err();
+    let e = fetch(&NoTracked, &[], &[], |_| {}).unwrap_err();
     assert!(
         e.to_string().contains("no tracked keystone dungeons"),
         "{e}"
@@ -431,4 +437,40 @@ fn spell_check_separates_unknown_renamed_and_failures() {
     );
     // A network error is an error, not "unknown".
     assert!(check_spells(&Spells, &[(500, "x".into())]).is_err());
+}
+
+#[test]
+fn affix_names_are_filled_and_penalties_kept() {
+    let mut pack = SeasonPack::parse(
+        r#"
+        [season]
+        key = "midnight-s2"
+        name = "x"
+        [[affix]]
+        id = 147
+        death_penalty_s = 15
+        [[affix]]
+        id = 165
+        name = "Old Name"
+        death_penalty_s = 0
+        note = "deaths cost no time"
+        "#,
+    )
+    .unwrap();
+    let sum = merge(&mut pack, &synced(), &wcl());
+    assert_eq!(sum.affix_names, 2);
+    let a: Vec<(u32, &str, Option<f64>, &str)> = pack
+        .affixes
+        .iter()
+        .map(|a| (a.id, a.name.as_str(), a.death_penalty_s, a.note.as_str()))
+        .collect();
+    assert_eq!(
+        a,
+        [
+            (147, "Xal'atath's Guile", Some(15.0), ""),
+            (165, "Lindormi's Guidance", Some(0.0), "deaths cost no time"),
+        ]
+    );
+    // A second sync changes nothing.
+    assert_eq!(merge(&mut pack, &synced(), &wcl()).affix_names, 0);
 }

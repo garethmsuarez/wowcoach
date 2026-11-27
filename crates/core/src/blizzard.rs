@@ -130,6 +130,13 @@ pub fn encounter_spells(v: &Value) -> Vec<(u32, String)> {
 }
 
 /// "12.1.5" from any `namespace=static-12.1.5_70077-us` link in a response.
+/// `/data/wow/keystone-affix/{id}`: (id, name).
+pub fn keystone_affix(v: &Value) -> Option<(u32, String)> {
+    let id = v["id"].as_u64()? as u32;
+    let name = v["name"].as_str()?.to_string();
+    Some((id, name))
+}
+
 pub fn build_version(v: &Value) -> Option<String> {
     let text = v.to_string();
     let i = text.find("namespace=static-")? + "namespace=static-".len();
@@ -163,6 +170,8 @@ pub struct Synced {
     /// The current keystone pool with each dungeon's journal data.
     pub dungeons: Vec<(KeystoneDungeon, SyncedInstance)>,
     pub raids: Vec<SyncedInstance>,
+    /// Names of the affixes the pack lists: (id, name).
+    pub affixes: Vec<(u32, String)>,
 }
 
 fn instance(
@@ -195,11 +204,12 @@ fn instance(
 }
 
 /// Walk the API: current season, its tracked dungeons and their journal
-/// entries, plus the given raids (journal instance IDs). `progress` gets one
-/// line per instance.
+/// entries, plus the given raids (journal instance IDs) and the names of the
+/// given affixes. `progress` gets one line per instance.
 pub fn fetch(
     api: &dyn Api,
     raid_journal_ids: &[u32],
+    affix_ids: &[u32],
     mut progress: impl FnMut(&str),
 ) -> anyhow::Result<Synced> {
     let index = api.get("/data/wow/mythic-keystone/season/index", Namespace::Dynamic)?;
@@ -249,12 +259,22 @@ pub fn fetch(
         progress(&format!("raid {} (journal {id})", inst.journal.name));
         raids.push(inst);
     }
+    // The API has no season → affix list (affixes come with keystone levels),
+    // so only the affixes the pack lists are looked up.
+    let mut affixes = vec![];
+    for id in affix_ids {
+        let v = api.get(&format!("/data/wow/keystone-affix/{id}"), Namespace::Static)?;
+        if let Some(a) = keystone_affix(&v) {
+            affixes.push(a);
+        }
+    }
     Ok(Synced {
         season_id,
         season_name,
         build,
         dungeons,
         raids,
+        affixes,
     })
 }
 
@@ -277,6 +297,8 @@ pub struct MergeSummary {
     pub bosses_without_encounter_id: Vec<String>,
     /// (boss, pack ID, WCL ID) where they disagree; the pack is left alone.
     pub encounter_id_conflicts: Vec<(String, u32, u32)>,
+    /// Affix names filled or changed.
+    pub affix_names: usize,
 }
 
 impl MergeSummary {
@@ -289,6 +311,7 @@ impl MergeSummary {
             && self.ids_added == 0
             && self.spells_removed == 0
             && self.encounter_ids_filled == 0
+            && self.affix_names == 0
     }
 }
 
@@ -317,6 +340,9 @@ impl std::fmt::Display for MergeSummary {
                 "Bosses added: {}. Spells added: {}. Journal IDs added to existing spells: {}. Encounter IDs filled: {}.",
                 self.bosses_added, self.spells_added, self.ids_added, self.encounter_ids_filled
             )?;
+        }
+        if self.affix_names > 0 {
+            writeln!(f, "Affix names filled or updated: {}.", self.affix_names)?;
         }
         for (b, ours, theirs) in &self.encounter_id_conflicts {
             writeln!(
@@ -406,6 +432,7 @@ fn merge_spells(
 }
 
 /// Merge synced data into `pack`. Never touches `tags`, `suggested`, `note`,
+/// affix death penalties,
 /// spell IDs learned from logs, or known encounter IDs. Dungeons that left the
 /// keystone pool are removed with their spells. `wcl_encounters` (boss name →
 /// logged encounter ID, from Warcraft Logs zone data) fills missing encounter IDs.
@@ -472,6 +499,16 @@ pub fn merge(
         r.journal_id = j.journal_id;
         r.bosses = merge_bosses(&r.bosses, &inst.bosses, &mut sum);
         merge_spells(pack, j.map_id, &inst.bosses, &mut sum);
+    }
+
+    // Affix names; death penalties and notes are the reviewer's.
+    for a in pack.affixes.iter_mut() {
+        if let Some((_, n)) = synced.affixes.iter().find(|(id, _)| *id == a.id)
+            && a.name != *n
+        {
+            a.name.clone_from(n);
+            sum.affix_names += 1;
+        }
     }
 
     // Logged encounter IDs from Warcraft Logs, by boss name (raids; WCL zone

@@ -36,7 +36,7 @@ A friendly dispel's cooldown only starts when it removes something, so cooldowns
 
 ## PRs
 
-1. **Data: dispel types, affixes, the removal/dispel pairing.**
+1. **Data: dispel types, affixes, the removal/dispel pairing.** *(done; see "PR 1 findings". The removal/dispel pairing moved to PR 2, where the debuff timeline needs it)*
    - Pack:
      - `dispel = [types]` on spell entries
      - `[[affix]]`, with `death_penalty_s` (147: 15, 158/160: 5, 165: 0) and names from the Blizzard API
@@ -64,6 +64,19 @@ A friendly dispel's cooldown only starts when it removes something, so cooldowns
    - It proposes affix spell entries: spells from sourced hostile units, seen in 2+ dungeons, only in keys with that affix. They get `map_id = 0`, `affixes` and the `affix` tag, alongside the usual tag proposals.
    - `promote_suggestions.py` gains an `affix` criterion.
    - Re-run over your logs and top keys, then draft for review as in M3 PR 4.
+
+## PR 1 findings
+
+- **Affixes:** `[[affix]]` is in the pack with names from `season sync`:
+  - 9 Tyrannical and 10 Fortified, with no penalty set
+  - 147 Xal'atath's Guile, 15 s
+  - 158 and 160 Xal'atath's Bargain: Voidbound and Devour, 5 s
+  - 165 Lindormi's Guidance, 0 s
+
+  The API has no season → affix list, so sync only names the IDs the pack lists. New IDs come from logs (PR 4).
+- **Death penalty rule:** the lowest of the affixes that set one wins, so the cost of a death is never overstated. Guile and the Bargains don't occur together (Guile revokes them).
+- **Spell fields:** `dispel` (debuff types) and `affixes` on spell entries. `Knowledge::dispel_types` and `death_penalty_s` read them. `SpellEvidence.dispelled_by` records the dispel abilities that removed each debuff (`EVIDENCE_VERSION` 5).
+- **Soul Cleanse:** `classes check` flags exactly the probe's case. Insatiable Hunger was removed by Soul Cleanse (listed as magic) and by Remove Corruption (curse, poison). Soul Cleanse's only removal in the local logs is that debuff, and the spell API has no entry for it (new in Midnight), so its types are left as they are and the evidence is recorded in `data/classes.toml`. Open question for review.
 
 ## Verification
 - CI as always. The golden test covers the new dispel scenarios in the synthetic log.

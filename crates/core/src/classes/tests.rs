@@ -527,3 +527,34 @@ fn audit_discovers_defensive_buffs() {
         ["Wall (Demon Hunter): cast 3x, no listed buff followed"]
     );
 }
+
+#[test]
+fn audit_flags_dispels_with_no_type_in_common() {
+    // Hunger is removed by Soul Cleanse (magic) and Remove Corruption (curse,
+    // poison): one of those types is wrong. Spores, removed by Nature's Cure
+    // and Purify, is magic: fine.
+    let dh = player("Dh");
+    let cat = player("Cat");
+    let tree = player("Tree");
+    let priest = player("Priest");
+    let mut log = Log::default();
+    log.combatant(0, &dh, 577)
+        .combatant(0, &cat, 103)
+        .combatant(0, &tree, 105)
+        .combatant(0, &priest, 256);
+    log.dispel_with(1000, &dh, &cat, 1266617, "Soul Cleanse", 900, "Hunger")
+        .dispel_with(2000, &cat, &dh, 2782, "Remove Corruption", 900, "Hunger")
+        .dispel_with(3000, &tree, &dh, 88423, "Nature's Cure", 901, "Spores")
+        .dispel_with(4000, &priest, &tree, 527, "Purify", 901, "Spores");
+    let mut a = Audit::default();
+    for e in &log.events {
+        a.feed(e);
+    }
+    let r = a.report(&ClassData::embedded());
+    assert_eq!(
+        r.dispel_type_conflicts,
+        [
+            "Hunger (900): removed by Remove Corruption (curse, poison), Soul Cleanse (magic), which share no type"
+        ]
+    );
+}

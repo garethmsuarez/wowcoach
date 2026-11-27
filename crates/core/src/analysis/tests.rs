@@ -1174,3 +1174,50 @@ fn evidence_counts_spikes_but_not_for_summons() {
     assert_eq!(ev(1246825).spikes, 0);
     assert_eq!(ev(777).spikes, 1);
 }
+
+#[test]
+fn evidence_records_which_dispels_removed_a_debuff() {
+    let party = Party::new();
+    let mob = enemy("Caster", 1);
+    let mut log = Log::default();
+    party.log_specs(&mut log, 0);
+    log.key_start(0, "Spire", 2000, 10);
+    keep_pull(&mut log, &party.dps[0], &mob, 500, 8000);
+    log.debuff(1000, &mob, &party.dps[1], 600, "Curse")
+        .dispel_with(
+            1500,
+            &party.healer,
+            &party.dps[1],
+            527,
+            "Purify",
+            600,
+            "Curse",
+        )
+        .debuff(2000, &mob, &party.dps[2], 600, "Curse")
+        .dispel_with(
+            2500,
+            &party.dps[0],
+            &party.dps[2],
+            475,
+            "Remove Curse",
+            600,
+            "Curse",
+        )
+        .debuff(3000, &mob, &party.dps[1], 600, "Curse")
+        .dispel_with(
+            3500,
+            &party.healer,
+            &party.dps[1],
+            527,
+            "Purify",
+            600,
+            "Curse",
+        );
+    log.key_end(10_000, 2000, true, 10_000);
+    let f = &analyze(&log, Config::default())[0];
+    let e = f.spell_evidence.iter().find(|e| e.spell_id == 600).unwrap();
+    assert_eq!(
+        (e.dispelled, e.dispelled_by.as_slice()),
+        (3, &[475, 527][..])
+    );
+}

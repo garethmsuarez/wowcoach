@@ -271,6 +271,28 @@ impl Log {
             },
         )
     }
+    /// `src` dispels aura `removed_id` from `dst` with a given dispel.
+    #[allow(clippy::too_many_arguments)]
+    pub fn dispel_with(
+        &mut self,
+        ts: i64,
+        src: &Unit,
+        dst: &Unit,
+        with: u32,
+        with_name: &str,
+        removed_id: u32,
+        removed: &str,
+    ) -> &mut Self {
+        self.push(
+            ts,
+            Some(src),
+            Some(dst),
+            Kind::Dispel {
+                spell: spell(with, with_name),
+                extra: spell(removed_id, removed),
+            },
+        )
+    }
     /// An event that logs `u`'s position (a cast with advanced info).
     pub fn at(&mut self, ts: i64, u: &Unit, x: f32, y: f32) -> &mut Self {
         self.push(

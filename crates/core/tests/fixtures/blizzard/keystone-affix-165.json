@@ -1,0 +1,16 @@
+{
+  "_links": {
+    "self": {
+      "href": "https://us.api.blizzard.com/data/wow/keystone-affix/165?namespace=static-12.1.5_70077-us"
+    }
+  },
+  "id": 165,
+  "name": "Lindormi's Guidance",
+  "description": "Lindormi guides players, highlighting and weakening specific non-boss enemies. Defeating these enemies will complete the enemy forces requirement. In addition, player deaths no longer reduce time remaining.",
+  "media": {
+    "key": {
+      "href": "https://us.api.blizzard.com/data/wow/media/keystone-affix/165?namespace=static-12.1.5_70077-us"
+    },
+    "id": 165
+  }
+}
