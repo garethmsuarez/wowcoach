@@ -307,7 +307,8 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
         } else {
             0.0
         };
-        if down_frac > 0.25 && f.duration_s > 300.0 {
+        // With top runs, the segment advice covers downtime per stretch.
+        if down_frac > 0.25 && f.duration_s > 300.0 && f.reference.is_none() {
             let mut gaps: Vec<(f64, f64)> = f
                 .pulls
                 .windows(2)
@@ -374,13 +375,23 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
                 Severity::Medium,
                 "Timer",
                 msg,
-                if death_penalty(f, cfg) > 0.0 {
-                    "Biggest levers, in order: deaths, downtime, then damage output.".into()
-                } else {
-                    "Biggest levers, in order: downtime, then damage output (deaths cost no time in this key).".into()
+                match (death_penalty(f, cfg) > 0.0, pacing::levers(f)) {
+                    (true, l) if !l.is_empty() => l,
+                    (true, _) => {
+                        "Biggest levers, in order: deaths, downtime, then damage output.".into()
+                    }
+                    (false, l) => format!(
+                        "Deaths cost no time in this key. {}",
+                        if l.is_empty() {
+                            "Biggest levers, in order: downtime, then damage output.".to_string()
+                        } else {
+                            l
+                        }
+                    ),
                 },
             ));
         }
+        pacing::apply(f, cfg, out);
     }
 }
 
@@ -889,6 +900,7 @@ pub fn apply_progression(p: &mut ProgressionReport) {
 mod defensives;
 mod dispels;
 pub mod kickplan;
+mod pacing;
 
 #[cfg(test)]
 mod tests;

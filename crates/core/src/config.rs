@@ -28,6 +28,9 @@ spike_frac = 0.50           #   summed max HP within this window
 summon_alive_max_s = 6      # M+: enemy totems/adds that hurt the group should die within this
 lust_idle_max_s = 180       # M+: lust left available this long in combat on spike pulls is flagged
 dispel_slow_s = 5           # M+: flag a median priority-dispel time above this
+forces_gap_pct = 5          # M+ (--compare-top): flag forces at a boss this far below the top runs
+forces_over_pct = 5         # M+: flag ending with more than 100% + this much enemy forces
+segment_slow_s = 60         # M+ (--compare-top): flag segments this much (and 20%) slower than the top runs
 
 # Bloodlust / Heroism / Time Warp / Primal Rage (+ hunter pet version) / Fury of the Aspects
 lust_spell_ids = [2825, 32182, 80353, 264667, 272678, 390386]
@@ -84,6 +87,9 @@ pub struct General {
     pub summon_alive_max_s: f64,
     pub lust_idle_max_s: f64,
     pub dispel_slow_s: f64,
+    pub forces_gap_pct: f64,
+    pub forces_over_pct: f64,
+    pub segment_slow_s: f64,
     pub lust_spell_ids: Vec<u32>,
     pub sated_aura_ids: Vec<u32>,
     pub healthstone_spell_ids: Vec<u32>,
@@ -108,6 +114,9 @@ impl Default for General {
             summon_alive_max_s: 6.0,
             lust_idle_max_s: 180.0,
             dispel_slow_s: 5.0,
+            forces_gap_pct: 5.0,
+            forces_over_pct: 5.0,
+            segment_slow_s: 60.0,
             lust_spell_ids: vec![2825, 32182, 80353, 264667, 272678, 390386],
             sated_aura_ids: vec![57723, 57724, 80354, 264689, 390435],
             healthstone_spell_ids: vec![6262, 452930],
