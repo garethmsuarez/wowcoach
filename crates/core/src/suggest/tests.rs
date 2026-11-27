@@ -435,3 +435,228 @@ fn group_wide_spike_causes_suggest_dangerous_cast() {
     );
     assert!(!spell(&p, 600).suggested.contains(&Tag::DangerousCast));
 }
+
+// ------------------------------------------------- dispel types and affixes
+
+fn affix_pack() -> SeasonPack {
+    SeasonPack::parse(
+        r#"
+        [season]
+        key = "t"
+        name = "T"
+        [[dungeon]]
+        name = "Voidscar Arena"
+        keystone_id = 585
+        map_id = 2923
+        [[affix]]
+        id = 147
+        name = "Xal'atath's Guile"
+        [[affix]]
+        id = 158
+        name = "Xal'atath's Bargain: Voidbound"
+        [[spell]]
+        ids = [462661]
+        name = "Voidbinding"
+        map_id = 2923
+        sources = ["log"]
+        suggested = ["avoidable"]
+        [[spell]]
+        ids = [462508]
+        name = "Dark Prayer"
+        map_id = 2923
+        tags = ["priority_kick"]
+        [[spell]]
+        ids = [700]
+        name = "Cryo Surge"
+        map_id = 2923
+        dispel = ["magic", "disease"]
+        "#,
+    )
+    .unwrap()
+}
+
+fn key(affixes: &[u32], spells: Vec<SpellEvidence>) -> FightEvidence {
+    FightEvidence {
+        title: "key".into(),
+        kind: FightKind::MythicPlus {
+            zone: "Voidscar Arena".into(),
+            map_id: MAP,
+            level: 10,
+            affixes: affixes.to_vec(),
+            success: true,
+            time_s: 1800.0,
+            bosses: vec![],
+        },
+        spell_evidence: spells,
+    }
+}
+
+fn sev(id: u32, name: &str, npc: Option<u32>) -> SpellEvidence {
+    SpellEvidence {
+        spell_id: id,
+        name: name.into(),
+        hits: 10,
+        npcs: npc.into_iter().collect(),
+        ..Default::default()
+    }
+}
+
+fn debuff_ev(id: u32, name: &str, by: &[u32]) -> SpellEvidence {
+    SpellEvidence {
+        applied: 5,
+        dispelled: by.len() as u32,
+        dispelled_by: by.to_vec(),
+        ..sev(id, name, Some(9))
+    }
+}
+
+/// Five Voidscar keys: three with Guile, one with Bargain: Voidbound, one
+/// with Lindormi's Guidance (165, not in the pack). Every key has a Bolt
+/// caster (NPC 1).
+fn affix_keys() -> Collected {
+    let pack = affix_pack();
+    let bolt = || sev(500, "Bolt", Some(1));
+    let mut c = Collected::default();
+    for k in [
+        // A summon in one Guile key of three: not an affix.
+        // A unit in every Guile key: Guile is in more keys than lack it, so
+        // there's nothing fair to compare against (high keys vs low keys).
+        key(
+            &[9, 10, 147],
+            vec![
+                bolt(),
+                sev(600, "Doom Bolt", Some(60)),
+                sev(604, "Bouncer", Some(80)),
+            ],
+        ),
+        key(&[9, 10, 147], vec![bolt(), sev(604, "Bouncer", Some(80))]),
+        key(&[9, 10, 147], vec![bolt(), sev(604, "Bouncer", Some(80))]),
+        key(
+            &[158, 9],
+            vec![
+                bolt(),
+                // The Voidbound Emissary's spells, under both IDs.
+                sev(462661, "Voidbinding", Some(50)),
+                sev(462508, "Dark Prayer", Some(50)),
+                // Only in this key, but cast by a unit every key has.
+                sev(601, "Voidcall", Some(1)),
+                // Unsourced.
+                sev(602, "Backlash", None),
+            ],
+        ),
+        key(&[165], vec![bolt(), sev(603, "Lindormi's Gift", Some(70))]),
+    ] {
+        c.add_evidence(&pack, &k, Origin::Own);
+    }
+    c
+}
+
+#[test]
+fn affix_mechanics_need_affix_only_casters_and_keys_to_compare() {
+    let found = affix_mechanics(&affix_keys());
+    let names: Vec<(&str, &[u32])> = found
+        .values()
+        .map(|(n, a, _)| (n.as_str(), a.as_slice()))
+        .collect();
+    // By spell ID. Tyrannical (9) is in the Voidbound key too, but only one
+    // key lacks it, too few to compare against.
+    assert_eq!(
+        names,
+        vec![
+            ("Lindormi's Gift", &[165][..]),
+            ("Dark Prayer", &[158][..]),
+            ("Voidbinding", &[158][..]),
+        ]
+    );
+    assert_eq!(
+        found[&462661].2,
+        "affix 158: in 1 of 1 key with it, its casters in none of 4 keys without it in the same dungeon"
+    );
+}
+
+#[test]
+fn affix_mechanics_move_to_an_affix_entry() {
+    let mut pack = affix_pack();
+    let a = apply(&mut pack, &affix_keys());
+    // The tool-made per-dungeon entry moved to map_id 0; the reviewed one stayed.
+    assert!(
+        !pack
+            .spells
+            .iter()
+            .any(|e| e.map_id == MAP && e.name == "Voidbinding")
+    );
+    let v = pack
+        .spells
+        .iter()
+        .find(|e| e.name == "Voidbinding")
+        .unwrap();
+    assert_eq!((v.map_id, v.affixes.as_slice()), (0, &[158][..]));
+    assert_eq!(v.suggested, vec![Tag::Affix]);
+    assert!(v.tags.is_empty());
+    assert!(v.evidence.ends_with("affix 158: in 1 of 1 key with it, its casters in none of 4 keys without it in the same dungeon"), "{}", v.evidence);
+    let d = pack
+        .spells
+        .iter()
+        .find(|e| e.name == "Dark Prayer")
+        .unwrap();
+    assert_eq!(
+        (d.map_id, d.tags.as_slice()),
+        (MAP, &[Tag::PriorityKick][..])
+    );
+    assert!(!d.suggested.contains(&Tag::Affix));
+    assert_eq!(a.affix_spells, vec![("Voidbinding".into(), vec![158])]);
+    assert_eq!(a.affix_skipped.len(), 2, "{:?}", a.affix_skipped);
+    assert!(a.affix_skipped[0].starts_with("Dark Prayer (462508): reviewed per-dungeon entry"));
+    assert!(a.affix_skipped[1].contains("affix [165] is not in the pack"));
+    assert!(pack.problems().is_empty(), "{:?}", pack.problems());
+}
+
+#[test]
+fn dispel_types_come_from_the_dispels_that_removed_it() {
+    let pack = affix_pack();
+    let mut c = Collected::default();
+    // Purify (magic, disease) and Cleanse (magic, poison, disease), then
+    // Nature's Cure (magic, curse, poison) in another key: magic.
+    c.add_evidence(
+        &pack,
+        &key(&[], vec![debuff_ev(800, "Melt", &[527, 4987])]),
+        Origin::Own,
+    );
+    c.add_evidence(
+        &pack,
+        &key(&[], vec![debuff_ev(800, "Melt", &[88423])]),
+        Origin::Own,
+    );
+    // Only Purify: magic or disease, which narrows the pack's [magic, disease]
+    // not at all; Remove Corruption (curse, poison) and Purify (magic,
+    // disease) share nothing.
+    c.add_evidence(
+        &pack,
+        &key(
+            &[],
+            vec![
+                debuff_ev(700, "Cryo Surge", &[527]),
+                debuff_ev(801, "Hunger", &[2782, 527]),
+            ],
+        ),
+        Origin::Own,
+    );
+    let mut pack = pack;
+    let a = apply(&mut pack, &c);
+    let dispel = |n: &str| {
+        pack.spells
+            .iter()
+            .find(|e| e.name == n)
+            .unwrap()
+            .dispel
+            .clone()
+    };
+    assert_eq!(dispel("Melt"), vec![DispelType::Magic]);
+    assert_eq!(
+        dispel("Cryo Surge"),
+        vec![DispelType::Magic, DispelType::Disease]
+    );
+    assert!(dispel("Hunger").is_empty());
+    assert_eq!(a.dispel_set, 1);
+    assert_eq!(a.dispel_conflicts, vec!["Hunger".to_string()]);
+}

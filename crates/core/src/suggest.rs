@@ -7,6 +7,7 @@
 //! names and aggregate counts are kept: no player names.
 
 use crate::analysis::{FightKind, FightReport, SpellEvidence};
+use crate::classes::{AbilityKind, ClassData, DispelType, Target};
 use crate::season::{Boss, SeasonPack, Source, SpellEntry, Tag, tag_name};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -68,6 +69,14 @@ pub const GROUP_HITS_PER_CAST: f64 = 2.5;
 /// ...in a spike on at least this share of its casts (not a frequent cast that
 /// merely lands during spikes), and not aimed at tanks.
 pub const SPIKE_RATE: f64 = 0.2;
+/// Affix mechanics: a spell seen only in keys with the affix, from units that
+/// never appear in a key without it, with at least this many keys of the same
+/// dungeon(s) without the affix to compare against, and no fewer than keys
+/// with it.
+pub const MIN_CONTROL_KEYS: usize = 2;
+/// ...and it shows up in at least this share of that dungeon's keys with the
+/// affix (an affix is in every key; a summon or an optional pack is not).
+pub const AFFIX_PRESENCE: f64 = 0.5;
 
 /// Counts for one spell from one origin, summed over fights.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -293,6 +302,41 @@ impl SpellAgg {
         out
     }
 
+    /// The debuff types the dispels that removed it share: None when no
+    /// listed friendly dispel removed it, empty when they share none.
+    pub fn dispel_types(&self) -> Option<Vec<DispelType>> {
+        let classes = ClassData::shared();
+        let ids: BTreeSet<u32> = self
+            .seen
+            .iter()
+            .flat_map(|(_, _, e)| e.dispelled_by.iter().copied())
+            .collect();
+        let mut common: Option<BTreeSet<DispelType>> = None;
+        for id in ids {
+            let Some(a) = classes
+                .by_id(id)
+                .into_iter()
+                .find(|a| a.kind == AbilityKind::Dispel && a.target == Some(Target::Friendly))
+            else {
+                continue;
+            };
+            let t: BTreeSet<DispelType> = a.types.iter().copied().collect();
+            common = Some(match common {
+                None => t,
+                Some(c) => c.intersection(&t).copied().collect(),
+            });
+        }
+        common.map(|c| c.into_iter().collect())
+    }
+
+    /// NPC IDs of the units it came from, over all fights.
+    pub fn npcs(&self) -> BTreeSet<u32> {
+        self.seen
+            .iter()
+            .flat_map(|(_, _, e)| e.npcs.iter().copied())
+            .collect()
+    }
+
     pub fn evidence(&self) -> String {
         self.by()
             .iter()
@@ -333,8 +377,8 @@ impl From<&FightReport> for FightEvidence {
 /// evidence from older versions is ignored.
 /// v2: Warcraft Logs NPC instances became separate units (casts of several
 /// mobs of the same type were merged before). v3: `stopped`. v4: `spikes`.
-/// v5: `dispelled_by`.
-pub const EVIDENCE_VERSION: u32 = 5;
+/// v5: `dispelled_by`. v6: `npcs`.
+pub const EVIDENCE_VERSION: u32 = 6;
 
 /// Everything learned from a set of fights, keyed by (instance map ID, spell ID).
 #[derive(Clone, Debug, Default)]
@@ -347,6 +391,9 @@ pub struct Collected {
     pub fights_used: BTreeMap<Origin, u32>,
     /// Titles of fights in instances the pack doesn't have.
     pub fights_skipped: Vec<String>,
+    /// M+ fights by number: (instance map ID, affix IDs, NPC IDs seen), for
+    /// affix discovery.
+    pub keys: BTreeMap<u32, (u32, Vec<u32>, BTreeSet<u32>)>,
     /// Numbers the fights so evidence can be merged per fight.
     fight_no: u32,
 }
@@ -454,6 +501,15 @@ impl Collected {
         };
         *self.fights_used.entry(origin).or_default() += 1;
         self.fight_no += 1;
+        if let FightKind::MythicPlus { affixes, .. } = &f.kind {
+            let npcs = f
+                .spell_evidence
+                .iter()
+                .flat_map(|e| e.npcs.iter().copied())
+                .collect();
+            self.keys
+                .insert(self.fight_no, (map_id, affixes.clone(), npcs));
+        }
 
         for e in &f.spell_evidence {
             let boss = match (&raid_boss, &e.boss) {
@@ -498,6 +554,15 @@ pub struct Applied {
     pub spells_added: usize,
     pub ids_added: usize,
     pub encounter_ids_filled: usize,
+    /// Spell entries whose `dispel` types were filled in or narrowed.
+    pub dispel_set: usize,
+    /// Debuffs whose dispels share no type (the class table needs a look).
+    pub dispel_conflicts: Vec<String>,
+    /// Affix mechanics found: (spell name, affix IDs).
+    pub affix_spells: Vec<(String, Vec<u32>)>,
+    /// Affix mechanics left alone: a reviewed per-dungeon entry already holds
+    /// the ID, or the affix isn't in the pack.
+    pub affix_skipped: Vec<String>,
     /// (instance, boss/trash, spell, new suggestions, evidence) for the review table.
     pub proposals: Vec<(String, String, String, Vec<Tag>, String)>,
 }
@@ -535,6 +600,59 @@ pub fn apply(pack: &mut SeasonPack, c: &Collected) -> Applied {
                 out.encounter_ids_filled += 1;
             }
         }
+    }
+
+    // Pass 0: affix mechanics get (or move to) an entry with map_id = 0.
+    let affix_ev = affix_mechanics(c);
+    for (id, (name, affixes, ev)) in &affix_ev {
+        let known: Vec<u32> = affixes
+            .iter()
+            .copied()
+            .filter(|a| pack.affixes.iter().any(|x| x.id == *a))
+            .collect();
+        if known.is_empty() {
+            out.affix_skipped.push(format!(
+                "{name} ({id}): affix {affixes:?} is not in the pack's [[affix]] list"
+            ));
+            continue;
+        }
+        match pack.spells.iter().position(|e| e.ids.contains(id)) {
+            Some(i) if pack.spells[i].map_id == 0 => {
+                if pack.spells[i].affixes.is_empty() {
+                    pack.spells[i].affixes.clone_from(&known);
+                }
+            }
+            Some(i) if reviewed(&pack.spells[i]) => {
+                out.affix_skipped.push(format!(
+                    "{name} ({id}): reviewed per-dungeon entry {:?} kept; move it by hand if it's {ev}",
+                    pack.spells[i].name
+                ));
+                continue;
+            }
+            found => {
+                // A tool-made per-dungeon entry: the ID moves to the affix entry.
+                if let Some(i) = found {
+                    pack.spells[i].ids.retain(|x| x != id);
+                    if pack.spells[i].ids.is_empty() {
+                        pack.spells.remove(i);
+                    }
+                }
+                match pack
+                    .spells
+                    .iter()
+                    .position(|e| e.map_id == 0 && e.name == *name && e.affixes == known)
+                {
+                    Some(i) => pack.spells[i].ids.push(*id),
+                    None => pack.spells.push(SpellEntry {
+                        ids: vec![*id],
+                        name: name.clone(),
+                        affixes: known.clone(),
+                        ..Default::default()
+                    }),
+                }
+            }
+        }
+        out.affix_spells.push((name.clone(), known));
     }
 
     // Pass 1: find or create the pack entry for every spell ID seen enough.
@@ -575,16 +693,35 @@ pub fn apply(pack: &mut SeasonPack, c: &Collected) -> Applied {
         let map = pack.spells[idx].map_id;
         let inst = inst_name(pack, map);
         let e = &mut pack.spells[idx];
+        match s.dispel_types() {
+            Some(t) if t.is_empty() => out.dispel_conflicts.push(e.name.clone()),
+            Some(t) => {
+                // Only ever narrowed: more dispels can only rule types out.
+                let new: Vec<DispelType> = if e.dispel.is_empty() {
+                    t
+                } else {
+                    e.dispel.iter().copied().filter(|x| t.contains(x)).collect()
+                };
+                if new.is_empty() {
+                    out.dispel_conflicts.push(e.name.clone());
+                } else if new != e.dispel {
+                    e.dispel = new;
+                    out.dispel_set += 1;
+                }
+            }
+            None => {}
+        }
         for o in s.by().keys() {
             if !e.sources.contains(&o.source()) {
                 e.sources.push(o.source());
             }
         }
-        let proposed: Vec<Tag> = s
-            .propose()
-            .into_iter()
-            .filter(|t| !e.tags.contains(t) && !e.dismissed.contains(t))
-            .collect();
+        let mut proposed: Vec<Tag> = s.propose();
+        let affix_note = e.ids.iter().find_map(|id| affix_ev.get(id)).map(|x| &x.2);
+        if e.map_id == 0 && !e.affixes.is_empty() && affix_note.is_some() {
+            proposed.push(Tag::Affix);
+        }
+        proposed.retain(|t| !e.tags.contains(t) && !e.dismissed.contains(t));
         let new: Vec<Tag> = proposed
             .iter()
             .copied()
@@ -592,6 +729,9 @@ pub fn apply(pack: &mut SeasonPack, c: &Collected) -> Applied {
             .collect();
         e.suggested = proposed;
         e.evidence = s.evidence();
+        if let Some(n) = affix_note {
+            e.evidence = format!("{}; {n}", e.evidence);
+        }
         if !new.is_empty() {
             out.proposals.push((
                 inst,
@@ -604,6 +744,89 @@ pub fn apply(pack: &mut SeasonPack, c: &Collected) -> Applied {
     }
     crate::season::sort(pack);
     out.proposals.sort();
+    out.affix_spells.sort();
+    out.affix_skipped.sort();
+    out.dispel_conflicts.sort();
+    out.dispel_conflicts.dedup();
+    out
+}
+
+/// A reviewer has worked on this entry, so tools don't move its IDs.
+fn reviewed(e: &SpellEntry) -> bool {
+    !e.tags.is_empty() || !e.note.is_empty() || !e.dismissed.is_empty()
+}
+
+/// Spell ID -> (name, affix IDs, evidence) for spells that come from an
+/// affix: seen enough, only in keys that have the affix, from units that
+/// never show up in a key without it, with at least `MIN_CONTROL_KEYS` keys
+/// of the same dungeon(s) without the affix, and in at least `AFFIX_PRESENCE`
+/// of those dungeons' keys with it. When several of the key's
+/// affixes qualify (Tyrannical alongside a Bargain), the rarest wins.
+pub fn affix_mechanics(c: &Collected) -> BTreeMap<u32, (String, Vec<u32>, String)> {
+    let mut by_id: BTreeMap<u32, Vec<(u32, &SpellAgg)>> = BTreeMap::new();
+    for ((map, id), s) in &c.spells {
+        by_id.entry(*id).or_default().push((*map, s));
+    }
+    let keys_with = |a: u32| c.keys.values().filter(|k| k.1.contains(&a)).count();
+    let mut out = BTreeMap::new();
+    for (id, parts) in by_id {
+        let s = SpellAgg::merge(&parts.iter().map(|p| p.1).collect::<Vec<_>>());
+        let npcs = s.npcs();
+        if s.total().events() < MIN_EVENTS || npcs.is_empty() {
+            continue;
+        }
+        let fights: BTreeSet<u32> = s.seen.iter().map(|x| x.0).collect();
+        let Some(keys) = fights
+            .iter()
+            .map(|f| c.keys.get(f))
+            .collect::<Option<Vec<_>>>()
+        else {
+            continue; // seen in a raid: not an affix
+        };
+        let maps: BTreeSet<u32> = parts.iter().map(|p| p.0).collect();
+        let mut common: Vec<u32> = keys[0].1.clone();
+        common.retain(|a| keys.iter().all(|k| k.1.contains(a)));
+        let mut ok: Vec<(usize, u32, usize, usize)> = vec![];
+        for a in common {
+            let without: Vec<&(u32, Vec<u32>, BTreeSet<u32>)> =
+                c.keys.values().filter(|k| !k.1.contains(&a)).collect();
+            if without.iter().any(|k| !k.2.is_disjoint(&npcs)) {
+                continue;
+            }
+            let control = without.iter().filter(|k| maps.contains(&k.0)).count();
+            let with = c
+                .keys
+                .values()
+                .filter(|k| maps.contains(&k.0) && k.1.contains(&a))
+                .count();
+            // An affix in most keys (Guile, in every key from +12) is
+            // confounded with key level and route: nothing to compare against.
+            if control >= MIN_CONTROL_KEYS.max(with)
+                && keys.len() as f64 >= AFFIX_PRESENCE * with as f64
+            {
+                ok.push((keys_with(a), a, control, with));
+            }
+        }
+        let Some(rarest) = ok.iter().map(|x| x.0).min() else {
+            continue;
+        };
+        let best: Vec<&(usize, u32, usize, usize)> = ok.iter().filter(|x| x.0 == rarest).collect();
+        let affixes: Vec<u32> = best.iter().map(|x| x.1).collect();
+        let control = best.iter().map(|x| x.2).min().unwrap_or(0);
+        let with = best.iter().map(|x| x.3).max().unwrap_or(0);
+        let ev = format!(
+            "affix {}: in {} of {with} key{} with it, its casters in none of {control} key{} without it in the same dungeon",
+            affixes
+                .iter()
+                .map(|a| a.to_string())
+                .collect::<Vec<_>>()
+                .join("+"),
+            keys.len(),
+            if with == 1 { "" } else { "s" },
+            if control == 1 { "" } else { "s" },
+        );
+        out.insert(id, (s.name.clone(), affixes, ev));
+    }
     out
 }
 
@@ -635,6 +858,23 @@ pub fn review(c: &Collected, a: &Applied) -> String {
         a.encounter_ids_filled,
         a.proposals.len()
     ));
+    if a.dispel_set > 0 {
+        o.push_str(&format!(
+            "Dispel types set or narrowed on {} spell(s).\n",
+            a.dispel_set
+        ));
+    }
+    for n in &a.dispel_conflicts {
+        o.push_str(&format!(
+            "{n}: its dispels share no type; check their types with `wowcoach classes check`.\n"
+        ));
+    }
+    for (n, ids) in &a.affix_spells {
+        o.push_str(&format!("Affix mechanic: {n} (affix {ids:?}).\n"));
+    }
+    for n in &a.affix_skipped {
+        o.push_str(&format!("Affix mechanic not moved: {n}.\n"));
+    }
     if !c.fights_skipped.is_empty() {
         o.push_str(&format!(
             "Skipped {} fight(s) in instances not in the pack (e.g. {}).\n",

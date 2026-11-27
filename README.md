@@ -127,6 +127,23 @@ analysed evidence (a few KB per run, no events) is cached in
 `~/.cache/wowcoach/suggest`, so re-runs are nearly free. A run stops before it
 uses more than `--max-points` (default 3000) of the hourly limit.
 
+`suggest` also writes two kinds of data directly, since they aren't judgements:
+
+- **Dispel types** (`dispel`): the types shared by every dispel that removed a
+  debuff. They're only ever narrowed. When the dispels share no type, the debuff
+  is listed for a look at the class table.
+- **Affix mechanics:** a spell gets an entry with `map_id = 0` and
+  `affixes = [id]` when it meets all of these:
+  - it is seen only in keys with that affix, in at least half of its
+    dungeon's keys with the affix;
+  - the units casting it appear in no key without the affix;
+  - at least 2 keys of the same dungeon without the affix are there to compare,
+    and no fewer than keys with it. An affix in every high key (Xal'atath's Guile)
+    would only be compared against low keys, which differ in more than the affix.
+
+  It's proposed with the `affix` tag. A per-dungeon entry a reviewer has worked on
+  (tags, note or dismissed) is never moved.
+
 ### Class abilities
 
 `data/classes.toml` lists each class's interrupts, crowd control that stops

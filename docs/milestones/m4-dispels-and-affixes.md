@@ -59,7 +59,7 @@ A friendly dispel's cooldown only starts when it removes something, so cooldowns
    - The Deaths and Timer advice use the key's affix death penalty. With Lindormi's Guidance it says deaths cost no time.
    - HTML: a per-pull dispels table.
    - Golden snapshot updated, after extending `gen_sample_log.py` with a priority debuff dispelled late, one that expires with a dispeller ready, and the removal-before-dispel order.
-4. **Content: dispel types, affix entries, `dispel_priority` re-check.**
+4. **Content: dispel types, affix entries, `dispel_priority` re-check.** *(done; see "PR 4 findings")*
    - `season suggest` writes `dispel` from `dispelled_by`.
    - It proposes affix spell entries: spells from sourced hostile units, seen in 2+ dungeons, only in keys with that affix. They get `map_id = 0`, `affixes` and the `affix` tag, alongside the usual tag proposals.
    - `promote_suggestions.py` gains an `affix` criterion.
@@ -98,6 +98,21 @@ A friendly dispel's cooldown only starts when it removes something, so cooldowns
 - **Checked by hand:** on the +14 Murder Row, Curse of Doom on Lokhos lasted from 20:09:40.6 to 20:09:50.7 (17:03 into the key) and expired. Tidereign's last Remove Corruption was at 20:09:22 (8 s cooldown) and their next at 20:09:53. The second claim (Incendiana, 20:10:03 to 20:10:13) is the same.
 - **Self-dispels:** a priest's own Purify or a warlock's Singe Magic on themselves can be named (0 yd). That's correct: they could have cleared it.
 - **Golden snapshot:** the synthetic key gains a magic Withering Hex (`dispel_priority` in `samples/wowcoach.toml`). It is dispelled 6 to 8 s late three times (removal logged before the dispel), expires once with the healer ready, and is up once at a judged death. The paladins' Cleanse Toxins (poison, disease) is never named.
+
+## PR 4 findings
+
+- **Affix criterion changed twice from the plan.** "Seen in 2+ dungeons" can't work: your logs have one Voidbound key (+7 Murder Row) and one Devour key (+7 Den of Nalorakk), and top keys are all Guile. What does work is the unit casting the spell.
+  - `SpellEvidence.npcs` (`EVIDENCE_VERSION` 6) records caster NPC IDs.
+  - A spell is an affix mechanic when it appears only in keys with the affix, in at least half of its dungeon's keys with the affix, and its casters appear in no key without it.
+  - There must also be at least 2 keys of that dungeon without the affix, and no fewer than with it.
+  - Without the casters condition, Malefic Wave (cast by Lithiel Cinderfury, a unit every Murder Row key has) qualified. Without the half-of-keys condition, a Doomguard's Doom Bolt (one of four Guile Murder Row keys) qualified. Without "no fewer than with it", nine Murder Row disguise-event spells (Bouncer, Cleaner, Server…) qualified for Guile: Guile is in every key from +12, so "absent without Guile" only compared against two low keys.
+- **Affix mechanics found:** Voidbinding and Dark Prayer (Voidbound Emissary, 158), Devouring Rift and Xal'atath's Bargain: Devour (Xal'atath, 160). Each was in its one Bargain key and absent from 11 to 12 keys of the same dungeon without it. They moved from tool-made per-dungeon entries to `map_id = 0` entries with `affixes`, and `promote_suggestions.py` promoted all four as `affix` (bar: every key with the affix, casters absent from ≥ 3 keys without it). None earns a coaching tag yet: Voidbinding was dispelled 0 of 80 times, and Bargain: Devour was kicked 0 of 16.
+- **Dispel types:** `suggest` set or narrowed `dispel` on 37 spells, among them Cryo Surge → magic (PR 2 found it ambiguous within one key), Hex → curse and poison, and Paralyzing Shots → magic. With these, all 91 expired priority debuffs in your keys have a known type. "Dispels" now fires in 7 keys, up from 5.
+- **Checked by hand:** on the +7 Den of Nalorakk, Cryo Surge on Tandralith lasted from 21:02:10.9 to 21:02:20.9 (11:05 into the key). The Holy Paladin cast Cleanse only twice all key, the last at 20:58:16. Nobody dispelled Cryo Surge in that key, so PR 3 couldn't infer its type there; the pack's type now makes it judgeable.
+- **Soul Cleanse is now magic and curse.** A top key had it removing Curse of Doom, the second curse after Insatiable Hunger (PR 1). Both type conflicts are gone. Magic remains the original assumption, not yet seen in a log. Open for review.
+- **Re-run:** 55 local fights plus the 64 public top keys (5 at +12 to +16 and 3 top runs per dungeon). The re-fetch after the evidence bump cost 2,106 WCL points; the corrected re-run came from the cache (21 points).
+- **Drafted tags:** besides the four `affix` tags, Paralyzing Shots `dispel_priority` (91 of 125 in top keys) and Hex `stoppable` (stopped by CC 7 times). Hex `dispel_priority` stays in `suggested`: only 3 of 7 dispelled, all in your logs. `--check` lists 0 reviewed tags whose evidence no longer meets the bar.
+- **Not done:** no rule reads the `affix` tag. Affix entries appear in reports like any other pack spell, under the usual tags.
 
 ## Verification
 - CI as always. The golden test covers the new dispel scenarios in the synthetic log.
