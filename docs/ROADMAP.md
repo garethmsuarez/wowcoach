@@ -72,9 +72,11 @@ Detailed plan: [`docs/milestones/m4-dispels-and-affixes.md`](milestones/m4-dispe
 - Affix mechanics are keyed by the affix IDs from `ChallengeStart`. They're handled through pack tags, so no affix gets hard-coded.
 
 ## M5: Route & pacing
+Detailed plan: [`docs/milestones/m5-route-and-pacing.md`](milestones/m5-route-and-pacing.md).
 - A richer `PullReport`: enemy count and NPC IDs, duration, the trash-vs-boss time split, and time-to-kill per pack.
-- Enemy forces % isn't in the log or the Blizzard API. Add an optional `npc_forces` table to the pack if wanted.
-- Compare against the WCL top runs of the same dungeon and level (keystone rankings and fights over the public API): per-segment timing deltas.
+- Enemy forces %: not in the log or the Blizzard API, so imported from Mythic Dungeon Tools into the pack and checked against logs. Report % forces at each boss.
+- Compare against the WCL top runs of the same dungeon and level (keystone rankings and fights over the public API): per-segment timing and forces deltas.
+- Fix "Timed": the log's flag means completed. Judge key time against the timer, with upgrade levels.
 - Compare against your own earlier runs once M6 lands.
 
 ## M6: Persistent history
