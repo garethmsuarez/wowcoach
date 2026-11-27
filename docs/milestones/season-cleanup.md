@@ -28,9 +28,9 @@ of them. Two gaps:
   `1` / `2` / `None`. `CastRecord` gains `tier`; `priority` stays (= tier 1), so existing code and JSON hold.
 - **Wasted kicks:** kicking a tier-2 or untagged cast while a tier-1 cast goes off.
 - **Free kicks** (`missed_free`): a completed tier-2 cast where the player was a ready, `in_range == Some(true)`
-  kicker and wasn't needed for tier 1. "Needed" means a tier-1 cast in the same pull, starting within one kick
-  cooldown before or after, listed them as a ready kicker. This is how pull size is handled: in a pull with
-  Healing Breeze casters, Earth Bolt misses aren't named.
+  kicker and no tier-1 cast in the same pull started within one of their kick cooldowns, before or after,
+  whoever dealt with it (see PR 1 findings). This is how pull size is handled: in a pull with Healing Breeze
+  casters, Earth Bolt misses aren't named.
 - **Rules:** "Priority kicks" stays tier 1. New Low-severity player "Free kicks": aggregated per spell, at least
   3. Group kick lists put tier 1 first.
 - **Kick plan:** `SpellNeed.tier`; spells sorted by tier, then rate. Tier 1 is assigned first and tier 2 gets the
@@ -60,6 +60,26 @@ of them. Two gaps:
    PR (promote / `dismissed` / leave). Add a `note` to each avoidable and tier-1 kick.
 4. **Later, optional:** with `analyze --compare-top`, list spells where your group takes far more hits per player
    than the top median (per-spell hits in `RefRun`, cache `v2-…`). No tag needed.
+
+## PR 1 findings
+
+- **"Needed for tier 1" had to mean any must-kick nearby, not only ones the player handled.** The first version
+  only excused an Earth Bolt when the player kicked (or let through) a Healing Breeze within their cooldown. Over
+  the 4 Den keys that named 9–24 "free" Earth Bolts per key, often 4 players for the same bolt, and it flagged
+  players holding their kick as backup for a Breeze someone else then kicked. Counting any tier-1 cast in the
+  same pull within the cooldown left 1–3 free bolts per key. With Earth Bolt tagged `kick` in a scratch override,
+  that gives one or two Low "Free kicks" notes in two of the four keys and none in the others.
+- **Hand check** (+12 Den, 1:30): Earth Bolt started at 87.7 s and went off at 90.2 s. The Shaman's Wind Shear
+  (12 s) was used on a Healing Breeze at 76.1 s, so it was back at 88.1 s, and the next Breeze started at 137.5 s.
+  The Shaman is named. A Mage (Counterspell, 24 s) in range is not, since the 73.1 s Breeze is inside that window.
+- **Kick plan:** Healing Breeze (~2/min) is listed before Earth Bolt (6–11/min) in every Earthwhisper Tender pack,
+  and Earth Bolt is never "uncovered".
+- **Proposals:** `season suggest` now proposes `priority_kick` at ≥ 90% kicked (was ≥ 50%) and `kick` at 70–90%.
+  A reviewed tier is never second-guessed: a spell tagged with one tier isn't proposed the other.
+  `promote_suggestions.py` drafts `kick` at 70–90% of ≥ 20 bars, and `stoppable` on either tier.
+  The pack's existing `suggested` lists still say `priority_kick` for the 75–87% spells; the PR 3 re-run rewrites them.
+- **Golden:** the only change is `tier: 1` on the kick plan's spell (the synthetic log uses the legacy
+  `[[priority_interrupt]]` list).
 
 ## Verification
 - All five CI commands; golden only re-blessed with a reviewed diff (it runs on `PackChoice::None`).

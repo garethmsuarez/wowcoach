@@ -93,6 +93,7 @@ note = "Step out of the Shade's line"
 
 Tag vocabulary (checked on load; an unknown tag is an error):
 - `priority_kick`: must be interrupted.
+- `kick`: interrupt when a kick is free, never instead of a `priority_kick` (added in the season cleanup).
 - `stoppable`: CC (stun, incapacitate, knock) also stops it.
 - `avoidable`: should never hit anyone.
 - `dispel_priority`: dispel on application.

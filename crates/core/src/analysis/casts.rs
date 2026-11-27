@@ -57,6 +57,9 @@ pub struct ReadyKicker {
     pub distance_yd: Option<f32>,
     /// Within the interrupt's range (plus slack), when the distance is known.
     pub in_range: Option<bool>,
+    /// The cooldown used to judge "ready": the table's, or the player's own
+    /// shorter observed reuse.
+    pub cd_s: f64,
 }
 
 #[derive(Serialize, Clone, Debug, PartialEq)]
@@ -69,7 +72,11 @@ pub struct CastRecord {
     pub start_s: f64,
     pub end_s: f64,
     pub pull: Option<usize>,
+    /// A must-kick (`priority_kick`, tier 1).
     pub priority: bool,
+    /// Kick tier: 1 = `priority_kick`, 2 = `kick` (when free), None = untagged.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tier: Option<u8>,
     #[serde(flatten)]
     pub outcome: CastOutcome,
     /// Only for completed casts.
@@ -88,7 +95,7 @@ pub(super) struct Ctx<'a> {
     pub pull: Option<usize>,
     pub owners: &'a HashMap<String, String>,
     pub specs: &'a HashMap<String, u32>,
-    pub priority: &'a dyn Fn(u32) -> bool,
+    pub tier: &'a dyn Fn(u32) -> Option<u8>,
     pub stoppable: &'a dyn Fn(u32) -> bool,
 }
 
@@ -196,7 +203,8 @@ impl Tracker {
             start_s: secs(bar.start - ctx.fight_start),
             end_s: secs(end - ctx.fight_start),
             pull: ctx.pull,
-            priority: (ctx.priority)(bar.spell_id),
+            priority: (ctx.tier)(bar.spell_id) == Some(1),
+            tier: (ctx.tier)(bar.spell_id),
             outcome,
             ready_kickers,
             ready_stoppers,
@@ -262,6 +270,7 @@ impl Tracker {
                     ability: a.name.clone(),
                     distance_yd: distance,
                     in_range: distance.map(|d| d <= range),
+                    cd_s: secs(cd),
                 });
                 break;
             }
@@ -431,6 +440,33 @@ pub fn missed_priority<'a>(
             c.ready_kickers
                 .iter()
                 .find(|k| k.player == player && k.in_range == Some(true))
+                .map(|k| (c, k))
+        })
+        .collect()
+}
+
+/// Tier-2 (`kick`) casts that went off while `player` had an interrupt ready
+/// and was in range, with no must-kick to save it for: no tier-1 cast in the
+/// same pull started within one of `player`'s kick cooldowns of this one
+/// ending, whoever dealt with it. Holding a kick as backup for a must-kick is
+/// right, so in a pull where one is around these misses aren't counted.
+pub fn missed_free<'a>(
+    casts: &'a [CastRecord],
+    player: &str,
+) -> Vec<(&'a CastRecord, &'a ReadyKicker)> {
+    let needed = |c: &CastRecord, cd_s: f64| {
+        casts
+            .iter()
+            .any(|p| p.priority && p.pull == c.pull && (p.start_s - c.end_s).abs() <= cd_s)
+    };
+    casts
+        .iter()
+        .filter(|c| c.tier == Some(2) && c.outcome == CastOutcome::Completed)
+        .filter_map(|c| {
+            c.ready_kickers
+                .iter()
+                .find(|k| k.player == player && k.in_range == Some(true))
+                .filter(|k| !needed(c, k.cd_s))
                 .map(|k| (c, k))
         })
         .collect()

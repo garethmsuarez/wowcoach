@@ -128,7 +128,7 @@ fn learns_ids_encounters_and_proposals() {
         (bolt.boss.as_deref(), bolt.sources.as_slice()),
         (None, &[Source::Log][..])
     );
-    assert_eq!(bolt.suggested, [Tag::PriorityKick]);
+    assert_eq!(bolt.suggested, [Tag::Kick], "kicked 8/10: kick when free");
     assert!(bolt.tags.is_empty(), "tools never set tags");
     assert!(
         bolt.evidence.starts_with("yours (2 fights): kicked 8/10"),
@@ -156,7 +156,7 @@ fn learns_ids_encounters_and_proposals() {
         names.contains(&"Bolt") && names.contains(&"Crush"),
         "{names:?}"
     );
-    assert!(review(&c, &a).contains("Bolt (trash) -> priority_kick"));
+    assert!(review(&c, &a).contains("Bolt (trash) -> kick"));
 }
 
 #[test]
@@ -214,7 +214,7 @@ fn dismissed_and_tagged_are_not_proposed_and_reruns_are_stable() {
 
     let a = apply(&mut p, &c);
     assert!(spell(&p, 500).suggested.is_empty());
-    assert_eq!(spell(&p, 500).tags, [Tag::PriorityKick]);
+    assert_eq!(spell(&p, 500).tags, [Tag::Kick]);
     assert!(spell(&p, 600).suggested.is_empty());
     assert_eq!(a.spells_added, 0);
     assert!(a.proposals.is_empty());
@@ -224,6 +224,13 @@ fn dismissed_and_tagged_are_not_proposed_and_reruns_are_stable() {
         crate::season::render(&p, "").unwrap(),
         before,
         "re-run changes nothing"
+    );
+    // A reviewer who picked the other tier isn't second-guessed.
+    p.spells[i].tags = vec![Tag::PriorityKick];
+    apply(&mut p, &c);
+    assert!(
+        spell(&p, 500).suggested.is_empty(),
+        "no `kick` on a priority_kick"
     );
 }
 

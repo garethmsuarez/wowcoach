@@ -24,6 +24,8 @@ pub const EMBEDDED: &[(&str, &str)] = &[(
 pub enum Tag {
     /// Must be interrupted every time.
     PriorityKick,
+    /// Kick when an interrupt is free, but never instead of a `priority_kick`.
+    Kick,
     /// Crowd control (stun, incapacitate, knock) also stops the cast.
     Stoppable,
     /// Should never hit anyone.
@@ -381,6 +383,11 @@ impl SeasonPack {
                     "{label}: an affix mechanic applies to every dungeon (map_id = 0)"
                 ));
             }
+            if s.tags.contains(&Tag::PriorityKick) && s.tags.contains(&Tag::Kick) {
+                out.push(format!(
+                    "{label}: tagged both priority_kick and kick (pick one tier)"
+                ));
+            }
             for t in &s.suggested {
                 if s.tags.contains(t) {
                     out.push(format!("{label}: {t:?} is both tagged and suggested"));
@@ -452,6 +459,7 @@ impl SeasonPack {
 pub fn tag_name(t: Tag) -> &'static str {
     match t {
         Tag::PriorityKick => "priority_kick",
+        Tag::Kick => "kick",
         Tag::Stoppable => "stoppable",
         Tag::Avoidable => "avoidable",
         Tag::DispelPriority => "dispel_priority",

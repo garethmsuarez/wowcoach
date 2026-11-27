@@ -95,7 +95,7 @@ fn kick_plan_html(k: &crate::rules::kickplan::KickPlan, o: &mut String) {
     }
     let _ = write!(
         o,
-        "<div class=card><details open><summary><h2>Kick plan: {}</h2><span class=chip>{} key{}</span><span class=chip>{} packs</span></summary><div class=body><div class=sub>For {}. Each pack is the set of enemies casting priority spells in a pull; rates are casts per minute while that pack was in combat. Kickers can do 60 ÷ cooldown kicks a minute, with a 25% margin, preferring whoever already kicked that spell, then whoever was usually in range. A starting point, not a rule.</div><table><tr><th>Pack</th><th>Priority casts</th><th>Suggested kickers</th></tr>",
+        "<div class=card><details open><summary><h2>Kick plan: {}</h2><span class=chip>{} key{}</span><span class=chip>{} packs</span></summary><div class=body><div class=sub>For {}. Each pack is the set of enemies casting priority spells in a pull. Must-kicks are assigned first; spells marked “with spare kicks” only get kicks left over; rates are casts per minute while that pack was in combat. Kickers can do 60 ÷ cooldown kicks a minute, with a 25% margin, preferring whoever already kicked that spell, then whoever was usually in range. A starting point, not a rule.</div><table><tr><th>Pack</th><th>Priority casts</th><th>Suggested kickers</th></tr>",
         esc(&k.dungeon),
         k.keys,
         if k.keys == 1 { "" } else { "s" },
@@ -108,8 +108,13 @@ fn kick_plan_html(k: &crate::rules::kickplan::KickPlan, o: &mut String) {
             .iter()
             .map(|s| {
                 format!(
-                    "{} <span class=sub>{:.1}/min · {} kicked, {} stopped, {}</span>",
+                    "{}{} <span class=sub>{:.1}/min · {} kicked, {} stopped, {}</span>",
                     esc(&s.spell),
+                    if s.tier == 2 {
+                        " <span class=sub>(with spare kicks)</span>"
+                    } else {
+                        ""
+                    },
                     s.casts_per_min,
                     s.kicked,
                     s.stopped,
@@ -805,7 +810,13 @@ pub fn html(r: &Report) -> String {
                     o,
                     "<tr><td>{}{}</td><td class=n>{}</td><td class=n>{}</td></tr>",
                     esc(&c.name),
-                    if c.priority { " ★" } else { "" },
+                    if c.priority {
+                        " ★"
+                    } else if c.kick {
+                        " ☆"
+                    } else {
+                        ""
+                    },
                     c.succeeded,
                     c.interrupted
                 );

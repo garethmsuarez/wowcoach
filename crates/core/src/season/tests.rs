@@ -163,6 +163,10 @@ suggested = ["avoidable"]
 ids = [8]
 name = "Excluded"
 exclude = true
+[[spell]]
+ids = [9]
+name = "Two Tiers"
+tags = ["priority_kick", "kick"]
 "#,
     );
     assert_eq!(
@@ -171,6 +175,7 @@ exclude = true
             "spell \"Empty\" has no ids",
             "spell \"Both\": Avoidable is both tagged and suggested",
             "spell \"Excluded\": `exclude` only belongs in a user override",
+            "spell \"Two Tiers\": tagged both priority_kick and kick (pick one tier)",
         ]
     );
 }

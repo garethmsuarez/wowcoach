@@ -5,7 +5,7 @@
 # coaching rules, and they are set by a reviewer, never by a tool. `suggested`
 # holds tool proposals awaiting review.
 #
-# Tags: priority_kick, stoppable, avoidable, dispel_priority, tank_buster,
+# Tags: priority_kick, kick, stoppable, avoidable, dispel_priority, tank_buster,
 #       dangerous_cast, affix
 # [[affix]]: keystone affixes by logged ID. `name` comes from `season sync`;
 #   `death_penalty_s` (seconds a death costs the timer) is set by a reviewer,

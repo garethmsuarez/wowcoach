@@ -2,7 +2,7 @@
 //! then aggregates group- and player-level metrics for each.
 
 use crate::config::Config;
-pub use casts::{CastOutcome, CastRecord, ReadyKicker, missed_priority, wasted_kicks};
+pub use casts::{CastOutcome, CastRecord, ReadyKicker, missed_free, missed_priority, wasted_kicks};
 pub use defensives::{
     DEATH_REACTION_MS, DefensiveUse, EnemySummon, GroupDefensive, ReadyDefensive, Spike,
     SpikeSpell, TankHit,
@@ -184,6 +184,9 @@ pub struct EnemyCastReport {
     pub succeeded: u32,
     pub interrupted: u32,
     pub priority: bool,
+    /// Tagged `kick` (kick when free) and not `priority_kick`.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub kick: bool,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -672,7 +675,7 @@ impl FightBuilder {
         let ts = e.ts;
         self.last_ts = ts;
         let g = &cfg.general;
-        let priority = |id: u32| cfg.is_priority_kick(id);
+        let tier = |id: u32| cfg.kick_tier(id);
         let stoppable = |id: u32| cfg.has_tag(id, crate::season::Tag::Stoppable);
         self.casts.feed(
             e,
@@ -681,7 +684,7 @@ impl FightBuilder {
                 pull: self.cur_pull.as_ref().map(|_| self.pulls.len()),
                 owners,
                 specs,
-                priority: &priority,
+                tier: &tier,
                 stoppable: &stoppable,
             },
         );
@@ -1180,7 +1183,7 @@ impl FightBuilder {
             .enemy_casts
             .iter()
             .filter(|(id, ec)| {
-                ec.interrupted > 0 || (cfg.is_priority_kick(**id) && ec.started + ec.success > 0)
+                ec.interrupted > 0 || (cfg.kick_tier(**id).is_some() && ec.started + ec.success > 0)
             })
             .collect();
         cast_ids.sort_by_key(|(id, _)| **id);
@@ -1192,6 +1195,7 @@ impl FightBuilder {
                     c.succeeded += ec.success;
                     c.interrupted += ec.interrupted;
                     c.priority |= cfg.is_priority_kick(*id);
+                    c.kick = !c.priority && (c.kick || cfg.kick_tier(*id) == Some(2));
                 }
                 None => enemy_casts.push(EnemyCastReport {
                     spell_id: *id,
@@ -1200,6 +1204,7 @@ impl FightBuilder {
                     succeeded: ec.success,
                     interrupted: ec.interrupted,
                     priority: cfg.is_priority_kick(*id),
+                    kick: cfg.kick_tier(*id) == Some(2),
                 }),
             }
         }

@@ -6,14 +6,17 @@ meets the bar below (top-key numbers when present, else your own logs), and
 prints a review table of what was promoted and what was left for a human:
 
   priority_kick    kicked >= 90% of >= 10 cast bars
+  kick             kicked 70-90% of >= 20 cast bars ("kick when free": top
+                   groups letting more through means they had something
+                   better to kick, often a priority_kick from the same pack)
   dispel_priority  dispelled >= 70% of >= 20 applications
   tank_buster      >= 95% of damage on tanks, >= 15 casts, 0.8..5 hits per
                    cast (a hit or short combo, not a DoT or a cast that rarely
                    lands) and <= 20 casts per run (not a filler like "Shoot")
   stoppable        ended by a listed crowd-control stop >= 4 times (your logs
                    and top keys summed: whether CC works is a property of the
-                   spell, not of who's playing), and only on priority_kick
-                   spells: that's where "a stop was ready" advice is used, and
+                   spell, not of who's playing), and only on priority_kick or
+                   kick spells: that's where "a stop was ready" advice is used, and
                    filler or boss spells with surprising stop counts are left
                    for a human
   dangerous_cast   a top source of >= 5 damage spikes, >= 3 hits per landed
@@ -64,6 +67,9 @@ def decide(name, tag, ev, tags=()):
     if tag == "priority_kick":
         rate = d["kicked"] / d["kick_n"] if d["kick_n"] else 0
         return (d["kick_n"] >= 10 and rate >= 0.9), f"{src}: kicked {d['kicked']}/{d['kick_n']} ({rate:.0%})"
+    if tag == "kick":
+        rate = d["kicked"] / d["kick_n"] if d["kick_n"] else 0
+        return (d["kick_n"] >= 20 and 0.7 <= rate < 0.9), f"{src}: kicked {d['kicked']}/{d['kick_n']} ({rate:.0%})"
     if tag == "dispel_priority":
         rate = d["disp"] / d["disp_n"] if d["disp_n"] else 0
         return (d["disp_n"] >= 20 and rate >= 0.7), f"{src}: dispelled {d['disp']}/{d['disp_n']} ({rate:.0%})"
@@ -75,8 +81,8 @@ def decide(name, tag, ev, tags=()):
         return ok, f"{src}: {casts} casts, {d['hits']} hits ({d['tank']:.0%} on tanks, {per_cast:.1f}/cast, {per_run:.1f} casts/run)"
     if tag == "stoppable":
         n = sum(o["stopped"] for o in st.values())
-        if "priority_kick" not in tags:
-            return False, f"stopped by CC {n} times, but not a priority kick"
+        if "priority_kick" not in tags and "kick" not in tags:
+            return False, f"stopped by CC {n} times, but not a kick target"
         return n >= 4, f"stopped by CC {n} times (yours + top keys)"
     if tag == "dangerous_cast":
         spikes = sum(o["spikes"] for o in st.values())
@@ -127,12 +133,12 @@ for b in blocks:
     if not sug:
         new_blocks.append(b); continue
     keep, promote = [], []
-    # Judge stoppable last, so a priority_kick promoted in this run counts.
+    # Judge stoppable last, so a kick tier promoted in this run counts.
     for t in sorted(sug, key=lambda t: t == "stoppable"):
         ok, why = decide(s["name"], t, s.get("evidence", ""), s.get("tags", []) + promote)
         (promote if ok else keep).append(t)
         rows.append((inst[s["map_id"]], s.get("boss") or "trash", s["name"], t, ok, why))
-    tags = sorted(set(s.get("tags", []) + promote), key=["priority_kick","stoppable","avoidable","dispel_priority","tank_buster","dangerous_cast","affix"].index)
+    tags = sorted(set(s.get("tags", []) + promote), key=["priority_kick","kick","stoppable","avoidable","dispel_priority","tank_buster","dangerous_cast","affix"].index)
     lines = [l for l in b.split("\n") if not l.startswith(("tags = ", "suggested = "))]
     i = next(i for i, l in enumerate(lines) if l.startswith("sources = ")) + 1
     ins = []
