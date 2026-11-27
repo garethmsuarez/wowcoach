@@ -485,6 +485,8 @@ fn key(affixes: &[u32], spells: Vec<SpellEvidence>) -> FightEvidence {
             affixes: affixes.to_vec(),
             success: true,
             time_s: 1800.0,
+            timer_s: None,
+            upgrades: None,
             bosses: vec![],
         },
         spell_evidence: spells,

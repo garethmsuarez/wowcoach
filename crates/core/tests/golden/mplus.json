@@ -3,7 +3,7 @@
   "season_pack": null,
   "fights": [
     {
-      "title": "+12 Test Spire — Depleted / abandoned",
+      "title": "+12 Test Spire — Completed",
       "kind": {
         "type": "MythicPlus",
         "zone": "Test Spire",
@@ -14,8 +14,8 @@
           9,
           147
         ],
-        "success": false,
-        "time_s": 554.0,
+        "success": true,
+        "time_s": 574.0,
         "bosses": [
           {
             "name": "Spire Boss 3",
@@ -37,7 +37,7 @@
           }
         ]
       },
-      "duration_s": 554.0,
+      "duration_s": 574.0,
       "complete": true,
       "players": [
         {
@@ -47,27 +47,27 @@
           "spec": "Protection",
           "role": "Tank",
           "role_inferred": false,
-          "damage_done": 30049281,
-          "dps": 54240.579422382674,
+          "damage_done": 30849281,
+          "dps": 53744.39198606272,
           "healing_done": 0,
           "absorbs_done": 0,
           "hps": 0.0,
           "overheal_pct": 0.0,
-          "damage_taken": 22800000,
+          "damage_taken": 22864000,
           "avoidable_taken": 0,
           "likely_avoidable_taken": 0,
           "interrupts": 7,
           "dispels": 0,
           "deaths": 0,
           "casts": 431,
-          "activity_pct": 0.8598437106125536,
+          "activity_pct": 0.8420143174524809,
           "healthstones": 0,
           "potions": 0,
           "top_damage_taken": [
             [
               "Melee",
-              17760000,
-              2220
+              17824000,
+              2228
             ],
             [
               "Shadow Volley",
@@ -103,7 +103,7 @@
           "dps": 0.0,
           "healing_done": 23380000,
           "absorbs_done": 0,
-          "hps": 42202.166064981946,
+          "hps": 40731.70731707317,
           "overheal_pct": 0.355390129583678,
           "damage_taken": 6080000,
           "avoidable_taken": 1260000,
@@ -112,7 +112,7 @@
           "dispels": 3,
           "deaths": 1,
           "casts": 408,
-          "activity_pct": 0.8664538441074754,
+          "activity_pct": 0.8475149622690606,
           "healthstones": 0,
           "potions": 0,
           "top_damage_taken": [
@@ -152,7 +152,7 @@
           "role": "Dps",
           "role_inferred": false,
           "damage_done": 60235458,
-          "dps": 108728.26353790614,
+          "dps": 104939.82229965157,
           "healing_done": 0,
           "absorbs_done": 0,
           "hps": 0.0,
@@ -164,7 +164,7 @@
           "dispels": 0,
           "deaths": 2,
           "casts": 404,
-          "activity_pct": 0.8588203896450494,
+          "activity_pct": 0.839989558861916,
           "healthstones": 0,
           "potions": 0,
           "top_damage_taken": [
@@ -209,7 +209,7 @@
           "role": "Dps",
           "role_inferred": false,
           "damage_done": 34239118,
-          "dps": 61803.462093862814,
+          "dps": 59650.03135888502,
           "healing_done": 0,
           "absorbs_done": 0,
           "hps": 0.0,
@@ -221,7 +221,7 @@
           "dispels": 0,
           "deaths": 1,
           "casts": 312,
-          "activity_pct": 0.7424847033785581,
+          "activity_pct": 0.726255529534218,
           "healthstones": 0,
           "potions": 0,
           "top_damage_taken": [
@@ -261,7 +261,7 @@
           "role": "Dps",
           "role_inferred": false,
           "damage_done": 31403188,
-          "dps": 56684.45487364621,
+          "dps": 54709.38675958188,
           "healing_done": 0,
           "absorbs_done": 0,
           "hps": 0.0,
@@ -273,7 +273,7 @@
           "dispels": 0,
           "deaths": 8,
           "casts": 206,
-          "activity_pct": 0.8863636363636364,
+          "activity_pct": 0.842873831775701,
           "healthstones": 0,
           "potions": 0,
           "top_damage_taken": [
@@ -799,7 +799,14 @@
           "lust_ready_s": 0.0,
           "lust_used": true,
           "priority_debuffs": 1,
-          "priority_dispelled": 1
+          "priority_dispelled": 1,
+          "npcs": [
+            {
+              "id": 210001,
+              "name": "Shade Caster",
+              "count": 4
+            }
+          ]
         },
         {
           "index": 2,
@@ -819,7 +826,14 @@
           "lust_ready_s": 0.0,
           "lust_used": false,
           "priority_debuffs": 1,
-          "priority_dispelled": 1
+          "priority_dispelled": 1,
+          "npcs": [
+            {
+              "id": 210001,
+              "name": "Shade Caster",
+              "count": 4
+            }
+          ]
         },
         {
           "index": 3,
@@ -839,7 +853,14 @@
           "lust_ready_s": 0.0,
           "lust_used": false,
           "priority_debuffs": 1,
-          "priority_dispelled": 1
+          "priority_dispelled": 1,
+          "npcs": [
+            {
+              "id": 210001,
+              "name": "Shade Caster",
+              "count": 4
+            }
+          ]
         },
         {
           "index": 4,
@@ -859,7 +880,14 @@
           "lust_ready_s": 0.0,
           "lust_used": false,
           "priority_debuffs": 1,
-          "priority_dispelled": 0
+          "priority_dispelled": 0,
+          "npcs": [
+            {
+              "id": 210002,
+              "name": "Spire Guardian",
+              "count": 1
+            }
+          ]
         },
         {
           "index": 5,
@@ -879,7 +907,14 @@
           "lust_ready_s": 0.0,
           "lust_used": false,
           "priority_debuffs": 1,
-          "priority_dispelled": 0
+          "priority_dispelled": 0,
+          "npcs": [
+            {
+              "id": 210001,
+              "name": "Shade Caster",
+              "count": 4
+            }
+          ]
         },
         {
           "index": 6,
@@ -899,7 +934,14 @@
           "lust_ready_s": 0.0,
           "lust_used": false,
           "priority_debuffs": 0,
-          "priority_dispelled": 0
+          "priority_dispelled": 0,
+          "npcs": [
+            {
+              "id": 210001,
+              "name": "Shade Caster",
+              "count": 4
+            }
+          ]
         },
         {
           "index": 7,
@@ -919,7 +961,14 @@
           "lust_ready_s": 0.0,
           "lust_used": false,
           "priority_debuffs": 0,
-          "priority_dispelled": 0
+          "priority_dispelled": 0,
+          "npcs": [
+            {
+              "id": 210001,
+              "name": "Shade Caster",
+              "count": 4
+            }
+          ]
         },
         {
           "index": 8,
@@ -939,10 +988,94 @@
           "lust_ready_s": 0.0,
           "lust_used": false,
           "priority_debuffs": 0,
-          "priority_dispelled": 0
+          "priority_dispelled": 0,
+          "npcs": [
+            {
+              "id": 210002,
+              "name": "Spire Guardian",
+              "count": 1
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "start_s": 554.0,
+          "end_s": 561.1,
+          "deaths": 0,
+          "enemies_killed": 2,
+          "boss": null,
+          "casts_kicked": 0,
+          "casts_stopped": 0,
+          "casters_killed": 0,
+          "priority_completed": 0,
+          "spikes": 0,
+          "tank_hits": 0,
+          "tank_hits_unmitigated": 0,
+          "lust_ready_at_start": false,
+          "lust_ready_s": 0.0,
+          "lust_used": false,
+          "priority_debuffs": 0,
+          "priority_dispelled": 0,
+          "npcs": [
+            {
+              "id": 210001,
+              "name": "Shade Caster",
+              "count": 2
+            }
+          ]
         }
       ],
-      "downtime_s": 157.3,
+      "segments": [
+        {
+          "index": 1,
+          "boss": "Spire Boss 3",
+          "start_s": 0.0,
+          "end_s": 244.0,
+          "pulls": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "combat_s": 197.5,
+          "boss_s": 75.0,
+          "downtime_s": 46.5,
+          "deaths": 5,
+          "death_penalty_s": 75.0
+        },
+        {
+          "index": 2,
+          "boss": "Spire Boss 7",
+          "start_s": 244.0,
+          "end_s": 539.0,
+          "pulls": [
+            5,
+            6,
+            7,
+            8
+          ],
+          "combat_s": 198.3,
+          "boss_s": 75.0,
+          "downtime_s": 96.7,
+          "deaths": 7,
+          "death_penalty_s": 105.0
+        },
+        {
+          "index": 3,
+          "boss": null,
+          "start_s": 539.0,
+          "end_s": 574.0,
+          "pulls": [
+            9
+          ],
+          "combat_s": 9.3,
+          "boss_s": 0.0,
+          "downtime_s": 25.7,
+          "deaths": 0,
+          "death_penalty_s": 0.0
+        }
+      ],
+      "downtime_s": 168.9,
       "enemy_casts": [
         {
           "spell_id": 77777,
@@ -965,19 +1098,19 @@
         {
           "spell_id": 1,
           "name": "Melee",
-          "total": 17760000,
-          "hits": 2220,
+          "total": 17824000,
+          "hits": 2228,
           "players_hit": 1,
           "non_tank_hit_frac": 0.0,
-          "max_hits_per_player": 2220,
-          "median_hits_per_player": 2220.0,
+          "max_hits_per_player": 2228,
+          "median_hits_per_player": 2228.0,
           "configured_avoidable": false,
           "likely_avoidable": false,
           "per_player": [
             [
               "Shieldy-Realm",
-              17760000,
-              2220
+              17824000,
+              2228
             ]
           ]
         },
@@ -1267,13 +1400,6 @@
         {
           "scope": "group",
           "severity": "High",
-          "category": "Pacing",
-          "message": "28% of the run (2:37) was spent out of combat. Chain pulls, pre-position, and drink less. Longest gaps: 0:55 gap at 4:58, 0:15 gap at 4:03, 0:15 gap at 2:33.",
-          "evidence": "8 pulls detected (a gap of 5s or more with no combat counts as a break)."
-        },
-        {
-          "scope": "group",
-          "severity": "High",
           "category": "Pull planning",
           "message": "Near-wipe or wipe pulls: pull 6 at 5:54 (4 deaths). Plan defensives and stops for these packs, or pull fewer mobs at once.",
           "evidence": ""
@@ -1316,9 +1442,9 @@
         {
           "scope": "group",
           "severity": "Medium",
-          "category": "Timer",
-          "message": "Key not timed (9:14).",
-          "evidence": "Biggest levers, in order: deaths, downtime, then damage output."
+          "category": "Pacing",
+          "message": "29% of the run (2:48) was spent out of combat. Chain pulls, pre-position, and drink less. Longest gaps: 0:55 gap at 4:58, 0:15 gap at 4:03, 0:15 gap at 2:33.",
+          "evidence": "9 pulls detected (a gap of 5s or more with no combat counts as a break)."
         },
         {
           "scope": "Leafy-Realm",
@@ -1338,7 +1464,7 @@
           "scope": "Slacky-Realm",
           "severity": "Low",
           "category": "Activity",
-          "message": "Estimated casting activity was 74% (group median 86%). Look for gaps in your GCD usage: keep casting while moving, and pre-cast before pulls.",
+          "message": "Estimated casting activity was 73% (group median 84%). Look for gaps in your GCD usage: keep casting while moving, and pre-cast before pulls.",
           "evidence": "This estimate comes from cast events plus one GCD each. Channelled spells are undercounted, so compare it against your own previous logs."
         },
         {
@@ -1367,222 +1493,17 @@
         {
           "name": "Shade Caster",
           "npc_ids": [
-            100005
+            210001
           ],
-          "pulls": 1,
+          "pulls": 6,
           "spells": [
             {
               "spell": "Shadow Volley",
-              "casts": 6,
-              "casts_per_min": 9.1,
-              "kicked": 0,
-              "stopped": 0,
-              "went_off": 6
-            }
-          ],
-          "assignments": [
-            {
-              "player": "Shieldy-Realm",
-              "ability": "Rebuke",
-              "spells": [
-                "Shadow Volley"
-              ]
-            },
-            {
-              "player": "Glaive-Realm",
-              "ability": "Disrupt",
-              "spells": [
-                "Shadow Volley"
-              ]
-            },
-            {
-              "player": "Slacky-Realm",
-              "ability": "Rebuke",
-              "spells": [
-                "Shadow Volley"
-              ]
-            }
-          ],
-          "uncovered": []
-        },
-        {
-          "name": "Shade Caster",
-          "npc_ids": [
-            100010
-          ],
-          "pulls": 1,
-          "spells": [
-            {
-              "spell": "Shadow Volley",
-              "casts": 6,
-              "casts_per_min": 9.1,
-              "kicked": 2,
+              "casts": 32,
+              "casts_per_min": 8.09,
+              "kicked": 11,
               "stopped": 1,
-              "went_off": 3
-            }
-          ],
-          "assignments": [
-            {
-              "player": "Shieldy-Realm",
-              "ability": "Rebuke",
-              "spells": [
-                "Shadow Volley"
-              ]
-            },
-            {
-              "player": "Glaive-Realm",
-              "ability": "Disrupt",
-              "spells": [
-                "Shadow Volley"
-              ]
-            },
-            {
-              "player": "Slacky-Realm",
-              "ability": "Rebuke",
-              "spells": [
-                "Shadow Volley"
-              ]
-            }
-          ],
-          "uncovered": []
-        },
-        {
-          "name": "Shade Caster",
-          "npc_ids": [
-            100000
-          ],
-          "pulls": 1,
-          "spells": [
-            {
-              "spell": "Shadow Volley",
-              "casts": 5,
-              "casts_per_min": 7.59,
-              "kicked": 2,
-              "stopped": 0,
-              "went_off": 3
-            }
-          ],
-          "assignments": [
-            {
-              "player": "Shieldy-Realm",
-              "ability": "Rebuke",
-              "spells": [
-                "Shadow Volley"
-              ]
-            },
-            {
-              "player": "Glaive-Realm",
-              "ability": "Disrupt",
-              "spells": [
-                "Shadow Volley"
-              ]
-            },
-            {
-              "player": "Slacky-Realm",
-              "ability": "Rebuke",
-              "spells": [
-                "Shadow Volley"
-              ]
-            }
-          ],
-          "uncovered": []
-        },
-        {
-          "name": "Shade Caster",
-          "npc_ids": [
-            100020
-          ],
-          "pulls": 1,
-          "spells": [
-            {
-              "spell": "Shadow Volley",
-              "casts": 5,
-              "casts_per_min": 7.59,
-              "kicked": 2,
-              "stopped": 0,
-              "went_off": 3
-            }
-          ],
-          "assignments": [
-            {
-              "player": "Shieldy-Realm",
-              "ability": "Rebuke",
-              "spells": [
-                "Shadow Volley"
-              ]
-            },
-            {
-              "player": "Glaive-Realm",
-              "ability": "Disrupt",
-              "spells": [
-                "Shadow Volley"
-              ]
-            },
-            {
-              "player": "Slacky-Realm",
-              "ability": "Rebuke",
-              "spells": [
-                "Shadow Volley"
-              ]
-            }
-          ],
-          "uncovered": []
-        },
-        {
-          "name": "Shade Caster",
-          "npc_ids": [
-            100025
-          ],
-          "pulls": 1,
-          "spells": [
-            {
-              "spell": "Shadow Volley",
-              "casts": 5,
-              "casts_per_min": 7.59,
-              "kicked": 2,
-              "stopped": 0,
-              "went_off": 3
-            }
-          ],
-          "assignments": [
-            {
-              "player": "Shieldy-Realm",
-              "ability": "Rebuke",
-              "spells": [
-                "Shadow Volley"
-              ]
-            },
-            {
-              "player": "Glaive-Realm",
-              "ability": "Disrupt",
-              "spells": [
-                "Shadow Volley"
-              ]
-            },
-            {
-              "player": "Slacky-Realm",
-              "ability": "Rebuke",
-              "spells": [
-                "Shadow Volley"
-              ]
-            }
-          ],
-          "uncovered": []
-        },
-        {
-          "name": "Shade Caster",
-          "npc_ids": [
-            100030
-          ],
-          "pulls": 1,
-          "spells": [
-            {
-              "spell": "Shadow Volley",
-              "casts": 5,
-              "casts_per_min": 7.59,
-              "kicked": 3,
-              "stopped": 0,
-              "went_off": 2
+              "went_off": 20
             }
           ],
           "assignments": [

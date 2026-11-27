@@ -229,6 +229,13 @@ in [`docs/milestones/m1-season-data.md`](docs/milestones/m1-season-data.md).
   other dispels only once used in that key. Debuffs up under 2 s, and group cooldowns (Revival,
   Mass Dispel), are never held against anyone. A debuff that drops early because its caster
   died is logged like an expiry.
+- **Timed:** the log's end-of-key flag only means the key was completed. Timed and the upgrade
+  level come from the logged key time (death penalties included) against the season pack's
+  timers. Without a pack, a completed key is reported as "Completed".
+- **Forces and segments:** forces come from the pack's MDT-derived table, and kills from deaths
+  plus enemies left at 1% health or less. A pull's kills include enemies that die just after its
+  last hit. Segments split a key at boss kills; the first one includes the start countdown, and a
+  pull that runs across a boss kill is listed in the segment it started in.
 - The WCL adapter supports public reports (client-credentials flow) only. Private
   reports need the user OAuth flow.
 

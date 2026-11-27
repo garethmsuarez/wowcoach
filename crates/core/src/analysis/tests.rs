@@ -152,7 +152,7 @@ fn mplus_run_splits_pulls_and_measures_downtime() {
     let fights = analyze(&log, Config::default());
     assert_eq!(fights.len(), 1);
     let f = &fights[0];
-    assert_eq!(f.title, "+10 Spire — Timed");
+    assert_eq!(f.title, "+10 Spire — Completed");
     assert!(f.complete);
     assert_eq!(f.pulls.len(), 2);
     assert_eq!((f.pulls[0].start_s, f.pulls[0].end_s), (1.0, 3.0));
@@ -194,7 +194,7 @@ fn leaving_the_dungeon_ends_an_abandoned_key() {
     let f = &fights[0];
     assert!(!f.complete);
     assert_eq!(f.duration_s, 8.0);
-    assert_eq!(f.title, "+10 Spire — Depleted / abandoned");
+    assert_eq!(f.title, "+10 Spire — Abandoned");
     assert_eq!(find(f, &party.dps[0]).damage_done, 8000);
 }
 
@@ -1408,4 +1408,164 @@ fn death_penalty_follows_the_key_affixes() {
     assert_eq!(key(vec![9, 10, 147]), Some(15.0));
     assert_eq!(key(vec![165]), Some(0.0));
     assert_eq!(key(vec![9]), Some(15.0), "general.death_penalty_s");
+}
+
+// ------------------------------------------------------------ route (M5)
+
+#[test]
+fn upgrades_count_the_timers_beaten() {
+    let t = [1800, 1440, 1080];
+    assert_eq!(upgrades(1000.0, &t), 3);
+    assert_eq!(upgrades(1440.0, &t), 2);
+    assert_eq!(upgrades(1500.0, &t), 1);
+    assert_eq!(upgrades(1801.0, &t), 0);
+}
+
+fn route_cfg() -> Config {
+    let pack = crate::season::SeasonPack::parse(
+        r#"
+        [season]
+        key = "t"
+        name = "T"
+        [[dungeon]]
+        name = "Spire"
+        keystone_id = 525
+        map_id = 2649
+        timer_s = [100, 80, 60]
+        forces_total = 20
+        [[npc]]
+        id = 7
+        name = "Brute"
+        map_id = 2649
+        forces = 5
+        source = "manual"
+        "#,
+    )
+    .unwrap();
+    Config {
+        knowledge: crate::season::Knowledge::build(Some(pack), &[]),
+        ..Default::default()
+    }
+}
+
+fn spawn(name: &str, npc: u32, n: u32) -> crate::model::Unit {
+    crate::model::Unit {
+        guid: format!("Creature-0-1-2649-1-{npc}-{n:010X}"),
+        name: name.into(),
+        ..enemy(name, npc)
+    }
+}
+
+/// Pull 1: two Brutes die, and a totem one of them summoned (no forces).
+/// Pull 2: the boss. Pull 3 (after the boss): a Brute beaten to 1 HP that
+/// never dies. Completed in 70 s against a 100 / 80 / 60 s timer.
+fn route_log(success: bool) -> Log {
+    let party = Party::new();
+    let tank = &party.tank;
+    let (b1, b2, b3) = (
+        spawn("Brute", 7, 1),
+        spawn("Brute", 7, 2),
+        spawn("Brute", 7, 3),
+    );
+    let totem = spawn("Totem", 9, 4);
+    let boss = spawn("Boss", 8, 5);
+    let mut log = Log::default();
+    party.log_specs(&mut log, 0);
+    log.key_start(0, "Spire", 2649, 10);
+    log.damage(1000, tank, &b1, 1, "Hit", 10)
+        .damage(1000, tank, &b2, 1, "Hit", 10)
+        .summon(2000, &b1, &totem)
+        .damage(3000, tank, &totem, 1, "Hit", 10)
+        .death(5000, &b1)
+        .death(5000, &b2)
+        .death(5500, &totem);
+    log.encounter_start(20_000, 3001, "Boss", 8, 5);
+    for t in (20_000..=39_000).step_by(2000) {
+        log.damage(t, tank, &boss, 1, "Hit", 10);
+    }
+    log.death(39_500, &boss)
+        .encounter_end(40_000, 3001, "Boss", 8, true);
+    log.damage_hp(55_000, tank, &b3, 1, "Hit", 10, Some((5, 1000)))
+        .damage_hp(60_000, tank, &b3, 1, "Hit", 10, Some((5, 1000)));
+    log.key_end(70_000, 2649, success, 70_000);
+    log
+}
+
+#[test]
+fn kills_forces_and_segments_through_a_key() {
+    let f = &analyze(&route_log(true), route_cfg())[0];
+    let FightKind::MythicPlus {
+        timer_s,
+        upgrades,
+        bosses,
+        ..
+    } = &f.kind
+    else {
+        panic!()
+    };
+    assert_eq!((*timer_s, *upgrades), (Some(100.0), Some(2)));
+    assert_eq!(f.title, "+10 Spire — Timed +2");
+    assert_eq!(bosses[0].forces_pct, Some(50.0));
+    assert_eq!(f.forces_pct, Some(75.0));
+
+    assert_eq!(f.pulls.len(), 3);
+    // The summoned totem died too, but isn't part of what was pulled.
+    assert_eq!(f.pulls[0].enemies_killed, 3);
+    assert_eq!(
+        f.pulls[0].npcs,
+        vec![PullNpc {
+            id: 7,
+            name: "Brute".into(),
+            count: 2
+        }]
+    );
+    assert_eq!(
+        (f.pulls[0].forces, f.pulls[0].forces_pct),
+        (Some(10), Some(50.0))
+    );
+    // Defeated at 1 HP without dying: still a kill.
+    assert_eq!(f.pulls[2].npcs[0].count, 1);
+    assert_eq!(f.pulls[2].forces, Some(5));
+
+    let seg = |s: &Segment| {
+        format!(
+            "{:?} {}-{} pulls {:?} {:?}%",
+            s.boss, s.start_s, s.end_s, s.pulls, s.forces_pct
+        )
+    };
+    assert_eq!(
+        f.segments.iter().map(seg).collect::<Vec<_>>(),
+        [
+            "Some(\"Boss\") 0-40 pulls [1, 2] Some(50.0)%",
+            "None 40-70 pulls [3] Some(75.0)%",
+        ]
+    );
+    assert_eq!(f.segments[0].boss_s, 20.0);
+    assert!(
+        (f.segments[0].combat_s + f.segments[0].downtime_s - 40.0).abs() < 1e-9,
+        "{:?}",
+        f.segments[0]
+    );
+}
+
+#[test]
+fn depleted_abandoned_and_unknown_timer() {
+    // 70 s against a 60 s timer.
+    let mut cfg = route_cfg();
+    if let Some(p) = cfg.knowledge.pack.as_mut() {
+        p.dungeons[0].timer_s = vec![60, 48, 36];
+    }
+    assert_eq!(
+        analyze(&route_log(true), cfg)[0].title,
+        "+10 Spire — Depleted"
+    );
+    assert_eq!(
+        analyze(&route_log(false), route_cfg())[0].title,
+        "+10 Spire — Abandoned"
+    );
+    // No pack: completed, nothing judged, no forces.
+    let f = &analyze(&route_log(true), Config::default())[0];
+    assert_eq!(f.title, "+10 Spire — Completed");
+    assert_eq!((f.forces_pct, f.pulls[0].forces), (None, None));
+    assert_eq!(f.segments.len(), 2);
 }

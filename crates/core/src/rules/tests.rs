@@ -58,6 +58,8 @@ fn fight(kind: FightKind, duration_s: f64) -> FightReport {
         players: party(),
         deaths: vec![],
         pulls: vec![],
+        segments: vec![],
+        forces_pct: None,
         downtime_s: 0.0,
         enemy_casts: vec![],
         enemy_damage: vec![],
@@ -83,6 +85,8 @@ fn mplus(success: bool, duration_s: f64) -> FightReport {
             affixes: vec![],
             success,
             time_s: duration_s,
+            timer_s: None,
+            upgrades: None,
             bosses: vec![],
         },
         duration_s,
@@ -324,7 +328,7 @@ fn mplus_pacing_pull_planning_and_timer() {
     );
     assert_eq!(
         get(&s, "group", "Timer").unwrap().message,
-        "Key not timed (10:00)."
+        "Key abandoned after 10:00."
     );
 }
 
@@ -909,6 +913,7 @@ fn boss(name: &str, at: f64, ready: bool, used: bool) -> BossMarker {
         success: true,
         lust_ready: ready,
         lust_used: used,
+        forces_pct: None,
     }
 }
 
@@ -1170,5 +1175,34 @@ fn death_penalty_comes_from_the_key() {
     assert_eq!(
         get(&s, "group", "Timer").unwrap().evidence,
         "Biggest levers, in order: downtime, then damage output (deaths cost no time in this key)."
+    );
+}
+
+#[test]
+fn timer_advice_follows_upgrades_not_the_completion_flag() {
+    let with = |success: bool, upgrades: Option<u8>| {
+        let mut f = mplus(success, 1200.0);
+        if let FightKind::MythicPlus {
+            timer_s,
+            upgrades: u,
+            time_s,
+            ..
+        } = &mut f.kind
+        {
+            *timer_s = Some(1100.0);
+            *u = upgrades;
+            *time_s = 1172.0;
+        }
+        run(f, &Config::default())
+    };
+    // Completed but over the timer: depleted, with the margin.
+    assert_eq!(
+        get(&with(true, Some(0)), "group", "Timer").unwrap().message,
+        "Key depleted: 19:32 against a 18:20 timer, 1:12 over."
+    );
+    assert!(get(&with(true, Some(1)), "group", "Timer").is_none());
+    assert_eq!(
+        get(&with(false, None), "group", "Timer").unwrap().message,
+        "Key abandoned after 19:32."
     );
 }
