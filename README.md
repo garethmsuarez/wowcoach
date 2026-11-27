@@ -212,8 +212,14 @@ in [`docs/milestones/m1-season-data.md`](docs/milestones/m1-season-data.md).
 
 - **Activity** is approximated from cast events plus one GCD each, so channelled spells are
   undercounted. Compare a player against their own earlier logs, not against other specs.
-- **"Possibly avoidable"** is a heuristic: targeted debuffs can trip it. Promote confirmed
-  spells to `[[avoidable]]`.
+- **"Possibly avoidable"** is a heuristic for spells the pack doesn't tag: targeted debuffs can
+  trip it. Promote confirmed spells to `[[avoidable]]`.
+- **`avoidable` proposals** (`season suggest`) come from top public keys only: a spell that
+  usually hits at most half the non-tanks, isn't aimed at the player it hits, isn't a
+  dispelled debuff, and hits top players at most 1.5 times per player per 10 minutes. That
+  shows a spell *can* be dodged. A rare unavoidable hit passes too, so every proposal is
+  confirmed by a human. Puddles dropped under a targeted player count as aimed at them and
+  are missed, and raids (no top-key data) get no proposals: tag those by hand.
 - Healing is effective healing: heals minus overheal, plus healing that cleared heal-absorb
   debuffs, plus shields credited to their caster (`SPELL_ABSORBED`). Shields that only delay
   damage (Stagger, Purgatory) are excluded, and Stagger ticks don't count twice as damage taken.

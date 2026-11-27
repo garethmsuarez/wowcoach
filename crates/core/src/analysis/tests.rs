@@ -1569,3 +1569,58 @@ fn depleted_abandoned_and_unknown_timer() {
     assert_eq!((f.forces_pct, f.pulls[0].forces), (None, None));
     assert_eq!(f.segments.len(), 2);
 }
+
+#[test]
+fn avoidable_evidence_counts_hit_events_spread_and_targeting() {
+    let party = Party::new();
+    let caster = enemy("Caster", 1);
+    let mut log = Log::default();
+    party.log_specs(&mut log, 0);
+    log.key_start(0, "Spire", 2000, 10);
+    // Swirl: three hit events. One dps (and the tank), two dps, then all four
+    // non-tanks. Hits within 1 s are one event.
+    log.damage(1000, &caster, &party.dps[0], 800, "Swirl", 10_000)
+        .damage(1400, &caster, &party.tank, 800, "Swirl", 10_000)
+        .damage(3000, &caster, &party.dps[0], 800, "Swirl", 10_000)
+        .damage(3900, &caster, &party.dps[1], 800, "Swirl", 10_000);
+    for (i, u) in [&party.dps[0], &party.dps[1], &party.dps[2], &party.healer]
+        .into_iter()
+        .enumerate()
+    {
+        log.damage(5000 + 100 * i as i64, &caster, u, 800, "Swirl", 10_000);
+    }
+    // Shadow Bolt: cast at Charlie under one ID, lands under another (matched
+    // by name), then a hit on Bravo that no cast aimed at.
+    log.push(
+        10_000,
+        Some(&caster),
+        Some(&party.dps[2]),
+        Kind::CastSuccess {
+            spell: spell(810, "Shadow Bolt"),
+            info: None,
+        },
+    )
+    .damage(10_800, &caster, &party.dps[2], 811, "Shadow Bolt", 20_000)
+    .damage(30_000, &caster, &party.dps[1], 811, "Shadow Bolt", 20_000);
+    log.key_end(60_000, 2000, true, 60_000);
+
+    let f = &analyze(&log, Config::default())[0];
+    let get = |id| f.spell_evidence.iter().find(|e| e.spell_id == id).unwrap();
+    let swirl = get(800);
+    assert_eq!(
+        (
+            swirl.hit_events,
+            swirl.few_hit_events,
+            swirl.untargeted_hits
+        ),
+        (3, 2, 8),
+        "the four-player event is group-wide"
+    );
+    assert_eq!(swirl.non_tank_hits, 7, "the tank's hit doesn't count");
+    assert_eq!(swirl.non_tank_player_min, 4.0, "4 non-tanks × 1 minute");
+    let bolt = get(811);
+    assert_eq!(
+        (bolt.hits, bolt.untargeted_hits, bolt.hit_events),
+        (2, 1, 2)
+    );
+}

@@ -52,9 +52,18 @@ pub const PRIORITY_KICK_RATE: f64 = 0.9;
 /// ...or `kick` (kick when free) from this share up to it. Top groups letting
 /// one in ten through usually means they had something better to kick.
 pub const KICK_RATE: f64 = 0.7;
-/// `avoidable`: flagged by the uneven-hit heuristic in at least half of the
-/// fights where it hit twice or more, in at least this many fights.
-pub const MIN_AVOIDABLE_FIGHTS: u32 = 2;
+/// `avoidable`, judged on top keys only (a group that dodges as well as they
+/// do would show nothing in a comparison): at least this many hit events...
+pub const MIN_AVOID_EVENTS: u32 = 20;
+/// ...of which at least this share hit at most half of the non-tanks (a swirl
+/// or a frontal, not group-wide damage)...
+pub const FEW_HIT_SHARE: f64 = 0.9;
+/// ...with at least this share of hits on players no cast of it aimed at
+/// (not a bolt or a channel)...
+pub const UNTARGETED_SHARE: f64 = 0.7;
+/// ...and top players hit at most this often per player per 10 minutes.
+/// Random-target damage nobody can dodge hits them 2-25 times (Season 2 probe).
+pub const AVOID_RATE_MAX: f64 = 1.5;
 /// `dispel_priority`: dispelled at least this often, and this share of applications.
 pub const MIN_DISPELS: u32 = 3;
 pub const DISPEL_RATE: f64 = 0.4;
@@ -101,6 +110,12 @@ pub struct Agg {
     pub hit_fights: u32,
     /// Of those, fights the uneven-hit heuristic flagged.
     pub avoidable_fights: u32,
+    /// Avoidable evidence (see `SpellEvidence`).
+    pub hit_events: u32,
+    pub few_hit_events: u32,
+    pub untargeted_hits: u32,
+    pub non_tank_hits: u32,
+    pub non_tank_player_min: f64,
 }
 
 impl Agg {
@@ -117,6 +132,11 @@ impl Agg {
         self.dispelled += e.dispelled;
         self.stopped += e.stopped;
         self.spikes += e.spikes;
+        self.hit_events += e.hit_events;
+        self.few_hit_events += e.few_hit_events;
+        self.untargeted_hits += e.untargeted_hits;
+        self.non_tank_hits += e.non_tank_hits;
+        self.non_tank_player_min += e.non_tank_player_min;
         if e.hits >= 2 {
             self.hit_fights += 1;
             if e.likely_avoidable {
@@ -140,6 +160,35 @@ impl Agg {
             spikes: self.spikes + o.spikes,
             hit_fights: self.hit_fights + o.hit_fights,
             avoidable_fights: self.avoidable_fights + o.avoidable_fights,
+            hit_events: self.hit_events + o.hit_events,
+            few_hit_events: self.few_hit_events + o.few_hit_events,
+            untargeted_hits: self.untargeted_hits + o.untargeted_hits,
+            non_tank_hits: self.non_tank_hits + o.non_tank_hits,
+            non_tank_player_min: self.non_tank_player_min + o.non_tank_player_min,
+        }
+    }
+    /// Share of hit events that hit at most half of the non-tanks.
+    pub fn few_hit_share(&self) -> f64 {
+        if self.hit_events == 0 {
+            0.0
+        } else {
+            self.few_hit_events as f64 / self.hit_events as f64
+        }
+    }
+    /// Share of hits not aimed at the player hit.
+    pub fn untargeted_share(&self) -> f64 {
+        if self.hits == 0 {
+            0.0
+        } else {
+            self.untargeted_hits as f64 / self.hits as f64
+        }
+    }
+    /// Hits per non-tank player per 10 minutes of fight.
+    pub fn non_tank_rate(&self) -> f64 {
+        if self.non_tank_player_min <= 0.0 {
+            0.0
+        } else {
+            10.0 * self.non_tank_hits as f64 / self.non_tank_player_min
         }
     }
     fn events(&self) -> u32 {
@@ -178,6 +227,15 @@ impl Agg {
                 0.0
             };
             parts.push(format!("{} hits ({tank:.0}% on tanks)", self.hits));
+        }
+        if self.hit_events > 0 {
+            parts.push(format!(
+                "{} hit events ({:.0}% few-hit, {:.0}% untargeted), {:.1} hits/player/10 min",
+                self.hit_events,
+                100.0 * self.few_hit_share(),
+                100.0 * self.untargeted_share(),
+                self.non_tank_rate()
+            ));
         }
         if self.hit_fights > 0 && self.avoidable_fights > 0 {
             parts.push(format!(
@@ -235,6 +293,12 @@ impl SpellAgg {
             f.stopped += e.stopped;
             f.spikes += e.spikes;
             f.likely_avoidable |= e.likely_avoidable;
+            f.hit_events += e.hit_events;
+            f.few_hit_events += e.few_hit_events;
+            f.untargeted_hits += e.untargeted_hits;
+            f.non_tank_hits += e.non_tank_hits;
+            // The same fight's exposure, whichever ID it came from.
+            f.non_tank_player_min = f.non_tank_player_min.max(e.non_tank_player_min);
         }
         let mut out: BTreeMap<Origin, Agg> = BTreeMap::new();
         for ((o, _), e) in &fights {
@@ -280,9 +344,14 @@ impl SpellAgg {
         } else {
             0.0
         };
-        if all.avoidable_fights >= MIN_AVOIDABLE_FIGHTS
-            && all.avoidable_fights * 2 >= all.hit_fights
-            && tank_share < 0.5
+        if let Some(t) = by.get(&Origin::Top)
+            && t.hit_events >= MIN_AVOID_EVENTS
+            && t.few_hit_share() >= FEW_HIT_SHARE
+            && t.untargeted_share() >= UNTARGETED_SHARE
+            && t.non_tank_rate() <= AVOID_RATE_MAX
+            && t.tank_damage * 2 < t.damage
+            // A debuff that gets dispelled lands on random players: not dodged.
+            && all.dispelled as f64 <= 0.1 * all.applied as f64
         {
             out.push(Tag::Avoidable);
         }
@@ -384,7 +453,7 @@ impl From<&FightReport> for FightEvidence {
 /// v2: Warcraft Logs NPC instances became separate units (casts of several
 /// mobs of the same type were merged before). v3: `stopped`. v4: `spikes`.
 /// v5: `dispelled_by`. v6: `npcs`.
-pub const EVIDENCE_VERSION: u32 = 6;
+pub const EVIDENCE_VERSION: u32 = 7;
 
 /// Everything learned from a set of fights, keyed by (instance map ID, spell ID).
 #[derive(Clone, Debug, Default)]

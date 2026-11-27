@@ -299,6 +299,24 @@ pub struct SpellEvidence {
     /// units only appear in keys with that affix).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub npcs: Vec<u32>,
+    /// Avoidable evidence. Hit events: hits on the group within 1 s of the
+    /// event's first hit.
+    #[serde(default)]
+    pub hit_events: u32,
+    /// Hit events that hit at most half of the non-tank players (a swirl, a
+    /// frontal), unlike group-wide damage that hits them all.
+    #[serde(default)]
+    pub few_hit_events: u32,
+    /// Hits on a player who wasn't the target of a cast of this spell in the
+    /// last 10 s (so not a bolt or a channel aimed at them).
+    #[serde(default)]
+    pub untargeted_hits: u32,
+    /// Hits on non-tank players, and non-tank players × fight minutes, for a
+    /// rate that compares across groups and key lengths.
+    #[serde(default)]
+    pub non_tank_hits: u32,
+    #[serde(default)]
+    pub non_tank_player_min: f64,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -428,6 +446,25 @@ struct EX {
     ctx: HashMap<Option<String>, u32>,
 }
 
+/// Hits of one enemy spell on the group, for the avoidable evidence.
+#[derive(Default)]
+struct Spread {
+    /// Hit events: hits within [`HIT_EVENT_MS`] of the event's first hit,
+    /// with the group players hit.
+    events: Vec<(i64, Vec<String>)>,
+    /// Hits on a player who wasn't the target of a cast of this spell (by
+    /// name, same caster) in the last [`CAST_TARGET_MS`].
+    untargeted: u32,
+}
+
+/// Hits of one spell this close together are one hit event (a swirl landing,
+/// a frontal sweeping through).
+const HIT_EVENT_MS: i64 = 1000;
+/// A hit within this long of a cast that targeted the player counts as
+/// targeted (bolts, and channels or puddles aimed at that player). Matched by
+/// name: the cast and the damage are often logged under different IDs.
+const CAST_TARGET_MS: i64 = 10_000;
+
 #[derive(Default)]
 struct ES {
     name: String,
@@ -466,6 +503,9 @@ struct FightBuilder {
     players: HashMap<String, PS>,
     enemy_casts: HashMap<u32, EC>,
     enemy_dmg: HashMap<u32, ES>,
+    spread: HashMap<u32, Spread>,
+    /// (hostile caster guid, spell name) -> (target guid, ts) of its last cast.
+    cast_target: HashMap<(String, String), (String, i64)>,
     boss_track: Option<(String, u64, u64)>,
     lust: Vec<i64>,
     pulls: Vec<Pull>,
@@ -580,6 +620,8 @@ impl FightBuilder {
             players: HashMap::new(),
             enemy_casts: HashMap::new(),
             enemy_dmg: HashMap::new(),
+            spread: HashMap::new(),
+            cast_target: HashMap::new(),
             boss_track: None,
             lust: vec![],
             pulls: vec![],
@@ -777,6 +819,24 @@ impl FightBuilder {
                     if src_hostile && spell.id > 1 {
                         self.seen(spell.id, &spell.name, e.src.as_ref());
                     }
+                    if let Some(s) = e.src.as_ref().filter(|_| src_hostile && spell.id > 1) {
+                        let targeted = self
+                            .cast_target
+                            .get(&(s.guid.clone(), spell.name.clone()))
+                            .is_some_and(|(t, at)| *t == d.guid && ts - at <= CAST_TARGET_MS);
+                        let sp = self.spread.entry(spell.id).or_default();
+                        if !targeted {
+                            sp.untargeted += 1;
+                        }
+                        match sp.events.last_mut() {
+                            Some((first, hit)) if ts - *first <= HIT_EVENT_MS => {
+                                if !hit.contains(&d.guid) {
+                                    hit.push(d.guid.clone());
+                                }
+                            }
+                            _ => sp.events.push((ts, vec![d.guid.clone()])),
+                        }
+                    }
                     if src_hostile || e.src.is_none() {
                         let es = self.enemy_dmg.entry(spell.id).or_default();
                         es.name.clone_from(&spell.name);
@@ -864,6 +924,10 @@ impl FightBuilder {
                             p.potions.push(ts);
                         }
                     } else if s.is_hostile_npc() {
+                        if let Some(d) = e.dst.as_ref().filter(|d| d.is_group_player()) {
+                            self.cast_target
+                                .insert((s.guid.clone(), spell.name.clone()), (d.guid.clone(), ts));
+                        }
                         // Only casts with a visible cast bar could have been kicked;
                         // instant versions of the same spell are ignored.
                         let started = self
@@ -1548,6 +1612,13 @@ impl FightBuilder {
             .filter(|p| p.role == Role::Tank)
             .map(|p| p.name.as_str())
             .collect();
+        let tank_guids: Vec<&str> = players
+            .iter()
+            .filter(|p| p.role == Role::Tank)
+            .map(|p| p.guid.as_str())
+            .collect();
+        let non_tanks = players.len() - tank_guids.len();
+        let non_tank_player_min = (100.0 * non_tanks as f64 * dur / 60.0).round() / 100.0;
         // Melee is 1 in raw logs and can be 0 from Warcraft Logs: not a spell.
         let mut spell_evidence: Vec<SpellEvidence> = self
             .enemy_extra
@@ -1558,7 +1629,7 @@ impl FightBuilder {
                 let dmg = enemy_damage.iter().find(|d| d.spell_id == *id);
                 let mut ctx: Vec<(&Option<String>, &u32)> = x.ctx.iter().collect();
                 ctx.sort_by(|a, b| b.1.cmp(a.1).then_with(|| a.0.cmp(b.0)));
-                SpellEvidence {
+                let mut ev = SpellEvidence {
                     spell_id: *id,
                     name: x.name.clone(),
                     boss: ctx.first().and_then(|c| c.0.clone()),
@@ -1597,7 +1668,33 @@ impl FightBuilder {
                                 .any(|t| t.spell_id == *id && t.summoned_by.is_none())
                         })
                         .count() as u32,
+                    hit_events: 0,
+                    few_hit_events: 0,
+                    untargeted_hits: 0,
+                    non_tank_hits: 0,
+                    non_tank_player_min,
+                };
+                if let Some(sp) = self.spread.get(id) {
+                    ev.hit_events = sp.events.len() as u32;
+                    ev.untargeted_hits = sp.untargeted;
+                    for (_, hit) in &sp.events {
+                        let nt = hit
+                            .iter()
+                            .filter(|g| !tank_guids.contains(&g.as_str()))
+                            .count();
+                        if 2 * nt <= non_tanks {
+                            ev.few_hit_events += 1;
+                        }
+                    }
                 }
+                ev.non_tank_hits = self.enemy_dmg.get(id).map_or(0, |es| {
+                    es.per_player
+                        .iter()
+                        .filter(|(g, _)| !tank_guids.contains(&g.as_str()))
+                        .map(|(_, v)| v.1)
+                        .sum()
+                });
+                ev
             })
             .collect();
         spell_evidence.sort_by_key(|e| e.spell_id);
