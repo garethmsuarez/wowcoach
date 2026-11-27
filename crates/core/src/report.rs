@@ -190,12 +190,23 @@ fn priority_casts_html(f: &FightReport, o: &mut String) {
                         format!("{} ({}, {d}{range})", esc(&k.player), esc(&k.ability))
                     })
                     .collect();
+                let stops: Vec<String> = c
+                    .ready_stoppers
+                    .iter()
+                    .filter(|k| k.in_range == Some(true))
+                    .map(|k| format!("{} ({})", esc(&k.player), esc(&k.ability)))
+                    .collect();
                 format!(
-                    "<b class=bad>went off</b>{}",
+                    "<b class=bad>went off</b>{}{}",
                     if ready.is_empty() {
                         " · no kick ready".to_string()
                     } else {
                         format!(" · ready: {}", ready.join(", "))
+                    },
+                    if stops.is_empty() {
+                        String::new()
+                    } else {
+                        format!(" · stops ready: {}", stops.join(", "))
                     }
                 )
             }

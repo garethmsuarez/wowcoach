@@ -56,6 +56,10 @@ pub const DISPEL_RATE: f64 = 0.4;
 /// `tank_buster`: this share of its damage lands on tanks, it has a cast bar,
 /// and it hit at least `MIN_EVENTS` times.
 pub const TANK_SHARE: f64 = 0.9;
+/// `stoppable`: ended by a listed crowd-control stop at least this often.
+/// The stops themselves are validated (lift >= 50x in the class audit), so a
+/// few observations are enough to say CC works on the cast.
+pub const MIN_STOPS: u32 = 3;
 
 /// Counts for one spell from one origin, summed over fights.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -70,6 +74,7 @@ pub struct Agg {
     pub tank_damage: u64,
     pub applied: u32,
     pub dispelled: u32,
+    pub stopped: u32,
     /// Fights where it hit at least twice.
     pub hit_fights: u32,
     /// Of those, fights the uneven-hit heuristic flagged.
@@ -88,6 +93,7 @@ impl Agg {
         self.tank_damage += e.tank_damage;
         self.applied += e.applied;
         self.dispelled += e.dispelled;
+        self.stopped += e.stopped;
         if e.hits >= 2 {
             self.hit_fights += 1;
             if e.likely_avoidable {
@@ -107,6 +113,7 @@ impl Agg {
             tank_damage: self.tank_damage + o.tank_damage,
             applied: self.applied + o.applied,
             dispelled: self.dispelled + o.dispelled,
+            stopped: self.stopped + o.stopped,
             hit_fights: self.hit_fights + o.hit_fights,
             avoidable_fights: self.avoidable_fights + o.avoidable_fights,
         }
@@ -133,6 +140,9 @@ impl Agg {
         }
         if self.instant_casts > 0 {
             parts.push(format!("{} instant", self.instant_casts));
+        }
+        if self.stopped > 0 {
+            parts.push(format!("stopped by CC {}", self.stopped));
         }
         if self.hits > 0 {
             let tank = if self.damage > 0 {
@@ -195,6 +205,7 @@ impl SpellAgg {
             f.tank_damage += e.tank_damage;
             f.applied += e.applied;
             f.dispelled += e.dispelled;
+            f.stopped += e.stopped;
             f.likely_avoidable |= e.likely_avoidable;
         }
         let mut out: BTreeMap<Origin, Agg> = BTreeMap::new();
@@ -252,6 +263,9 @@ impl SpellAgg {
         if all.hits >= MIN_EVENTS && all.casts_started > 0 && tank_share >= TANK_SHARE {
             out.push(Tag::TankBuster);
         }
+        if all.stopped >= MIN_STOPS {
+            out.push(Tag::Stoppable);
+        }
         out
     }
 
@@ -294,8 +308,8 @@ impl From<&FightReport> for FightEvidence {
 /// Bump when analysis changes what goes into `FightEvidence`, so cached
 /// evidence from older versions is ignored.
 /// v2: Warcraft Logs NPC instances became separate units (casts of several
-/// mobs of the same type were merged before).
-pub const EVIDENCE_VERSION: u32 = 2;
+/// mobs of the same type were merged before). v3: `stopped`.
+pub const EVIDENCE_VERSION: u32 = 3;
 
 /// Everything learned from a set of fights, keyed by (instance map ID, spell ID).
 #[derive(Clone, Debug, Default)]

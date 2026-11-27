@@ -69,7 +69,7 @@ From that it proposes an assignment ("Bravo and Charlie: Lightning Bolt casters;
    - HTML: a per-pull kick table with outcome per priority cast.
    - Golden snapshot updated, after extending `gen_sample_log.py` with kicks, stops and a wasted kick.
 4. **Kick plan.** *(done. `analyze` now takes several logs as one report. Over the 13 local logs the plans merge 1–4 keys per dungeon; e.g. Voidscar Arena's Brawler + Magi pack, seen in 5 pulls, where 13 of 35 Shadowbolt Volleys went off, gets 3 kickers)* Pack identification, cast rates, assignment, and a "Kick plan" section per dungeon in the report. Built from all keys of that dungeon in the input (cross-week history comes with M6).
-5. **`stoppable` content.**
+5. **`stoppable` content.** *(done; see "PR 5 findings")*
    - `season suggest` gains stop evidence ("stopped by CC in N of M top-key casts").
    - `promote_suggestions.py` gains a `stoppable` criterion.
    - Re-run over the logs and top keys, and draft tags for review as in M1 PR 5.
@@ -88,6 +88,24 @@ From that it proposes an assignment ("Bravo and Charlie: Lightning Bolt casters;
   - The delve companion's Cheap Shot (Valeera) is excluded by collecting only inside keys and only from players, pets and summoned units.
   - The remaining candidate, Frostwyrm's Fury's damage debuff, rides along with the stun and isn't one.
 - **Warlocks:** `classes check --wcl` on 4 public Demonology keys confirmed Spell Lock (27 kicks, now listed for every spec) and Singe Magic 132411. Axe Toss isn't confirmed yet.
+
+## PR 5 findings
+
+- **Availability:** `CastRecord.ready_stoppers` is filled for completed casts of `stoppable` spells. A stop counts once its player used it in that run, from the cast or from the aura landing (totems, pets, AoE). Range is `range_yd`, or 8 yd when none is listed.
+- **Situational stops:** some stops are credited when they land but never offered as ready, flagged `situational` in the class table:
+  - damage cooldowns that happen to stun: Absolute Zero, Havoc Metamorphosis, Wake of Ashes
+  - Rake, which only stuns from stealth. The first smoke run named Feral druids "ready with Rake" mid-combat, which is why the flag exists.
+- **Rule:** group "Stops" (Medium) lists priority casts that went off with a stop ready and in range. The HTML priority-cast table gains "stops ready: …".
+- **Suggest:** evidence now carries "stopped by CC N" (`EVIDENCE_VERSION` 3), and `season suggest` proposes `stoppable` at ≥ 3 stops.
+- **Promotion:** `promote_suggestions.py` promotes `stoppable` at ≥ 4 stops (your logs + top keys), and only on `priority_kick` spells, since that's the only place the advice is used.
+  - 13 spells promoted. 20 more keep `stoppable` in `suggested`; one of them is a priority kick (Hex, 3 stops).
+  - `--check` lists reviewed tags whose current evidence no longer meets the bar (0 now). It never removes tags.
+- **Smoke run** (13 local logs):
+  - 10 "Stops" suggestions, and 32 completed stoppable casts with a stop ready.
+  - Two claims were checked by hand against the raw events. Both stops were off cooldown, in range, and used 0.5–2.4 s after the cast went off:
+    - Shockwave on Demoralizing Shout: last used 7.8 min earlier
+    - Incapacitating Roar: used at 0:18.5, 30 s cooldown, ready again before the 0:50.4 Shout
+- **Not done:** listed ranges for ranged stops. With the 8 yd default, Hammer of Justice and Intimidation are mostly "out of range", which errs toward not naming anyone.
 
 ## Verification
 - CI as always. The golden test covers the new kick and stop scenarios in the synthetic log.

@@ -186,6 +186,9 @@ pub struct SpellEvidence {
     /// Harmful auras applied to group players, and how many were dispelled.
     pub applied: u32,
     pub dispelled: u32,
+    /// Cast bars ended by a listed crowd-control stop.
+    #[serde(default)]
+    pub stopped: u32,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -516,6 +519,7 @@ impl FightBuilder {
         self.last_ts = ts;
         let g = &cfg.general;
         let priority = |id: u32| cfg.is_priority_kick(id);
+        let stoppable = |id: u32| cfg.has_tag(id, crate::season::Tag::Stoppable);
         self.casts.feed(
             e,
             &casts::Ctx {
@@ -524,6 +528,7 @@ impl FightBuilder {
                 owners,
                 specs,
                 priority: &priority,
+                stoppable: &stoppable,
             },
         );
         match &e.kind {
@@ -1192,6 +1197,12 @@ impl FightBuilder {
                     likely_avoidable: dmg.is_some_and(|d| d.likely_avoidable),
                     applied: x.applied,
                     dispelled: x.dispelled,
+                    stopped: cast_records
+                        .iter()
+                        .filter(|c| {
+                            c.spell_id == *id && matches!(c.outcome, CastOutcome::Stopped { .. })
+                        })
+                        .count() as u32,
                 }
             })
             .collect();

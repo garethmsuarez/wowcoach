@@ -319,6 +319,7 @@ mod tests {
             priority: true,
             outcome,
             ready_kickers: vec![],
+            ready_stoppers: vec![],
         }
     }
 

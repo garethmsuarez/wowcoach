@@ -373,3 +373,30 @@ fn cached_evidence_gives_the_same_result() {
         crate::season::render(&p2, "").unwrap()
     );
 }
+
+#[test]
+fn repeated_stops_suggest_stoppable() {
+    let mut p = pack();
+    let mut c = Collected::default();
+    for n in [2, 1] {
+        let mut f = run(4, MAP);
+        f.spell_evidence
+            .iter_mut()
+            .find(|e| e.spell_id == 500)
+            .unwrap()
+            .stopped = n;
+        c.add(&p, &f, Origin::Top);
+    }
+    apply(&mut p, &c);
+    let bolt = spell(&p, 500);
+    assert!(
+        bolt.suggested.contains(&Tag::Stoppable),
+        "{:?}",
+        bolt.suggested
+    );
+    assert!(
+        bolt.evidence.contains("stopped by CC 3"),
+        "{}",
+        bolt.evidence
+    );
+}

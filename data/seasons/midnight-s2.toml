@@ -321,7 +321,7 @@ name = "Ravenous Stomp"
 map_id = 2993
 boss = "Rav'i"
 sources = ["journal", "log", "wcl"]
-evidence = "yours (1 fight): kicked 0/3, 15 hits (18% on tanks); top keys (8 fights): kicked 0/31, 155 hits (18% on tanks)"
+evidence = "yours (1 fight): kicked 0/3, 15 hits (18% on tanks); top keys (8 fights): kicked 0/31, stopped by CC 1, 155 hits (18% on tanks)"
 
 [[spell]]
 ids = [1296058, 1296069]
@@ -401,8 +401,8 @@ name = "Toxic Atrophy"
 map_id = 2993
 boss = "The Writhing Coil"
 sources = ["journal", "log", "wcl"]
-tags = ["priority_kick"]
-evidence = "yours (1 fight): kicked 8/8; top keys (8 fights): kicked 53/53"
+tags = ["priority_kick", "stoppable"]
+evidence = "yours (1 fight): kicked 8/8, stopped by CC 1; top keys (8 fights): kicked 53/53, stopped by CC 21"
 
 [[spell]]
 ids = [1310357]
@@ -517,7 +517,7 @@ ids = [1300618, 1300698]
 name = "Assimilation"
 map_id = 2993
 sources = ["log", "wcl"]
-evidence = "yours (1 fight): kicked 0/15, 15 instant; top keys (8 fights): kicked 0/19, 171 instant"
+evidence = "yours (1 fight): kicked 0/15, 15 instant; top keys (8 fights): kicked 0/84, 106 instant"
 
 [[spell]]
 ids = [1306517, 1306550, 1306641, 1306657]
@@ -547,7 +547,7 @@ name = "Dismember"
 map_id = 2993
 sources = ["log", "wcl"]
 tags = ["tank_buster"]
-evidence = "yours (1 fight): kicked 0/13, 12 hits (100% on tanks); top keys (8 fights): kicked 0/102, 16 instant, 118 hits (100% on tanks)"
+evidence = "yours (1 fight): kicked 0/13, 12 hits (100% on tanks); top keys (8 fights): kicked 0/118, 118 hits (100% on tanks)"
 
 [[spell]]
 ids = [1294572]
@@ -561,8 +561,8 @@ ids = [1289416, 1307571]
 name = "Envenom"
 map_id = 2993
 sources = ["log", "wcl"]
-suggested = ["priority_kick", "dispel_priority"]
-evidence = "yours (1 fight): kicked 33/53, 272 hits (13% on tanks), dispelled 0/29; top keys (8 fights): kicked 253/351, 64 instant, 1017 hits (23% on tanks), uneven hits in 1/8 fights, dispelled 78/156"
+suggested = ["priority_kick", "dispel_priority", "stoppable"]
+evidence = "yours (1 fight): kicked 33/53, stopped by CC 4, 272 hits (13% on tanks), dispelled 0/29; top keys (8 fights): kicked 253/415, stopped by CC 64, 1017 hits (23% on tanks), uneven hits in 1/8 fights, dispelled 78/156"
 
 [[spell]]
 ids = [1306385]
@@ -583,7 +583,8 @@ ids = [1306381]
 name = "Fetid Spit"
 map_id = 2993
 sources = ["log", "wcl"]
-evidence = "yours (1 fight): kicked 0/86, 80 hits (12% on tanks); top keys (8 fights): kicked 0/398, 289 instant, 667 hits (17% on tanks)"
+suggested = ["stoppable"]
+evidence = "yours (1 fight): kicked 0/86, stopped by CC 16, 80 hits (12% on tanks); top keys (8 fights): kicked 0/687, stopped by CC 53, 667 hits (17% on tanks)"
 
 [[spell]]
 ids = [1307098]
@@ -649,8 +650,8 @@ ids = [1294557]
 name = "Piercing Hiss"
 map_id = 2993
 sources = ["log", "wcl"]
-tags = ["priority_kick"]
-evidence = "yours (1 fight): kicked 21/26, 22 hits (6% on tanks), dispelled 0/15; top keys (8 fights): kicked 210/211, 1 instant, 10 hits (14% on tanks), dispelled 0/10"
+tags = ["priority_kick", "stoppable"]
+evidence = "yours (1 fight): kicked 21/26, stopped by CC 6, 22 hits (6% on tanks), dispelled 0/15; top keys (8 fights): kicked 210/212, stopped by CC 30, 10 hits (14% on tanks), dispelled 0/10"
 
 [[spell]]
 ids = [1294849, 1294859]
@@ -692,14 +693,14 @@ ids = [1306844]
 name = "Totemic Ritual"
 map_id = 2993
 sources = ["log", "wcl"]
-evidence = "yours (1 fight): kicked 0/2; top keys (8 fights): kicked 0/8, 8 instant"
+evidence = "yours (1 fight): kicked 0/2; top keys (8 fights): kicked 0/16"
 
 [[spell]]
 ids = [1306668, 1306669]
 name = "Toxic Breath"
 map_id = 2993
 sources = ["log", "wcl"]
-evidence = "yours (1 fight): kicked 0/5, 4 hits (25% on tanks), dispelled 0/3; top keys (8 fights): kicked 0/54, 24 instant, 63 hits (35% on tanks), dispelled 0/31"
+evidence = "yours (1 fight): kicked 0/5, 4 hits (25% on tanks), dispelled 0/3; top keys (8 fights): kicked 0/78, 63 hits (35% on tanks), dispelled 0/31"
 
 [[spell]]
 ids = [1306852, 1306853]
@@ -879,8 +880,8 @@ name = "Winter's Shroud"
 map_id = 2825
 boss = "Sentinel of Winter"
 sources = ["journal", "log", "wcl"]
-tags = ["priority_kick"]
-evidence = "yours (3 fights): kicked 14/19, 20 hits (13% on tanks), dispelled 0/18; top keys (8 fights): kicked 68/68"
+tags = ["priority_kick", "stoppable"]
+evidence = "yours (3 fights): kicked 14/19, stopped by CC 2, 20 hits (13% on tanks), dispelled 0/18; top keys (8 fights): kicked 68/68, stopped by CC 6"
 
 [[spell]]
 ids = [1249186]
@@ -966,8 +967,8 @@ ids = [1297778]
 name = "Arc Lightning"
 map_id = 2825
 sources = ["log", "wcl"]
-tags = ["priority_kick"]
-evidence = "yours (3 fights): kicked 12/15, 7 hits (9% on tanks); top keys (8 fights): kicked 42/42"
+tags = ["priority_kick", "stoppable"]
+evidence = "yours (3 fights): kicked 12/15, stopped by CC 2, 7 hits (9% on tanks); top keys (8 fights): kicked 42/42, stopped by CC 12"
 
 [[spell]]
 ids = [1246860]
@@ -1017,8 +1018,8 @@ ids = [1241214]
 name = "Earth Bolt"
 map_id = 2825
 sources = ["log", "wcl"]
-suggested = ["priority_kick"]
-evidence = "yours (3 fights): kicked 41/129, 80 hits (20% on tanks); top keys (8 fights): kicked 207/234, 10 instant, 37 hits (17% on tanks)"
+suggested = ["priority_kick", "stoppable"]
+evidence = "yours (3 fights): kicked 41/129, stopped by CC 8, 80 hits (20% on tanks); top keys (8 fights): kicked 207/244, stopped by CC 24, 37 hits (17% on tanks)"
 
 [[spell]]
 ids = [1247366, 1247367, 1296722]
@@ -1039,9 +1040,9 @@ ids = [1309919]
 name = "Frigid Roar"
 map_id = 2825
 sources = ["log", "wcl"]
-tags = ["priority_kick"]
+tags = ["priority_kick", "stoppable"]
 suggested = ["dispel_priority"]
-evidence = "yours (3 fights): kicked 17/18, dispelled 0/4; top keys (8 fights): kicked 144/148, 5 instant, 2 hits (0% on tanks), dispelled 4/5"
+evidence = "yours (3 fights): kicked 17/18, stopped by CC 5, dispelled 0/4; top keys (8 fights): kicked 144/153, stopped by CC 7, 2 hits (0% on tanks), dispelled 4/5"
 
 [[spell]]
 ids = [1265400]
@@ -1083,8 +1084,8 @@ ids = [1297696]
 name = "Healing Breeze"
 map_id = 2825
 sources = ["log", "wcl"]
-tags = ["priority_kick"]
-evidence = "yours (3 fights): kicked 21/27; top keys (8 fights): kicked 72/72, 1 instant"
+tags = ["priority_kick", "stoppable"]
+evidence = "yours (3 fights): kicked 21/27, stopped by CC 8; top keys (8 fights): kicked 72/73, stopped by CC 13"
 
 [[spell]]
 ids = [1238801]
@@ -1098,8 +1099,8 @@ ids = [1246687, 1290205]
 name = "Lightning Bolt"
 map_id = 2825
 sources = ["log", "wcl"]
-suggested = ["priority_kick"]
-evidence = "yours (3 fights): kicked 37/69, 31 hits (11% on tanks); top keys (8 fights): kicked 168/195, 1 instant, 23 hits (7% on tanks)"
+suggested = ["priority_kick", "stoppable"]
+evidence = "yours (3 fights): kicked 37/69, stopped by CC 5, 31 hits (11% on tanks); top keys (8 fights): kicked 168/196, stopped by CC 14, 23 hits (7% on tanks)"
 
 [[spell]]
 ids = [1246820]
@@ -1184,7 +1185,7 @@ ids = [1239394]
 name = "Scavenge"
 map_id = 2825
 sources = ["log", "wcl"]
-evidence = "yours (2 fights): kicked 2/2; top keys (6 fights): kicked 1/5"
+evidence = "yours (2 fights): kicked 2/2; top keys (6 fights): kicked 1/5, stopped by CC 1"
 
 [[spell]]
 ids = [1246821, 1246825]
@@ -1198,8 +1199,8 @@ ids = [1246847]
 name = "Shoot"
 map_id = 2825
 sources = ["log", "wcl"]
-suggested = ["tank_buster"]
-evidence = "yours (3 fights): kicked 0/198, 78 hits (88% on tanks), uneven hits in 1/3 fights; top keys (8 fights): kicked 0/522, 159 instant, 685 hits (99% on tanks), uneven hits in 2/8 fights"
+suggested = ["tank_buster", "stoppable"]
+evidence = "yours (3 fights): kicked 0/198, stopped by CC 10, 78 hits (88% on tanks), uneven hits in 1/3 fights; top keys (8 fights): kicked 0/681, stopped by CC 36, 685 hits (99% on tanks), uneven hits in 2/8 fights"
 
 [[spell]]
 ids = [1311695]
@@ -1373,8 +1374,8 @@ name = "Wretched Discharge"
 map_id = 1762
 boss = "Mchimba the Embalmer"
 sources = ["journal", "log", "wcl"]
-tags = ["priority_kick"]
-evidence = "yours (2 fights): kicked 13/15, 25 hits (12% on tanks), dispelled 0/10; top keys (8 fights): kicked 149/150, 9 hits (65% on tanks), dispelled 2/4"
+tags = ["priority_kick", "stoppable"]
+evidence = "yours (2 fights): kicked 13/15, stopped by CC 12, 25 hits (12% on tanks), dispelled 0/10; top keys (8 fights): kicked 149/150, stopped by CC 2, 9 hits (65% on tanks), dispelled 2/4"
 
 [[spell]]
 ids = [1305810]
@@ -1597,7 +1598,7 @@ ids = [1301851]
 name = "Bloodthirsty Axe"
 map_id = 1762
 sources = ["log", "wcl"]
-evidence = "yours (2 fights): kicked 0/13, 233 hits (7% on tanks), dispelled 0/18; top keys (8 fights): kicked 0/44, 7 instant, 951 hits (11% on tanks), uneven hits in 1/8 fights, dispelled 0/89"
+evidence = "yours (2 fights): kicked 0/13, 233 hits (7% on tanks), dispelled 0/18; top keys (8 fights): kicked 0/51, 951 hits (11% on tanks), uneven hits in 1/8 fights, dispelled 0/89"
 
 [[spell]]
 ids = [269935]
@@ -1683,7 +1684,8 @@ name = "Hex"
 map_id = 1762
 sources = ["log", "wcl"]
 tags = ["priority_kick"]
-evidence = "yours (2 fights): kicked 5/8, dispelled 0/3; top keys (7 fights): kicked 17/18"
+suggested = ["stoppable"]
+evidence = "yours (2 fights): kicked 5/8, dispelled 0/3; top keys (7 fights): kicked 17/18, stopped by CC 3"
 
 [[spell]]
 ids = [269972]
@@ -1823,8 +1825,8 @@ ids = [1295125]
 name = "Spectral Bolt"
 map_id = 1762
 sources = ["log", "wcl"]
-suggested = ["priority_kick"]
-evidence = "yours (2 fights): kicked 10/46, 36 hits (11% on tanks), uneven hits in 1/2 fights; top keys (7 fights): kicked 56/74, 8 instant, 26 hits (15% on tanks)"
+suggested = ["priority_kick", "stoppable"]
+evidence = "yours (2 fights): kicked 10/46, stopped by CC 9, 36 hits (11% on tanks), uneven hits in 1/2 fights; top keys (7 fights): kicked 56/82, stopped by CC 8, 26 hits (15% on tanks)"
 
 [[spell]]
 ids = [1297781]
@@ -1838,7 +1840,7 @@ ids = [270003]
 name = "Suppression Slam"
 map_id = 1762
 sources = ["log", "wcl"]
-evidence = "yours (4 fights): kicked 0/26, 6 hits (6% on tanks), uneven hits in 1/1 fights, dispelled 0/3; top keys (8 fights): kicked 0/74, 12 instant, 2 hits (0% on tanks), dispelled 0/2"
+evidence = "yours (4 fights): kicked 0/26, 6 hits (6% on tanks), uneven hits in 1/1 fights, dispelled 0/3; top keys (8 fights): kicked 0/86, 2 hits (0% on tanks), dispelled 0/2"
 
 [[spell]]
 ids = [270901]
@@ -1860,7 +1862,7 @@ ids = [270482, 270485]
 name = "Violent Lunge"
 map_id = 1762
 sources = ["log", "wcl"]
-evidence = "yours (2 fights): kicked 0/14, 14 instant; top keys (8 fights): kicked 0/41, 65 instant"
+evidence = "yours (2 fights): kicked 0/14, 14 instant; top keys (8 fights): kicked 0/53, 53 instant"
 
 [[spell]]
 ids = [271561, 271562]
@@ -1907,7 +1909,7 @@ name = "Fel Nova"
 map_id = 2813
 boss = "Kystia Manaheart"
 sources = ["journal", "log", "wcl"]
-evidence = "yours (4 fights): kicked 0/15, 17 instant, 1 hits (0% on tanks); top keys (8 fights): kicked 0/44, 47 instant, 2 hits (100% on tanks)"
+evidence = "yours (4 fights): kicked 0/15, 17 instant, 1 hits (0% on tanks); top keys (8 fights): kicked 0/44, 47 instant, stopped by CC 1, 2 hits (100% on tanks)"
 
 [[spell]]
 ids = [1253811]
@@ -1996,7 +1998,7 @@ name = "Freight Explosion"
 map_id = 2813
 boss = "Zaen Bladesorrow"
 sources = ["journal", "log", "wcl"]
-evidence = "yours (4 fights): kicked 0/101; top keys (8 fights): kicked 0/60, 118 instant, 2 hits (67% on tanks)"
+evidence = "yours (4 fights): kicked 0/101; top keys (8 fights): kicked 0/178, 2 hits (67% on tanks)"
 
 [[spell]]
 ids = [474515, 1216589, 1216590]
@@ -2005,8 +2007,8 @@ map_id = 2813
 boss = "Zaen Bladesorrow"
 sources = ["journal", "log", "wcl"]
 tags = ["dispel_priority"]
-suggested = ["tank_buster"]
-evidence = "yours (4 fights): kicked 0/47, 242 hits (100% on tanks), dispelled 19/34; top keys (8 fights): kicked 0/106, 35 instant, 468 hits (100% on tanks), dispelled 44/62"
+suggested = ["tank_buster", "stoppable"]
+evidence = "yours (4 fights): kicked 0/47, stopped by CC 1, 242 hits (100% on tanks), dispelled 19/34; top keys (8 fights): kicked 0/141, stopped by CC 11, 468 hits (100% on tanks), dispelled 44/62"
 
 [[spell]]
 ids = [474478, 474483]
@@ -2112,7 +2114,8 @@ name = "Felfire Burst"
 map_id = 2813
 boss = "Lithiel Cinderfury"
 sources = ["journal", "log", "wcl"]
-evidence = "yours (4 fights): kicked 15/954, 843 hits (31% on tanks), uneven hits in 1/4 fights; top keys (8 fights): kicked 60/550, 937 instant, 1394 hits (37% on tanks), uneven hits in 3/8 fights"
+suggested = ["stoppable"]
+evidence = "yours (4 fights): kicked 15/954, stopped by CC 136, 843 hits (31% on tanks), uneven hits in 1/4 fights; top keys (8 fights): kicked 60/1487, stopped by CC 524, 1394 hits (37% on tanks), uneven hits in 3/8 fights"
 
 [[spell]]
 ids = [1231262, 1231353]
@@ -2190,7 +2193,8 @@ ids = [1216970]
 name = "Back to Work!"
 map_id = 2813
 sources = ["log", "wcl"]
-evidence = "yours (4 fights): kicked 0/18; top keys (8 fights): kicked 0/24"
+suggested = ["stoppable"]
+evidence = "yours (4 fights): kicked 0/18; top keys (8 fights): kicked 0/24, stopped by CC 4"
 
 [[spell]]
 ids = [1302007, 1302010]
@@ -2361,8 +2365,8 @@ ids = [1214922]
 name = "Fel Rage"
 map_id = 2813
 sources = ["log", "wcl"]
-suggested = ["priority_kick"]
-evidence = "yours (4 fights): kicked 42/57; top keys (8 fights): kicked 117/149, 8 instant"
+suggested = ["priority_kick", "stoppable"]
+evidence = "yours (4 fights): kicked 42/57, stopped by CC 12; top keys (8 fights): kicked 117/157, stopped by CC 23"
 
 [[spell]]
 ids = [1294870]
@@ -2461,8 +2465,8 @@ ids = [1201554]
 name = "Seduction"
 map_id = 2813
 sources = ["log", "wcl"]
-tags = ["priority_kick"]
-evidence = "yours (4 fights): kicked 7/12, dispelled 1/5; top keys (8 fights): kicked 67/74, dispelled 1/7"
+tags = ["priority_kick", "stoppable"]
+evidence = "yours (4 fights): kicked 7/12, stopped by CC 5, dispelled 1/5; top keys (8 fights): kicked 67/74, stopped by CC 12, dispelled 1/7"
 
 [[spell]]
 ids = [1218465]
@@ -2533,7 +2537,7 @@ ids = [1297691]
 name = "Whirlwind"
 map_id = 2813
 sources = ["log", "wcl"]
-evidence = "yours (4 fights): kicked 0/26, 4 hits (0% on tanks); top keys (8 fights): kicked 0/36, 1 instant, 14 hits (88% on tanks)"
+evidence = "yours (4 fights): kicked 0/26, 4 hits (0% on tanks); top keys (8 fights): kicked 0/37, 14 hits (88% on tanks)"
 
 [[spell]]
 ids = [373046]
@@ -2748,8 +2752,8 @@ ids = [384194]
 name = "Cinderbolt"
 map_id = 2521
 sources = ["wcl"]
-suggested = ["priority_kick"]
-evidence = "top keys (8 fights): kicked 377/481, 30 instant, 132 hits (20% on tanks)"
+suggested = ["priority_kick", "stoppable"]
+evidence = "top keys (8 fights): kicked 377/511, stopped by CC 41, 132 hits (20% on tanks)"
 
 [[spell]]
 ids = [372730, 1305213]
@@ -2757,7 +2761,7 @@ name = "Crushing Smash"
 map_id = 2521
 sources = ["wcl"]
 tags = ["tank_buster"]
-evidence = "top keys (8 fights): kicked 0/20, 3 instant, 46 hits (100% on tanks)"
+evidence = "top keys (8 fights): kicked 0/23, 46 hits (100% on tanks)"
 
 [[spell]]
 ids = [1307205]
@@ -2829,8 +2833,8 @@ ids = [371984]
 name = "Frostbolt"
 map_id = 2521
 sources = ["wcl"]
-suggested = ["priority_kick"]
-evidence = "top keys (8 fights): kicked 169/211, 9 instant, 49 hits (29% on tanks)"
+suggested = ["priority_kick", "stoppable"]
+evidence = "top keys (8 fights): kicked 169/220, stopped by CC 16, 49 hits (29% on tanks)"
 
 [[spell]]
 ids = [372743]
@@ -2962,7 +2966,7 @@ name = "Gust"
 map_id = 1877
 boss = "Adderis and Aspix"
 sources = ["journal", "wcl"]
-evidence = "top keys (8 fights): kicked 0/281, 1267 hits (0% on tanks), dispelled 0/258"
+evidence = "top keys (8 fights): kicked 0/281, stopped by CC 2, 1267 hits (0% on tanks), dispelled 0/258"
 
 [[spell]]
 ids = [1288428, 1308740]
@@ -3051,9 +3055,9 @@ name = "Poison Spit"
 map_id = 1877
 boss = "Merektha"
 sources = ["journal", "wcl"]
-tags = ["priority_kick"]
+tags = ["priority_kick", "stoppable"]
 suggested = ["dispel_priority"]
-evidence = "top keys (8 fights): kicked 58/61, 1 instant, 13 hits (0% on tanks), dispelled 4/4"
+evidence = "top keys (8 fights): kicked 58/62, stopped by CC 13, 13 hits (0% on tanks), dispelled 4/4"
 
 [[spell]]
 ids = [1293048]
@@ -3258,7 +3262,7 @@ ids = [1293464]
 name = "Accumulate Charge"
 map_id = 1877
 sources = ["wcl"]
-evidence = "top keys (8 fights): kicked 0/91, 7 instant"
+evidence = "top keys (8 fights): kicked 0/98"
 
 [[spell]]
 ids = [1293307]
@@ -3266,7 +3270,7 @@ name = "Addle Mind"
 map_id = 1877
 sources = ["wcl"]
 tags = ["priority_kick"]
-evidence = "top keys (8 fights): kicked 36/36"
+evidence = "top keys (8 fights): kicked 36/36, stopped by CC 1"
 
 [[spell]]
 ids = [1308113, 1308116]
@@ -3280,7 +3284,7 @@ ids = [1293650]
 name = "Call Lightning"
 map_id = 1877
 sources = ["wcl"]
-evidence = "top keys (8 fights): kicked 0/67, 3 instant"
+evidence = "top keys (8 fights): kicked 0/70"
 
 [[spell]]
 ids = [1303486]
@@ -3302,7 +3306,7 @@ ids = [269116]
 name = "Draw Power"
 map_id = 1877
 sources = ["wcl"]
-evidence = "top keys (4 fights): kicked 0/5, 2 instant"
+evidence = "top keys (4 fights): kicked 0/7"
 
 [[spell]]
 ids = [265966]
@@ -3332,8 +3336,8 @@ ids = [1291262]
 name = "Lightning Bolt"
 map_id = 1877
 sources = ["wcl"]
-suggested = ["priority_kick"]
-evidence = "top keys (8 fights): kicked 366/419, 20 instant, 73 hits (20% on tanks)"
+suggested = ["priority_kick", "stoppable"]
+evidence = "top keys (8 fights): kicked 366/439, stopped by CC 41, 73 hits (20% on tanks)"
 
 [[spell]]
 ids = [267483, 1225638]
@@ -3355,7 +3359,7 @@ name = "Poisoned Cheap Shot"
 map_id = 1877
 sources = ["wcl"]
 suggested = ["tank_buster"]
-evidence = "top keys (5 fights): kicked 1/2, 5 instant, 8 hits (100% on tanks), dispelled 2/5"
+evidence = "top keys (5 fights): kicked 1/3, 4 instant, 8 hits (100% on tanks), dispelled 2/5"
 
 [[spell]]
 ids = [1293475]
@@ -3376,7 +3380,7 @@ ids = [272655]
 name = "Scouring Sand"
 map_id = 1877
 sources = ["wcl"]
-evidence = "top keys (8 fights): kicked 0/105, 4 instant"
+evidence = "top keys (8 fights): kicked 0/109"
 
 [[spell]]
 ids = [1310396, 1310402]
@@ -3434,22 +3438,22 @@ name = "Sunder Slam"
 map_id = 1877
 sources = ["wcl"]
 tags = ["tank_buster"]
-evidence = "top keys (8 fights): kicked 0/36, 3 instant, 39 hits (100% on tanks), dispelled 0/30"
+evidence = "top keys (8 fights): kicked 0/39, 39 hits (100% on tanks), dispelled 0/30"
 
 [[spell]]
 ids = [1292990]
 name = "Swarming Krolusks"
 map_id = 1877
 sources = ["wcl"]
-evidence = "top keys (8 fights): kicked 0/73, 2 instant"
+evidence = "top keys (8 fights): kicked 0/75, stopped by CC 1"
 
 [[spell]]
 ids = [1310683]
 name = "Venom Bolt"
 map_id = 1877
 sources = ["wcl"]
-suggested = ["priority_kick"]
-evidence = "top keys (8 fights): kicked 155/186, 7 instant, 38 hits (25% on tanks)"
+suggested = ["priority_kick", "stoppable"]
+evidence = "top keys (8 fights): kicked 155/193, stopped by CC 14, 38 hits (25% on tanks)"
 
 [[spell]]
 ids = [1303443, 1308546]
@@ -3512,8 +3516,8 @@ name = "Light Bolt"
 map_id = 2859
 boss = "Lightblossom Trinity"
 sources = ["journal", "log", "wcl"]
-suggested = ["priority_kick"]
-evidence = "yours (3 fights): kicked 67/120, 48 hits (11% on tanks); top keys (8 fights): kicked 397/449, 8 instant, 56 hits (3% on tanks)"
+suggested = ["priority_kick", "stoppable"]
+evidence = "yours (3 fights): kicked 67/120, stopped by CC 7, 48 hits (11% on tanks); top keys (8 fights): kicked 397/457, stopped by CC 33, 56 hits (3% on tanks)"
 
 [[spell]]
 ids = [1235729]
@@ -3795,8 +3799,8 @@ name = "Lightspore Shot"
 map_id = 2859
 boss = "Ziekket"
 sources = ["journal", "log", "wcl"]
-suggested = ["priority_kick"]
-evidence = "yours (3 fights): kicked 3/29, 26 hits (14% on tanks); top keys (8 fights): kicked 58/97, 46 instant, 83 hits (20% on tanks)"
+suggested = ["stoppable"]
+evidence = "yours (3 fights): kicked 3/29, stopped by CC 11, 26 hits (14% on tanks); top keys (8 fights): kicked 58/140, 3 instant, stopped by CC 102, 83 hits (20% on tanks)"
 
 [[spell]]
 ids = [1247377, 1247644]
@@ -3848,8 +3852,8 @@ ids = [1238294]
 name = "Disorienting Screech"
 map_id = 2859
 sources = ["log", "wcl"]
-tags = ["priority_kick"]
-evidence = "yours (3 fights): kicked 11/12, dispelled 0/5; top keys (8 fights): kicked 115/115"
+tags = ["priority_kick", "stoppable"]
+evidence = "yours (3 fights): kicked 11/12, dispelled 0/5; top keys (8 fights): kicked 115/115, stopped by CC 19"
 
 [[spell]]
 ids = [1237855]
@@ -3872,14 +3876,14 @@ name = "Grievous Gash"
 map_id = 2859
 sources = ["log", "wcl"]
 tags = ["tank_buster"]
-evidence = "yours (3 fights): kicked 0/18, 32 hits (76% on tanks), dispelled 0/18; top keys (8 fights): kicked 0/99, 5 instant, 241 hits (100% on tanks), dispelled 0/99"
+evidence = "yours (3 fights): kicked 0/18, 32 hits (76% on tanks), dispelled 0/18; top keys (8 fights): kicked 0/104, 241 hits (100% on tanks), dispelled 0/99"
 
 [[spell]]
 ids = [1250203]
 name = "Hatch"
 map_id = 2859
 sources = ["log", "wcl"]
-evidence = "yours (3 fights): kicked 0/1; top keys (8 fights): kicked 0/21, 40 instant"
+evidence = "yours (3 fights): kicked 0/1; top keys (8 fights): kicked 0/61"
 
 [[spell]]
 ids = [1314883, 1314884, 1314885]
@@ -3893,8 +3897,8 @@ ids = [1301834]
 name = "Light Bolt Volley"
 map_id = 2859
 sources = ["log", "wcl"]
-tags = ["priority_kick"]
-evidence = "yours (3 fights): kicked 23/27, 15 hits (13% on tanks); top keys (8 fights): kicked 93/100, 1 instant, 40 hits (18% on tanks)"
+tags = ["priority_kick", "stoppable"]
+evidence = "yours (3 fights): kicked 23/27, stopped by CC 7, 15 hits (13% on tanks); top keys (8 fights): kicked 93/101, stopped by CC 27, 40 hits (18% on tanks)"
 
 [[spell]]
 ids = [1238158]
@@ -3922,7 +3926,8 @@ ids = [1250829, 1250831]
 name = "Potad-Toss"
 map_id = 2859
 sources = ["log", "wcl"]
-evidence = "yours (1 fight): kicked 0/1, 1 instant; top keys (8 fights): kicked 0/61, 113 instant, 83 hits (0% on tanks)"
+suggested = ["stoppable"]
+evidence = "yours (1 fight): kicked 0/1, 1 instant; top keys (8 fights): kicked 0/91, 83 instant, stopped by CC 4, 83 hits (0% on tanks)"
 
 [[spell]]
 ids = [1237858]
@@ -3936,15 +3941,15 @@ ids = [1238232]
 name = "Seed Shot"
 map_id = 2859
 sources = ["log", "wcl"]
-suggested = ["priority_kick"]
-evidence = "yours (3 fights): kicked 25/62, 32 hits (2% on tanks); top keys (8 fights): kicked 118/181, 21 instant, 83 hits (4% on tanks)"
+suggested = ["priority_kick", "stoppable"]
+evidence = "yours (3 fights): kicked 25/62, stopped by CC 5, 32 hits (2% on tanks); top keys (8 fights): kicked 118/202, stopped by CC 21, 83 hits (4% on tanks)"
 
 [[spell]]
 ids = [1242138]
 name = "Solar Breath"
 map_id = 2859
 sources = ["log", "wcl"]
-evidence = "yours (3 fights): kicked 0/14, 2 hits (0% on tanks); top keys (8 fights): kicked 0/81, 2 instant, 1 hits (100% on tanks)"
+evidence = "yours (3 fights): kicked 0/14, 2 hits (0% on tanks); top keys (8 fights): kicked 0/83, 1 hits (100% on tanks)"
 
 [[spell]]
 ids = [1238588]
@@ -4020,7 +4025,7 @@ name = "Nether Dash"
 map_id = 2923
 boss = "Taz'Rah"
 sources = ["journal", "log", "wcl"]
-evidence = "yours (2 fights): kicked 0/45, 752 hits (12% on tanks), dispelled 0/51; top keys (8 fights): kicked 0/34, 176 instant, 3153 hits (17% on tanks), dispelled 0/195"
+evidence = "yours (2 fights): kicked 0/45, 752 hits (12% on tanks), dispelled 0/51; top keys (8 fights): kicked 0/170, 40 instant, 3153 hits (17% on tanks), dispelled 0/195"
 
 [[spell]]
 ids = [1296963]
@@ -4028,7 +4033,7 @@ name = "Umbral Rupture"
 map_id = 2923
 boss = "Taz'Rah"
 sources = ["journal", "log", "wcl"]
-evidence = "yours (2 fights): kicked 0/54; top keys (8 fights): kicked 0/82, 164 instant, 3 hits (76% on tanks)"
+evidence = "yours (2 fights): kicked 0/54; top keys (8 fights): kicked 0/246, 3 hits (76% on tanks)"
 
 [[spell]]
 ids = [1297017]
@@ -4231,8 +4236,8 @@ ids = [1298899]
 name = "Demoralizing Shout"
 map_id = 2923
 sources = ["log", "wcl"]
-tags = ["priority_kick"]
-evidence = "yours (4 fights): kicked 8/18, dispelled 0/48; top keys (8 fights): kicked 82/83, dispelled 0/5"
+tags = ["priority_kick", "stoppable"]
+evidence = "yours (4 fights): kicked 8/18, stopped by CC 4, dispelled 0/48; top keys (8 fights): kicked 82/83, stopped by CC 4, dispelled 0/5"
 
 [[spell]]
 ids = [1300249]
@@ -4331,8 +4336,8 @@ ids = [1228176]
 name = "Lava Bolt"
 map_id = 2923
 sources = ["log", "wcl"]
-suggested = ["priority_kick"]
-evidence = "yours (4 fights): kicked 46/169, 110 hits (26% on tanks), uneven hits in 1/4 fights; top keys (8 fights): kicked 169/240, 7 instant, 75 hits (22% on tanks)"
+suggested = ["priority_kick", "stoppable"]
+evidence = "yours (4 fights): kicked 46/169, stopped by CC 23, 110 hits (26% on tanks), uneven hits in 1/4 fights; top keys (8 fights): kicked 169/247, stopped by CC 29, 75 hits (22% on tanks)"
 
 [[spell]]
 ids = [1311712]
@@ -4353,8 +4358,8 @@ ids = [1233398]
 name = "Mad Shriek"
 map_id = 2923
 sources = ["log", "wcl"]
-tags = ["priority_kick"]
-evidence = "yours (2 fights): kicked 12/12; top keys (8 fights): kicked 105/105"
+tags = ["priority_kick", "stoppable"]
+evidence = "yours (2 fights): kicked 12/12; top keys (8 fights): kicked 105/105, stopped by CC 10"
 
 [[spell]]
 ids = [1250043]

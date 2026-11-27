@@ -7,7 +7,7 @@
 //! from the caster, when both positions are fresh. Metrics only; the rules
 //! decide what to say about them.
 
-use crate::classes::{Ability, ClassData};
+use crate::classes::{Ability, AbilityKind, ClassData};
 use crate::model::{Event, Kind, Pos, Unit};
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
@@ -18,6 +18,9 @@ pub const POS_FRESH_MS: i64 = 3000;
 /// An interrupt that only comes off cooldown in the last moment of a cast
 /// bar couldn't realistically have been used on it.
 pub const REACTION_MS: i64 = 300;
+/// Reach assumed for a stop without a listed range (most stuns and AoE
+/// crowd control are melee or a short radius).
+pub const STOP_DEFAULT_RANGE_YD: f32 = 8.0;
 /// Hitbox and position slack added to an interrupt's listed range.
 pub const RANGE_SLACK_YD: f32 = 3.0;
 /// Two use events of one interrupt this close together are the same kick
@@ -72,6 +75,11 @@ pub struct CastRecord {
     /// Only for completed casts.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub ready_kickers: Vec<ReadyKicker>,
+    /// Players with a cast-stopping CC ready, for completed casts of
+    /// `stoppable` spells. A stop only counts once its player used it this
+    /// run (most are talents).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub ready_stoppers: Vec<ReadyKicker>,
 }
 
 /// What the tracker needs from the fight around it.
@@ -81,6 +89,7 @@ pub(super) struct Ctx<'a> {
     pub owners: &'a HashMap<String, String>,
     pub specs: &'a HashMap<String, u32>,
     pub priority: &'a dyn Fn(u32) -> bool,
+    pub stoppable: &'a dyn Fn(u32) -> bool,
 }
 
 struct Bar {
@@ -168,8 +177,14 @@ impl Tracker {
         let Some(bar) = self.bars.remove(caster) else {
             return;
         };
-        let ready_kickers = if outcome == CastOutcome::Completed {
-            self.ready_kickers(&bar, end, ctx)
+        let done = outcome == CastOutcome::Completed;
+        let ready_kickers = if done {
+            self.ready(&bar, end, ctx, AbilityKind::Interrupt)
+        } else {
+            vec![]
+        };
+        let ready_stoppers = if done && (ctx.stoppable)(bar.spell_id) {
+            self.ready(&bar, end, ctx, AbilityKind::Stop)
         } else {
             vec![]
         };
@@ -184,11 +199,12 @@ impl Tracker {
             priority: (ctx.priority)(bar.spell_id),
             outcome,
             ready_kickers,
+            ready_stoppers,
         });
     }
 
-    /// Players whose interrupt was available before the bar ended.
-    fn ready_kickers(&self, bar: &Bar, end: i64, ctx: &Ctx) -> Vec<ReadyKicker> {
+    /// Players with an interrupt (or a stop) available before the bar ended.
+    fn ready(&self, bar: &Bar, end: i64, ctx: &Ctx, kind: AbilityKind) -> Vec<ReadyKicker> {
         let classes = ClassData::shared();
         let caster_pos = self.fresh_pos(&bar.caster_guid, end);
         let mut out = vec![];
@@ -198,10 +214,23 @@ impl Tracker {
             if self.dead.contains(guid) || !self.names.contains_key(guid) {
                 continue;
             }
-            let (main, extra) = classes.interrupts_for(*spec);
             let has = |a: &Ability| self.uses.contains_key(&(guid.clone(), a.name.clone()));
-            let options = main.into_iter().chain(extra.into_iter().filter(|a| has(a)));
-            // The first ready interrupt is enough to say "could have kicked".
+            let options: Vec<&Ability> = match kind {
+                AbilityKind::Interrupt => {
+                    let (main, extra) = classes.interrupts_for(*spec);
+                    main.into_iter()
+                        .chain(extra.into_iter().filter(|a| has(a)))
+                        .collect()
+                }
+                // Stops are mostly talents: only ones this player has used, and
+                // not situational ones (damage cooldowns, Rake from stealth).
+                _ => classes
+                    .for_spec(*spec, kind)
+                    .into_iter()
+                    .filter(|a| has(a) && !a.situational)
+                    .collect(),
+            };
+            // The first ready one is enough to say "could have kicked/stopped".
             for a in options {
                 let uses = self.uses.get(&(guid.clone(), a.name.clone()));
                 let table = (a.cd_s * 1000.0) as i64;
@@ -223,7 +252,11 @@ impl Tracker {
                     (Some(p), Some(c)) => p.distance(&c),
                     _ => None,
                 };
-                let range = a.range_yd.unwrap_or(5.0) + RANGE_SLACK_YD;
+                let base = match kind {
+                    AbilityKind::Stop => STOP_DEFAULT_RANGE_YD,
+                    _ => 5.0,
+                };
+                let range = a.range_yd.unwrap_or(base) + RANGE_SLACK_YD;
                 out.push(ReadyKicker {
                     player: self.name(guid),
                     ability: a.name.clone(),
@@ -298,7 +331,7 @@ impl Tracker {
                 } else if let Some(p) = self.player_of(src, ctx.owners) {
                     self.dead.remove(&p);
                     for a in classes.by_id(spell.id) {
-                        if a.kind == crate::classes::AbilityKind::Interrupt {
+                        if matches!(a.kind, AbilityKind::Interrupt | AbilityKind::Stop) {
                             self.note_use(&p, a, e.ts);
                         }
                     }
@@ -311,7 +344,7 @@ impl Tracker {
                 let by = self.player_of(src, ctx.owners);
                 if let Some(p) = &by {
                     for a in classes.by_id(spell.id) {
-                        if a.kind == crate::classes::AbilityKind::Interrupt {
+                        if a.kind == AbilityKind::Interrupt {
                             self.note_use(p, a, e.ts);
                         }
                     }
@@ -343,6 +376,8 @@ impl Tracker {
                 if let Some(stop) = classes.stop_by_aura(spell.id)
                     && let Some(p) = self.player_of(src, ctx.owners)
                 {
+                    // The aura is also a use of the stop (totems, pets, AoE).
+                    self.note_use(&p, stop, e.ts);
                     let by = self.name(&p);
                     if let Some(bar) = self.bars.get_mut(&dst.guid)
                         && bar.stopped.is_none()

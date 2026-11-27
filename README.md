@@ -51,6 +51,7 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 | Missed interrupts: a cast counts as interruptible if it was kicked at least once, or is listed in config | "Possibly avoidable": took far more of a spell than peers (heuristic) |
 | M+ priority kicks: each priority cast that went off, and who had a kick ready and in range | Priority casts you could have kicked; kicks wasted on filler while a priority cast went off |
 | M+ kick plan per dungeon: who should cover which priority casters, from all keys of that dungeon | |
+| M+ stops: priority casts that crowd control also stops (`stoppable`), that went off while someone had a stun, knock or incapacitate ready and in range | |
 | Avoidable damage (config) + uneven-hit heuristic | Estimated casting activity (GCD coverage while alive) |
 | Bloodlust missing / late | DPS vs group DPS median with likely causes |
 | M+ pacing: downtime %, longest gaps, near-wipe pulls | Healer overheal %, zero interrupts in M+ |
@@ -166,6 +167,12 @@ in [`docs/milestones/m1-season-data.md`](docs/milestones/m1-season-data.md).
   small layout changes between patches are handled automatically.
 - On raid wipes, deaths after roughly a quarter of the raid is down count as the wipe cascade
   and are ignored. Missed interrupts only count casts that showed a cast bar.
+- **Stops ready:** a stop only counts as available once its player has used it in that key
+  (most are talents), and stops without a listed range are assumed to reach 8 yd, so
+  ranged ones (Hammer of Justice, Storm Bolt, a hunter pet's Intimidation) are rarely
+  named. Stops the log can't judge are credited when they land but never named as
+  available: damage cooldowns that happen to stun (`situational` in `data/classes.toml`)
+  and Rake, which only stuns from stealth.
 - The WCL adapter supports public reports (client-credentials flow) only. Private
   reports need the user OAuth flow.
 
