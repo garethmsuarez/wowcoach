@@ -53,6 +53,7 @@ Detailed plan: [`docs/milestones/m2-kicks-and-stops.md`](milestones/m2-kicks-and
 - M+ only. Delivered in 5 PRs: data (positions, ranges, stop auras) → cast timeline → rules + report → kick plan → `stoppable` tags.
 
 ## M3: Defensives on dangerous pulls
+**Status: done.**
 Detailed plan: [`docs/milestones/m3-defensives.md`](milestones/m3-defensives.md).
 - Consume aura events. Track personal and group defensive uptime and casts, and each defensive's availability (last use + cooldown from the `[class]` data).
 - Damage-spike windows: group damage taken per X seconds above a threshold, and `tank_buster` / `dangerous_cast` hits.

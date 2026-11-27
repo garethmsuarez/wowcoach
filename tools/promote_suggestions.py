@@ -16,6 +16,12 @@ prints a review table of what was promoted and what was left for a human:
                    spells: that's where "a stop was ready" advice is used, and
                    filler or boss spells with surprising stop counts are left
                    for a human
+  dangerous_cast   a top source of >= 5 damage spikes, >= 3 hits per landed
+                   cast (group-wide, not a bolt), in a spike on >= 25% of its
+                   landed casts (your logs and top keys summed), with a cast
+                   bar (predictable, so a group defensive can be planned for
+                   it), < 50% of its damage on tanks, and not tagged avoidable
+                   (that answer is to move, not a defensive)
   avoidable        never: the uneven-hit heuristic alone is too weak
 
 EXCEPTIONS lists spells that pass the numbers but are judged otherwise.
@@ -42,6 +48,8 @@ def origin_stats(ev):
         if h := re.search(r"(\d+) hits \((\d+)% on tanks\)", body): d["hits"], d["tank"] = int(h[1]), int(h[2]) / 100
         if x := re.search(r"dispelled (\d+)/(\d+)", body): d["disp"], d["disp_n"] = int(x[1]), int(x[2])
         d["stopped"] = int(x[1]) if (x := re.search(r"stopped by CC (\d+)", body)) else 0
+        d["spikes"] = int(x[1]) if (x := re.search(r"in (\d+) damage spikes", body)) else 0
+        d["instant"] = int(x[1]) if (x := re.search(r"(\d+) instant", body)) else 0
         out[m[1]] = d
     return out
 
@@ -67,6 +75,17 @@ def decide(name, tag, ev, tags=()):
         if "priority_kick" not in tags:
             return False, f"stopped by CC {n} times, but not a priority kick"
         return n >= 4, f"stopped by CC {n} times (yours + top keys)"
+    if tag == "dangerous_cast":
+        spikes = sum(o["spikes"] for o in st.values())
+        bars = sum(o["kick_n"] for o in st.values())
+        landed = sum(o["kick_n"] - o["kicked"] + o["instant"] for o in st.values())
+        hits = sum(o["hits"] for o in st.values())
+        tank = sum(o["tank"] * o["hits"] for o in st.values()) / hits if hits else 0
+        per, rate = (hits / landed, spikes / landed) if landed else (0, 0)
+        why = f"in {spikes} spikes ({rate:.0%} of {landed} landed casts), {per:.1f} hits/cast, {bars} cast bars, {tank:.0%} on tanks (yours + top keys)"
+        if "avoidable" in tags:
+            return False, why + ", but tagged avoidable"
+        return (spikes >= 5 and per >= 3 and rate >= 0.25 and bars > 0 and tank < 0.5), why
     return False, "not promoted: " + ("uneven-hit heuristic only" if tag == "avoidable" else "no rule")
 
 text = open(PACK).read()

@@ -77,7 +77,7 @@ Decisions (2026-11-26):
      - a first-pull lust as information
    - HTML: a per-pull defensives table (spikes, tank busters, deaths with ready defensives).
    - Golden snapshot updated, after extending `gen_sample_log.py` with a spike, a defensive use and a tank buster.
-4. **`dangerous_cast` content.**
+4. **`dangerous_cast` content.** *(done; see "PR 4 findings")*
    - `season suggest` gains spike evidence ("in N spike windows, M players hit per cast"). Damage from enemy summons is attributed to the summon, not proposed as a `dangerous_cast` of the caster.
    - `promote_suggestions.py` gains a `dangerous_cast` criterion.
    - Re-run over the logs and top keys, and draft tags for review, as in M2 PR 5.
@@ -129,6 +129,17 @@ Decisions (2026-11-26):
   - Trash melee is down from 45k to 8k per swing, so melee alone no longer makes every pull a spike.
   - The Demon Hunter's new death is on the boss pull's last tick, so no rotation draws are skipped and the rest of the log, including the kick scenarios, is unchanged.
   - Golden diff: the five new suggestions, the extra death, and the order of two tied 0:15 gaps.
+
+## PR 4 findings
+
+- **Evidence:** `SpellEvidence.spikes` counts the spikes a spell was a top-three source of. Hits from enemy summons don't count, so Searing Magma isn't the shaman's. `EVIDENCE_VERSION` is 4.
+- **First criterion was wrong:** "group-wide" was the share of non-tanks hit over the whole fight, and the first draft proposed 137 spells and promoted 88. Single-target casts that rotate targets (Earth Bolt, Lava Bolt, Fetid Spit, Felfire Burst) passed.
+  - Judged per landed cast instead: `suggest` needs ≥ 3 spikes, ≥ 2.5 hits per cast and spikes on ≥ 20% of casts; the promotion needs ≥ 5 spikes, ≥ 3 hits per cast and ≥ 25%.
+  - The second draft proposed 79 and promoted 58: bellows, slams, storms and boss raid-wides (Dreadbellow, Gilded Destruction, Cosmic Crash, Inferno, Serpentine Gust…).
+- **Re-run:** 52 local fights plus 64 public top keys, the same set as M1 (5 at +12–+16 and 3 top runs per dungeon). That cost 2,101 WCL points. The re-run after the criterion fix came from the cache: 21 points, 9 s.
+  - No other proposal or tag changed, and `promote_suggestions.py --check` lists 0 tags whose evidence no longer meets the bar.
+- **Shadowbolt Volley and Hex Volley** are both `priority_kick` and now also `dangerous_cast`: when the kick is missed they spike the group.
+- **Not done:** no rule reads `dangerous_cast` yet. A natural next step is to prefer tagged casts in the Spikes advice, or to plan group defensives per pull with them (M5).
 
 ## Verification
 - CI as always. The golden test covers the new spike, defensive and tank-buster scenarios in the synthetic log.
