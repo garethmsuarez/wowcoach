@@ -26,7 +26,7 @@ const RANGE_SLACK_YD: f32 = 3.0;
 const POS_FRESH_MS: i64 = 3000;
 /// Dispels with a longer cooldown (Mass Dispel, Revival) only count as ready
 /// once used in this fight; so do any non-healer's dispels (often talents).
-const SHORT_DISPEL_CD_S: f64 = 15.0;
+pub const SHORT_DISPEL_CD_S: f64 = 15.0;
 const MIN_OBSERVED_CD_MS: i64 = 3000;
 
 #[derive(Serialize, Clone, Debug, PartialEq)]
@@ -49,6 +49,9 @@ pub enum DebuffOutcome {
 pub struct ReadyDispeller {
     pub player: String,
     pub ability: String,
+    /// The class table's cooldown: long ones (Revival, Mass Dispel) are group
+    /// cooldowns, not what a single debuff calls for.
+    pub cd_s: f64,
     /// Distance to the debuffed player when the dispel came off cooldown
     /// during the debuff; None if either position was stale.
     pub distance_yd: Option<f32>,
@@ -408,6 +411,7 @@ impl Tracker {
                 out.push(ReadyDispeller {
                     player: self.name(guid),
                     ability: a.name.clone(),
+                    cd_s: a.cd_s,
                     distance_yd: dist,
                     in_range: dist.map(|x| x <= DISPEL_RANGE_YD + RANGE_SLACK_YD),
                 });

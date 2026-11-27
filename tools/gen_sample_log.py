@@ -48,6 +48,11 @@ def buff(t, src, dst, sid, sname, removed=False):
     line(t, ev, f'{unit(src)},{unit(dst)},{sid},"{sname}",0x1,BUFF')
 
 
+def hex_(t, src, dst, removed=False):
+    ev = "SPELL_AURA_REMOVED" if removed else "SPELL_AURA_APPLIED"
+    line(t, ev, f'{unit(src)},{unit(dst)},99200,"Withering Hex",0x20,DEBUFF')
+
+
 def summon(t, src, dst, sid, sname):
     line(t, "SPELL_SUMMON", f'{unit(src)},{unit(dst)},{sid},"{sname}",0x1')
 
@@ -216,6 +221,24 @@ def mplus():
                         dmg(now, totem, p, 99100, "Searing Lava", 160000, school=0x4)
             if pull == 6 and abs(s - 17.0) < 1e-6:
                 died(now, totem)
+            # Dispels (M4), also without random draws. A mob's Withering Hex
+            # (a priority dispel, magic) on a DPS. Pulls 1-3: the healer's
+            # Nature's Cure removes it 6-8 s late, logged as the removal, then
+            # the dispel at the same timestamp, as raw logs do. Pull 5: it
+            # expires after 10 s with the healer ready. Pull 4 (boss): the
+            # demon hunter dies to Shadow Burst with it up.
+            for (hp_, who, on, off, how) in ((0, dh, 5.0, 12.0, "dispel"), (1, ret, 5.0, 11.0, "dispel"),
+                                             (2, dh, 5.0, 13.0, "dispel"), (4, ret, 8.0, 18.0, "expire"),
+                                             (3, dh, 68.0, None, "die")):
+                if pull != hp_:
+                    continue
+                if abs(s - on) < 1e-6:
+                    hex_(now, mobs[0], who)
+                if off is not None and abs(s - off) < 1e-6:
+                    hex_(now, mobs[0], who, removed=True)
+                    if how == "dispel":
+                        cast(now, heal_, 88423, "Nature's Cure")
+                        line(now, "SPELL_DISPEL", f'{unit(heal_)},{unit(who)},88423,"Nature\'s Cure",0x8,99200,"Withering Hex",32,DEBUFF')
             # pull 6: overpull, three people die to a big hit
             if pull == 5 and abs(s - 20.0) < 1e-6:
                 for p in (heal_, dh, ret):

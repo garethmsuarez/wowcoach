@@ -35,7 +35,7 @@ fn pull_label(p: Option<usize>) -> String {
 
 /// Deaths a defensive could have prevented: not wipe cascades, not the late
 /// deaths of a wiping pull, and with real burst damage at the end.
-fn judged_deaths(f: &FightReport) -> Vec<&DeathReport> {
+pub(super) fn judged_deaths(f: &FightReport) -> Vec<&DeathReport> {
     let mut seen_in_pull: Vec<(Option<usize>, usize)> = vec![];
     let mut out = vec![];
     for d in f.deaths.iter().filter(|d| !d.wipe_cascade) {

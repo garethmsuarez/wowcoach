@@ -107,6 +107,11 @@ fn season_pack_matches_legacy_config() {
         ids = [99001]
         name = "Crushing Blow"
         tags = ["tank_buster"]
+        [[spell]]
+        ids = [99200]
+        name = "Withering Hex"
+        tags = ["dispel_priority"]
+        dispel = ["magic"]
         "#,
     )
     .unwrap();

@@ -109,10 +109,10 @@
           "avoidable_taken": 1260000,
           "likely_avoidable_taken": 0,
           "interrupts": 0,
-          "dispels": 0,
+          "dispels": 3,
           "deaths": 1,
-          "casts": 405,
-          "activity_pct": 0.8659217877094972,
+          "casts": 408,
+          "activity_pct": 0.8664538441074754,
           "healthstones": 0,
           "potions": 0,
           "top_damage_taken": [
@@ -141,8 +141,8 @@
           "kick_latency_s": null,
           "priority_missed": 0,
           "wasted_kicks": 0,
-          "priority_dispels": 0,
-          "dispel_latency_s": null
+          "priority_dispels": 3,
+          "dispel_latency_s": 7.0
         },
         {
           "name": "Glaive-Realm",
@@ -503,7 +503,9 @@
             }
           ],
           "defensives_active": [],
-          "priority_debuffs": []
+          "priority_debuffs": [
+            "Withering Hex"
+          ]
         },
         {
           "player": "Pyro-Realm",
@@ -796,8 +798,8 @@
           "lust_ready_at_start": true,
           "lust_ready_s": 0.0,
           "lust_used": true,
-          "priority_debuffs": 0,
-          "priority_dispelled": 0
+          "priority_debuffs": 1,
+          "priority_dispelled": 1
         },
         {
           "index": 2,
@@ -816,8 +818,8 @@
           "lust_ready_at_start": false,
           "lust_ready_s": 0.0,
           "lust_used": false,
-          "priority_debuffs": 0,
-          "priority_dispelled": 0
+          "priority_debuffs": 1,
+          "priority_dispelled": 1
         },
         {
           "index": 3,
@@ -836,8 +838,8 @@
           "lust_ready_at_start": false,
           "lust_ready_s": 0.0,
           "lust_used": false,
-          "priority_debuffs": 0,
-          "priority_dispelled": 0
+          "priority_debuffs": 1,
+          "priority_dispelled": 1
         },
         {
           "index": 4,
@@ -856,7 +858,7 @@
           "lust_ready_at_start": false,
           "lust_ready_s": 0.0,
           "lust_used": false,
-          "priority_debuffs": 0,
+          "priority_debuffs": 1,
           "priority_dispelled": 0
         },
         {
@@ -876,7 +878,7 @@
           "lust_ready_at_start": false,
           "lust_ready_s": 0.0,
           "lust_used": false,
-          "priority_debuffs": 0,
+          "priority_debuffs": 1,
           "priority_dispelled": 0
         },
         {
@@ -1251,6 +1253,13 @@
         {
           "scope": "group",
           "severity": "High",
+          "category": "Dispels",
+          "message": "2 priority debuff(s) went undispelled while someone could have dispelled them, worst first. Withering Hex on Glaive-Realm when they died at 4:03 (pull 4); ready: Leafy-Realm (Nature's Cure, 23 yd). Withering Hex on Slacky-Realm expired at 4:37 after 10 s (pull 5); ready: Leafy-Realm (Nature's Cure, 22 yd). 3 of 5 priority debuffs were dispelled this run.",
+          "evidence": "Ready = alive, with a dispel that removes the debuff's type, off cooldown before it ended, not busy dispelling something else, and within 40 yd by logged positions. A healer's own dispel always counts; others once used this run. Debuffs up under 2 s and group cooldowns (Revival, Mass Dispel) aren't counted."
+        },
+        {
+          "scope": "group",
+          "severity": "High",
           "category": "Avoidable damage",
           "message": "The group took avoidable damage from: Void Pool (8.40M over 60 hits).",
           "evidence": "These spells are listed as avoidable in your config."
@@ -1280,7 +1289,7 @@
           "scope": "Glaive-Realm",
           "severity": "Medium",
           "category": "Death",
-          "message": "Died 2 times (4:03, 6:14). Killing blows: Shadow Burst ×1, Cataclysmic Slam ×1. No healthstone or potion was used before dying. Use a defensive or healthstone earlier in the damage window.",
+          "message": "Died 2 times (4:03, 6:14). Killing blows: Shadow Burst ×1, Cataclysmic Slam ×1. No healthstone or potion was used before dying. Use a defensive or healthstone earlier in the damage window. Priority dispels up when you died: Withering Hex at 4:03.",
           "evidence": "Last death, final hits: 6:04 Shadow Volley 120.0K → 6:14 Cataclysmic Slam 900.0K. Damage taken in the final 5s: 900.0K."
         },
         {
@@ -1310,6 +1319,13 @@
           "category": "Timer",
           "message": "Key not timed (9:14).",
           "evidence": "Biggest levers, in order: deaths, downtime, then damage output."
+        },
+        {
+          "scope": "Leafy-Realm",
+          "severity": "Low",
+          "category": "Dispel speed",
+          "message": "Priority debuffs took a median 7.0 s to dispel (3 dispels). Slowest: Withering Hex on Glaive-Realm at 1:59, after 8.0 s. Dispel these as soon as they land: a focus or mouseover macro helps.",
+          "evidence": "Time from the debuff landing to its dispel. Flagged above 5 s (dispel_slow_s)."
         },
         {
           "scope": "Shieldy-Realm",

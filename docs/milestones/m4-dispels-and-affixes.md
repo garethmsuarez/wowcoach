@@ -53,7 +53,7 @@ A friendly dispel's cooldown only starts when it removes something, so cooldowns
      - type from the pack versus inferred
      - a dispeller on cooldown, dead, or out of range
      - an observed faster reuse
-3. **Rules + report.** Players are named only when every check passes.
+3. **Rules + report.** Players are named only when every check passes. *(done; see "PR 3 findings")*
    - Group: "Dispels": priority debuffs that expired or killed someone while a dispeller was ready, worst first, naming them.
    - Player: "Dispel speed": median latency on priority debuffs over `dispel_slow_s` (at least 3 samples). Death recaps mention a priority debuff that was up.
    - The Deaths and Timer advice use the key's affix death penalty. With Lindormi's Guidance it says deaths cost no time.
@@ -86,6 +86,18 @@ A friendly dispel's cooldown only starts when it removes something, so cooldowns
 - **Checked by hand:** a +12 Den of Nalorakk Cryo Surge expired on Thortic after 10 s while the Discipline priest, 7 yd away, used no dispel at all from 12:40 to 13:15.
 - **Death penalty:** your keys get 15 s (Guile), 5 s (Bargain) and 0 s (Lindormi's Guidance).
 - **Golden snapshot:** new fields only. The synthetic log has no priority debuffs yet (PR 3 adds them).
+
+## PR 3 findings
+
+- **Rules:** group "Dispels" (High when a debuff was up at a death), player "Dispel speed", and death recaps list the priority debuffs up at each death. Deaths and Timer advice use the key's penalty: 15 s on the Guile keys, 5 s on the two +7 Bargain keys, and on the 0 s keys (Lindormi's Guidance, +2 to +4) they say deaths cost no time. None of those keys had deaths, so that text only shows in tests.
+- **Two filters the smoke run called for:**
+  - A Cryo Surge on a +15 Den of Nalorakk dropped after 1 s with no dispel, death or immunity logged (most likely its caster died), and the first pass named a Mistweaver's Revival for it. Debuffs up under 2 s (the probe's p25 dispel time) are no longer judged.
+  - Group cooldowns (dispels over 15 s: Revival, Mass Dispel) are never named for a single debuff. `ReadyDispeller` carries the table `cd_s` for this.
+- **Wipe pulls:** a death with a priority debuff up only counts when the death itself is judged (`judged_deaths`, as for defensives), so the third and later deaths of a wiping pull aren't blamed on a dispel.
+- **Local keys:** 5 keys get "Dispels", each naming 1 to 3 debuffs. No player reaches "Dispel speed": nobody had a median over 5 s across 3 or more priority dispels.
+- **Checked by hand:** on the +14 Murder Row, Curse of Doom on Lokhos lasted from 20:09:40.6 to 20:09:50.7 (17:03 into the key) and expired. Tidereign's last Remove Corruption was at 20:09:22 (8 s cooldown) and their next at 20:09:53. The second claim (Incendiana, 20:10:03 to 20:10:13) is the same.
+- **Self-dispels:** a priest's own Purify or a warlock's Singe Magic on themselves can be named (0 yd). That's correct: they could have cleared it.
+- **Golden snapshot:** the synthetic key gains a magic Withering Hex (`dispel_priority` in `samples/wowcoach.toml`). It is dispelled 6 to 8 s late three times (removal logged before the dispel), expires once with the healer ready, and is up once at a judged death. The paladins' Cleanse Toxins (poison, disease) is never named.
 
 ## Verification
 - CI as always. The golden test covers the new dispel scenarios in the synthetic log.
