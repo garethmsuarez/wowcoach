@@ -333,6 +333,83 @@ fn defensives_html(f: &FightReport, o: &mut String) {
     o.push_str("</table>");
 }
 
+/// One row per M+ pull with priority debuffs (`dispel_priority`): how many
+/// were dispelled and how fast, and the ones that weren't, with who was ready.
+fn dispels_html(f: &FightReport, o: &mut String) {
+    let rows: Vec<String> = f
+        .pulls
+        .iter()
+        .filter(|p| p.priority_debuffs > 0)
+        .map(|p| {
+            let i = Some(p.index);
+            let mine: Vec<&DebuffRecord> =
+                f.debuffs.iter().filter(|d| d.priority && d.pull == i).collect();
+            let mut lat: Vec<f64> = mine
+                .iter()
+                .filter_map(|d| match &d.outcome {
+                    DebuffOutcome::Dispelled { latency_s, .. } => Some(*latency_s),
+                    _ => None,
+                })
+                .collect();
+            lat.sort_by(f64::total_cmp);
+            let med = match lat.len() {
+                0 => String::new(),
+                n if n % 2 == 1 => format!("{:.1}s", lat[n / 2]),
+                n => format!("{:.1}s", (lat[n / 2 - 1] + lat[n / 2]) / 2.0),
+            };
+            let missed = mine
+                .iter()
+                .filter(|d| !matches!(d.outcome, DebuffOutcome::Dispelled { .. }))
+                .map(|d| {
+                    let how = match d.outcome {
+                        DebuffOutcome::Died => "died with it",
+                        DebuffOutcome::Lasted => "still up at the end",
+                        _ => "expired",
+                    };
+                    let ready: Vec<String> = d
+                        .ready_dispellers
+                        .iter()
+                        .filter(|r| r.in_range == Some(true) && r.cd_s <= SHORT_DISPEL_CD_S)
+                        .map(|r| format!("{} ({})", esc(&r.player), esc(&r.ability)))
+                        .collect();
+                    let answer = if ready.is_empty() {
+                        "none ready".to_string()
+                    } else {
+                        format!("<b class=bad>ready: {}</b>", ready.join(", "))
+                    };
+                    format!(
+                        "{} {} on {}, {how} · {answer}",
+                        mmss(d.applied_s),
+                        esc(&d.name),
+                        esc(&d.player)
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("<br>");
+            let cls = if p.priority_dispelled < p.priority_debuffs {
+                " class=bad"
+            } else {
+                ""
+            };
+            format!(
+                "<tr><td class=n>{}</td><td>{}</td><td class=n><span{cls}>{} of {}</span></td><td class=n>{med}</td><td>{missed}</td></tr>",
+                p.index,
+                p.boss.as_deref().map(esc).unwrap_or_default(),
+                p.priority_dispelled,
+                p.priority_debuffs
+            )
+        })
+        .collect();
+    if rows.is_empty() {
+        return;
+    }
+    o.push_str("<h3>Dispels by pull</h3><div class=sub>Priority debuffs (dispel_priority): how many were dispelled, the median time to dispel, and the ones that weren't, with who had a dispel ready and in range</div><table><tr><th>Pull</th><th>Boss</th><th>Dispelled</th><th>Median</th><th>Not dispelled</th></tr>");
+    for r in rows {
+        o.push_str(&r);
+    }
+    o.push_str("</table>");
+}
+
 pub fn html(r: &Report) -> String {
     let mut o = String::new();
     let _ = write!(
@@ -453,6 +530,7 @@ pub fn html(r: &Report) -> String {
         if matches!(f.kind, FightKind::MythicPlus { .. }) {
             priority_casts_html(f, &mut o);
             defensives_html(f, &mut o);
+            dispels_html(f, &mut o);
         }
 
         // players
@@ -463,7 +541,7 @@ pub fn html(r: &Report) -> String {
             o,
             "<h3>Players</h3><table><tr><th>Player</th><th>Spec</th><th>DPS</th><th></th><th>HPS</th><th>Shields</th><th>Taken</th><th>Avoidable</th><th>Kicks</th>{}<th>Dispels</th><th>Deaths</th><th>Activity</th>{}</tr>",
             if is_mplus {
-                "<th title='median time into the cast bar'>Kick time</th><th title='priority casts that went off with your kick ready in range'>Missed ★</th><th title='filler kicked while a priority cast was casting'>Wasted</th>"
+                "<th title='median time into the cast bar'>Kick time</th><th title='priority casts that went off with your kick ready in range'>Missed ★</th><th title='filler kicked while a priority cast was casting'>Wasted</th><th title='median time to dispel a priority debuff'>Dispel time</th>"
             } else {
                 ""
             },
@@ -494,7 +572,7 @@ pub fn html(r: &Report) -> String {
                 p.interrupts,
                 if is_mplus {
                     format!(
-                        "<td class=n>{}</td><td class=n>{}</td><td class=n>{}</td>",
+                        "<td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td>",
                         p.kick_latency_s
                             .map(|l| format!("{l:.1}s"))
                             .unwrap_or_default(),
@@ -507,7 +585,13 @@ pub fn html(r: &Report) -> String {
                             p.wasted_kicks.to_string()
                         } else {
                             String::new()
-                        }
+                        },
+                        p.dispel_latency_s
+                            .map(|l| format!(
+                                "<span title='{} priority dispel(s)'>{l:.1}s</span>",
+                                p.priority_dispels
+                            ))
+                            .unwrap_or_default()
                     )
                 } else {
                     String::new()
@@ -553,7 +637,15 @@ pub fn html(r: &Report) -> String {
                     "<tr><td>{}</td><td>{}</td><td>{}</td><td class=sub>{}</td></tr>",
                     mmss(d.at_s),
                     esc(&d.player),
-                    esc(&d.killing_blow),
+                    if d.priority_debuffs.is_empty() {
+                        esc(&d.killing_blow)
+                    } else {
+                        format!(
+                            "{} <span class=bad>· {} up</span>",
+                            esc(&d.killing_blow),
+                            esc(&d.priority_debuffs.join(", "))
+                        )
+                    },
                     recap
                 );
             }

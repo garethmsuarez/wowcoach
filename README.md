@@ -46,7 +46,7 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 
 | Group rules | Individual rules |
 |---|---|
-| Deaths and most common killing blows (+ M+ timer cost) | Death recap (last hits, HP%), avoidable vs not, healthstone/potion used |
+| Deaths and most common killing blows (+ M+ timer cost from the key's affixes) | Death recap (last hits, HP%), avoidable vs not, healthstone/potion used |
 | Raid wipe: early first death that snowballed | Avoidable damage vs group median (config-listed) |
 | Missed interrupts: a cast counts as interruptible if it was kicked at least once, or is listed in config | "Possibly avoidable": took far more of a spell than peers (heuristic) |
 | M+ priority kicks: each priority cast that went off, and who had a kick ready and in range | Priority casts you could have kicked; kicks wasted on filler while a priority cast went off |
@@ -55,6 +55,7 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 | M+ spikes: the group losing half its HP within 5 s while a group defensive was ready and unused, naming who held it | M+: died with a personal defensive ready (used earlier in the key, off cooldown) |
 | M+ summons: enemy totems and adds that led a spike or healed enemies and lived too long | M+ tanks: tank busters taken with no active mitigation or defensive up |
 | M+ lust: a boss engaged with lust available and unused, lust idle through spiking trash, first-pull lust (info) | |
+| M+ dispels: priority debuffs (`dispel_priority`) that expired or were up at a death while someone had a matching dispel ready and in range | M+ dispel speed: median time to dispel priority debuffs over `dispel_slow_s`; death recaps name a priority debuff that was up |
 | Avoidable damage (config) + uneven-hit heuristic | Estimated casting activity (GCD coverage while alive) |
 | Bloodlust missing / late | DPS vs group DPS median with likely causes |
 | M+ pacing: downtime %, longest gaps, near-wipe pulls | Healer overheal %, zero interrupts in M+ |
@@ -187,6 +188,13 @@ in [`docs/milestones/m1-season-data.md`](docs/milestones/m1-season-data.md).
   and nobody is Sated; a lust cast with no Sated logged counts as 10 minutes of Sated, and a Sated
   debuff with no listed cast (drums) counts as a use. A Marksmanship hunter without a pet can't
   lust but still counts.
+- **Dispels ready:** a debuff's type (magic, curse, poison, disease) isn't in the log. It comes
+  from the pack's `dispel`, else from the dispels that removed it in that key; with neither,
+  nobody is named. When the type is ambiguous (only ever removed by Purify: magic or disease), a
+  dispeller must cover every candidate type. A healer's own dispel always counts as available;
+  other dispels only once used in that key. Debuffs up under 2 s, and group cooldowns (Revival,
+  Mass Dispel), are never held against anyone. A debuff that drops early because its caster
+  died is logged like an expiry.
 - The WCL adapter supports public reports (client-credentials flow) only. Private
   reports need the user OAuth flow.
 

@@ -964,3 +964,211 @@ fn lust_on_bosses_idle_trash_and_first_pull() {
             .all(|x| x.category != "Lust")
     );
 }
+
+// ----------------------------------------------------------------- dispels
+
+fn debuff(player: &str, applied: f64, ended: f64, outcome: DebuffOutcome) -> DebuffRecord {
+    DebuffRecord {
+        spell_id: 1,
+        name: "Cryo Surge".into(),
+        player: player.into(),
+        source: "Mob".into(),
+        applied_s: applied,
+        ended_s: ended,
+        pull: Some(1),
+        priority: true,
+        types: vec![crate::classes::DispelType::Magic],
+        outcome,
+        ready_dispellers: vec![],
+    }
+}
+
+fn rdisp(player: &str, in_range: Option<bool>) -> ReadyDispeller {
+    ReadyDispeller {
+        player: player.into(),
+        ability: "Purify".into(),
+        cd_s: 8.0,
+        distance_yd: in_range.map(|r| if r { 18.0 } else { 55.0 }),
+        in_range,
+    }
+}
+
+fn dispelled(by: &str, latency_s: f64) -> DebuffOutcome {
+    DebuffOutcome::Dispelled {
+        by: by.into(),
+        ability: "Purify".into(),
+        latency_s,
+    }
+}
+
+#[test]
+fn undispelled_priority_debuffs_with_a_dispeller_ready() {
+    let mut f = mplus(true, 1200.0);
+    f.deaths = vec![died_with("Charlie", 300.0, 1, vec![])];
+    let with = |mut d: DebuffRecord, r: Vec<ReadyDispeller>| {
+        d.ready_dispellers = r;
+        d
+    };
+    f.debuffs = vec![
+        debuff("Alpha", 10.0, 11.5, dispelled("Healer", 1.5)),
+        with(
+            debuff("Bravo", 242.0, 252.0, DebuffOutcome::Expired),
+            vec![rdisp("Healer", Some(true))],
+        ),
+        with(
+            debuff("Charlie", 295.0, 300.0, DebuffOutcome::Died),
+            vec![rdisp("Healer", Some(true))],
+        ),
+        // Not named: position unknown, out of range, nobody ready, not
+        // priority, still up at the end, up under 2 s, or only a group
+        // cooldown ready.
+        with(
+            debuff("Alpha", 800.0, 801.5, DebuffOutcome::Expired),
+            vec![rdisp("Healer", Some(true))],
+        ),
+        with(
+            debuff("Alpha", 900.0, 910.0, DebuffOutcome::Expired),
+            vec![ReadyDispeller {
+                ability: "Revival".into(),
+                cd_s: 180.0,
+                ..rdisp("Healer", Some(true))
+            }],
+        ),
+        with(
+            debuff("Alpha", 400.0, 410.0, DebuffOutcome::Expired),
+            vec![rdisp("Healer", None)],
+        ),
+        with(
+            debuff("Alpha", 500.0, 510.0, DebuffOutcome::Expired),
+            vec![rdisp("Healer", Some(false))],
+        ),
+        debuff("Alpha", 600.0, 610.0, DebuffOutcome::Expired),
+        DebuffRecord {
+            priority: false,
+            ..with(
+                debuff("Alpha", 700.0, 710.0, DebuffOutcome::Expired),
+                vec![rdisp("Healer", Some(true))],
+            )
+        },
+        with(
+            debuff("Alpha", 1190.0, 1200.0, DebuffOutcome::Lasted),
+            vec![rdisp("Healer", Some(true))],
+        ),
+    ];
+    let s = run(f, &Config::default());
+    let d = get(&s, "group", "Dispels").unwrap();
+    assert_eq!(d.severity, Severity::High);
+    assert_eq!(
+        d.message,
+        "2 priority debuff(s) went undispelled while someone could have dispelled them, worst first. \
+         Cryo Surge on Charlie when they died at 5:00 (pull 1); ready: Healer (Purify, 18 yd). \
+         Cryo Surge on Bravo expired at 4:12 after 10 s (pull 1); ready: Healer (Purify, 18 yd). \
+         1 of 9 priority debuffs were dispelled this run."
+    );
+}
+
+#[test]
+fn no_dispel_advice_for_late_wipe_deaths_or_outside_mplus() {
+    let mut f = mplus(true, 1200.0);
+    // A wiping pull: the third death isn't judged.
+    f.deaths = vec![
+        died_with("Tank", 300.0, 2, vec![]),
+        died_with("Healer", 301.0, 2, vec![]),
+        died_with("Alpha", 302.0, 2, vec![]),
+        died_with("Bravo", 303.0, 2, vec![]),
+    ];
+    let mut d = debuff("Alpha", 295.0, 302.0, DebuffOutcome::Died);
+    d.ready_dispellers = vec![rdisp("Healer", Some(true))];
+    f.debuffs = vec![d.clone()];
+    assert!(get(&run(f, &Config::default()), "group", "Dispels").is_none());
+
+    let mut r = raid(false, 300.0, Some(40.0));
+    d.outcome = DebuffOutcome::Expired;
+    r.debuffs = vec![d];
+    assert!(get(&run(r, &Config::default()), "group", "Dispels").is_none());
+}
+
+#[test]
+fn slow_priority_dispels() {
+    let mut f = mplus(true, 1200.0);
+    for p in f.players.iter_mut() {
+        match p.name.as_str() {
+            "Healer" => {
+                p.priority_dispels = 3;
+                p.dispel_latency_s = Some(6.5);
+            }
+            // Too few samples, or fast enough.
+            "Alpha" => {
+                p.priority_dispels = 2;
+                p.dispel_latency_s = Some(12.0);
+            }
+            "Bravo" => {
+                p.priority_dispels = 5;
+                p.dispel_latency_s = Some(4.0);
+            }
+            _ => {}
+        }
+    }
+    f.debuffs = vec![
+        debuff("Alpha", 60.0, 66.0, dispelled("Healer", 6.0)),
+        debuff("Bravo", 120.0, 129.5, dispelled("Healer", 9.5)),
+        debuff("Charlie", 180.0, 186.5, dispelled("Healer", 6.5)),
+    ];
+    let s = run(f, &Config::default());
+    let h = get(&s, "Healer", "Dispel speed").unwrap();
+    assert_eq!(h.severity, Severity::Low);
+    assert_eq!(
+        h.message,
+        "Priority debuffs took a median 6.5 s to dispel (3 dispels). Slowest: Cryo Surge on Bravo at 2:00, after 9.5 s. Dispel these as soon as they land: a focus or mouseover macro helps."
+    );
+    assert!(get(&s, "Alpha", "Dispel speed").is_none());
+    assert!(get(&s, "Bravo", "Dispel speed").is_none());
+}
+
+#[test]
+fn death_penalty_comes_from_the_key() {
+    let mut f = mplus(false, 1200.0);
+    f.death_penalty_s = Some(5.0);
+    f.deaths = vec![
+        death("Alpha", 10.0, "Slam", 2),
+        DeathReport {
+            priority_debuffs: vec!["Cryo Surge".into()],
+            ..death("Bravo", 20.0, "Slam", 2)
+        },
+    ];
+    let s = run(f.clone(), &Config::default());
+    assert!(
+        get(&s, "group", "Deaths")
+            .unwrap()
+            .message
+            .contains("At 5s per death that's roughly 0:10 added")
+    );
+    assert!(
+        get(&s, "Bravo", "Death")
+            .unwrap()
+            .message
+            .ends_with("Priority dispels up when you died: Cryo Surge at 0:20.")
+    );
+    assert!(
+        !get(&s, "Alpha", "Death")
+            .unwrap()
+            .message
+            .contains("Priority dispels")
+    );
+    assert!(
+        get(&s, "group", "Timer")
+            .unwrap()
+            .evidence
+            .starts_with("Biggest levers, in order: deaths")
+    );
+
+    f.death_penalty_s = Some(0.0);
+    let s = run(f, &Config::default());
+    let d = &get(&s, "group", "Deaths").unwrap().message;
+    assert!(d.contains("Deaths cost no time in this key"), "{d}");
+    assert!(!d.contains("added to the timer"));
+    assert_eq!(
+        get(&s, "group", "Timer").unwrap().evidence,
+        "Biggest levers, in order: downtime, then damage output (deaths cost no time in this key)."
+    );
+}

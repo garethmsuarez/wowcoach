@@ -13,7 +13,7 @@ mod defensives;
 mod dispels;
 use crate::model::*;
 use crate::specs::{Role, spec_info};
-pub use dispels::{DebuffOutcome, DebuffRecord, ReadyDispeller};
+pub use dispels::{DebuffOutcome, DebuffRecord, ReadyDispeller, SHORT_DISPEL_CD_S};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 

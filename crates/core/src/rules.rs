@@ -48,6 +48,12 @@ fn median(mut v: Vec<f64>) -> f64 {
     }
 }
 
+/// Seconds a death costs the timer in this key: its affixes', else the config's.
+fn death_penalty(f: &FightReport, cfg: &Config) -> f64 {
+    f.death_penalty_s
+        .unwrap_or(cfg.general.death_penalty_s as f64)
+}
+
 pub fn apply(f: &mut FightReport, cfg: &Config) {
     let mut out = vec![];
     group_rules(f, cfg, &mut out);
@@ -96,11 +102,17 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
             )
         };
         if is_mplus {
-            msg.push_str(&format!(
-                " At {}s per death that's roughly {} added to the timer.",
-                g.death_penalty_s,
-                mmss((f.deaths.len() as i64 * g.death_penalty_s) as f64)
-            ));
+            let pen = death_penalty(f, cfg);
+            if pen > 0.0 {
+                msg.push_str(&format!(
+                    " At {pen:.0}s per death that's roughly {} added to the timer.",
+                    mmss(f.deaths.len() as f64 * pen)
+                ));
+            } else {
+                msg.push_str(
+                    " Deaths cost no time in this key (affix), but they still slow the pull.",
+                );
+            }
         }
         out.push(sugg(
             "group",
@@ -189,6 +201,7 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
         priority_kicks(f, out);
         priority_stops(f, out);
         defensives::apply(f, cfg, out);
+        dispels::group(f, out);
     }
 
     // --- Avoidable damage
@@ -344,7 +357,11 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
                 Severity::Medium,
                 "Timer",
                 format!("Key not timed ({}).", mmss(*time_s)),
-                "Biggest levers, in order: deaths, downtime, then damage output.".into(),
+                if death_penalty(f, cfg) > 0.0 {
+                    "Biggest levers, in order: deaths, downtime, then damage output.".into()
+                } else {
+                    "Biggest levers, in order: downtime, then damage output (deaths cost no time in this key).".into()
+                },
             ));
         }
     }
@@ -574,6 +591,17 @@ fn player_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
             {
                 msg.push_str(" No healthstone or potion was used before dying. Use a defensive or healthstone earlier in the damage window.");
             }
+            let with_debuffs: Vec<String> = mine
+                .iter()
+                .filter(|d| !d.priority_debuffs.is_empty())
+                .map(|d| format!("{} at {}", d.priority_debuffs.join(" and "), mmss(d.at_s)))
+                .collect();
+            if !with_debuffs.is_empty() {
+                msg.push_str(&format!(
+                    " Priority dispels up when you died: {}.",
+                    with_debuffs.join(", ")
+                ));
+            }
             let recap = last
                 .recap
                 .iter()
@@ -770,6 +798,9 @@ fn player_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
                 ));
             }
         }
+        if matches!(f.kind, FightKind::MythicPlus { .. }) {
+            dispels::speed(f, p, g.dispel_slow_s, out);
+        }
         // interrupts in M+ (unless the specific "Priority kicks" advice covers it)
         if matches!(f.kind, FightKind::MythicPlus { .. })
             && p.role != Role::Healer
@@ -839,6 +870,7 @@ pub fn apply_progression(p: &mut ProgressionReport) {
 }
 
 mod defensives;
+mod dispels;
 pub mod kickplan;
 
 #[cfg(test)]
