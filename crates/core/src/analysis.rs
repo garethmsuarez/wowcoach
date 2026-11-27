@@ -220,6 +220,10 @@ pub struct SpellEvidence {
     /// Cast bars ended by a listed crowd-control stop.
     #[serde(default)]
     pub stopped: u32,
+    /// Damage spikes it was a top source of (not counting hits from enemy
+    /// summons, which belong to the summon).
+    #[serde(default)]
+    pub spikes: u32,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -1334,6 +1338,15 @@ impl FightBuilder {
                         .iter()
                         .filter(|c| {
                             c.spell_id == *id && matches!(c.outcome, CastOutcome::Stopped { .. })
+                        })
+                        .count() as u32,
+                    spikes: def_out
+                        .spikes
+                        .iter()
+                        .filter(|s| {
+                            s.top
+                                .iter()
+                                .any(|t| t.spell_id == *id && t.summoned_by.is_none())
                         })
                         .count() as u32,
                 }

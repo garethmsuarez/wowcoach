@@ -1149,3 +1149,28 @@ fn enemy_totems_are_tracked_and_named_in_spikes() {
         ("Magma Totem", Some("Shaman"), Some(2.0))
     );
 }
+
+#[test]
+fn evidence_counts_spikes_but_not_for_summons() {
+    // The totem's Searing Magma leads the spike; it's the summon's, so the
+    // spell gets no spike evidence. A shadow bolt in the same spike does.
+    let war = player("War");
+    let heal = player("Heal");
+    let shaman = enemy("Shaman", 1);
+    let totem = enemy("Magma Totem", 2);
+    let mut log = Log::default();
+    log.combatant(0, &war, 71)
+        .combatant(0, &heal, 264)
+        .key_start(0, "Spire", 2000, 10);
+    keep_pull(&mut log, &war, &shaman, 500, 8000);
+    log.summon(1000, &shaman, &totem);
+    log.hit(3000, &totem, &war, 1246825, 4, 600, 1000)
+        .hit(3500, &shaman, &heal, 777, 32, 300, 1000)
+        .hit(4000, &totem, &heal, 1246825, 4, 600, 1000);
+    log.key_end(20_000, 2000, true, 20_000);
+    let f = &analyze(&log, Config::default())[0];
+    assert_eq!(f.spikes.len(), 1);
+    let ev = |id: u32| f.spell_evidence.iter().find(|e| e.spell_id == id).unwrap();
+    assert_eq!(ev(1246825).spikes, 0);
+    assert_eq!(ev(777).spikes, 1);
+}

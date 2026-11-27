@@ -400,3 +400,38 @@ fn repeated_stops_suggest_stoppable() {
         bolt.evidence
     );
 }
+
+#[test]
+fn group_wide_spike_causes_suggest_dangerous_cast() {
+    // Bolt (5 casts a run, 1 completed, 4 kicked... so 2 landed casts over
+    // both runs) was in 2 + 1 spikes with 8 hits a run: a volley. Curse
+    // spiked as often but hit one player per application, like a bolt.
+    let mut p = pack();
+    let mut c = Collected::default();
+    for n in [2, 1] {
+        let mut f = run(4, MAP);
+        for e in f.spell_evidence.iter_mut() {
+            match e.spell_id {
+                500 => (e.spikes, e.hits, e.damage) = (n, 8, 800),
+                600 => {
+                    (e.spikes, e.hits, e.damage, e.instant_casts) = (n, 8, 800, 8);
+                }
+                _ => {}
+            }
+        }
+        c.add(&p, &f, Origin::Top);
+    }
+    apply(&mut p, &c);
+    let bolt = spell(&p, 500);
+    assert!(
+        bolt.suggested.contains(&Tag::DangerousCast),
+        "{:?}",
+        bolt.suggested
+    );
+    assert!(
+        bolt.evidence.contains("in 3 damage spikes"),
+        "{}",
+        bolt.evidence
+    );
+    assert!(!spell(&p, 600).suggested.contains(&Tag::DangerousCast));
+}

@@ -60,6 +60,14 @@ pub const TANK_SHARE: f64 = 0.9;
 /// The stops themselves are validated (lift >= 50x in the class audit), so a
 /// few observations are enough to say CC works on the cast.
 pub const MIN_STOPS: u32 = 3;
+/// `dangerous_cast`: a top source of at least this many damage spikes...
+pub const MIN_SPIKES: u32 = 3;
+/// ...hitting several players per cast (a volley, not a bolt: a fight-wide
+/// "who was ever hit" share can't tell those apart)...
+pub const GROUP_HITS_PER_CAST: f64 = 2.5;
+/// ...in a spike on at least this share of its casts (not a frequent cast that
+/// merely lands during spikes), and not aimed at tanks.
+pub const SPIKE_RATE: f64 = 0.2;
 
 /// Counts for one spell from one origin, summed over fights.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -75,6 +83,7 @@ pub struct Agg {
     pub applied: u32,
     pub dispelled: u32,
     pub stopped: u32,
+    pub spikes: u32,
     /// Fights where it hit at least twice.
     pub hit_fights: u32,
     /// Of those, fights the uneven-hit heuristic flagged.
@@ -94,6 +103,7 @@ impl Agg {
         self.applied += e.applied;
         self.dispelled += e.dispelled;
         self.stopped += e.stopped;
+        self.spikes += e.spikes;
         if e.hits >= 2 {
             self.hit_fights += 1;
             if e.likely_avoidable {
@@ -114,6 +124,7 @@ impl Agg {
             applied: self.applied + o.applied,
             dispelled: self.dispelled + o.dispelled,
             stopped: self.stopped + o.stopped,
+            spikes: self.spikes + o.spikes,
             hit_fights: self.hit_fights + o.hit_fights,
             avoidable_fights: self.avoidable_fights + o.avoidable_fights,
         }
@@ -143,6 +154,9 @@ impl Agg {
         }
         if self.stopped > 0 {
             parts.push(format!("stopped by CC {}", self.stopped));
+        }
+        if self.spikes > 0 {
+            parts.push(format!("in {} damage spikes", self.spikes));
         }
         if self.hits > 0 {
             let tank = if self.damage > 0 {
@@ -206,6 +220,7 @@ impl SpellAgg {
             f.applied += e.applied;
             f.dispelled += e.dispelled;
             f.stopped += e.stopped;
+            f.spikes += e.spikes;
             f.likely_avoidable |= e.likely_avoidable;
         }
         let mut out: BTreeMap<Origin, Agg> = BTreeMap::new();
@@ -266,6 +281,15 @@ impl SpellAgg {
         if all.stopped >= MIN_STOPS {
             out.push(Tag::Stoppable);
         }
+        let landed = all.casts_succeeded + all.instant_casts;
+        if all.spikes >= MIN_SPIKES
+            && landed > 0
+            && all.hits as f64 >= GROUP_HITS_PER_CAST * landed as f64
+            && all.spikes as f64 >= SPIKE_RATE * landed as f64
+            && tank_share < 0.5
+        {
+            out.push(Tag::DangerousCast);
+        }
         out
     }
 
@@ -308,8 +332,8 @@ impl From<&FightReport> for FightEvidence {
 /// Bump when analysis changes what goes into `FightEvidence`, so cached
 /// evidence from older versions is ignored.
 /// v2: Warcraft Logs NPC instances became separate units (casts of several
-/// mobs of the same type were merged before). v3: `stopped`.
-pub const EVIDENCE_VERSION: u32 = 3;
+/// mobs of the same type were merged before). v3: `stopped`. v4: `spikes`.
+pub const EVIDENCE_VERSION: u32 = 4;
 
 /// Everything learned from a set of fights, keyed by (instance map ID, spell ID).
 #[derive(Clone, Debug, Default)]
