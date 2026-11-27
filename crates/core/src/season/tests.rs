@@ -276,3 +276,19 @@ dispel = ["magic"]
     assert_eq!(k.dispel_types(800), [DispelType::Magic]);
     assert!(k.dispel_types(1).is_empty());
 }
+
+#[test]
+fn npcs_must_point_at_a_dungeon_once() {
+    let p = with(
+        "[[npc]]\nid = 7\nname = \"Brute\"\nmap_id = 2923\nforces = 5\nsource = \"mdt\"\n\
+         [[npc]]\nid = 7\nname = \"Brute\"\nmap_id = 2923\nforces = 5\nsource = \"log\"\n\
+         [[npc]]\nid = 8\nname = \"Stray\"\nmap_id = 1\nforces = 2\nsource = \"manual\"\n",
+    );
+    assert_eq!(
+        p,
+        [
+            "npc 7 \"Brute\" is listed twice for map 2923",
+            "npc 8 \"Stray\": map_id 1 is not a dungeon in this pack",
+        ]
+    );
+}

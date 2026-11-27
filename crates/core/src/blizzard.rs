@@ -457,6 +457,7 @@ pub fn merge(
         let before = pack.spells.len();
         pack.spells.retain(|s| s.map_id != d.map_id);
         sum.spells_removed += before - pack.spells.len();
+        pack.npcs.retain(|n| n.map_id != d.map_id);
     }
     pack.dungeons.retain(|d| pool.contains(&d.map_id));
     for (k, inst) in &synced.dungeons {
