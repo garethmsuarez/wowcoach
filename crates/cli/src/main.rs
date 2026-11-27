@@ -45,6 +45,9 @@ struct OutOpts {
     /// enemy summons (JSON)
     #[arg(long, hide = true, value_name = "PATH")]
     dump_defensives: Option<PathBuf>,
+    /// Debugging: write every hostile debuff on the group and how it ended (JSON)
+    #[arg(long, hide = true, value_name = "PATH")]
+    dump_dispels: Option<PathBuf>,
 }
 
 impl OutOpts {
@@ -692,6 +695,14 @@ fn finish(
             .fights
             .iter()
             .map(|f| serde_json::json!({ "title": f.title, "casts": f.casts }))
+            .collect();
+        std::fs::write(p, serde_json::to_string_pretty(&all)?)?;
+    }
+    if let Some(p) = &o.dump_dispels {
+        let all: Vec<_> = rep
+            .fights
+            .iter()
+            .map(|f| serde_json::json!({ "title": f.title, "debuffs": f.debuffs }))
             .collect();
         std::fs::write(p, serde_json::to_string_pretty(&all)?)?;
     }

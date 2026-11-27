@@ -44,7 +44,7 @@ A friendly dispel's cooldown only starts when it removes something, so cooldowns
      - validation in `problems()`
    - `season sync` fetches affix names. `SpellEvidence` gains `dispelled_by` (dispel ability IDs), and `EVIDENCE_VERSION` is bumped.
    - `classes check`: debuffs whose dispellers share no type, as a table error.
-2. **Debuff timeline + affix-aware penalty** (analysis only, no new advice).
+2. **Debuff timeline + affix-aware penalty** (analysis only, no new advice). *(done; see "PR 2 findings")*
    - Records as above, `#[serde(skip)]` on the full list. `--dump-dispels PATH` writes it for debugging.
    - Per-pull counts in `PullReport`, and the death penalty used goes into the report.
    - Synthetic tests cover:
@@ -77,6 +77,15 @@ A friendly dispel's cooldown only starts when it removes something, so cooldowns
 - **Death penalty rule:** the lowest of the affixes that set one wins, so the cost of a death is never overstated. Guile and the Bargains don't occur together (Guile revokes them).
 - **Spell fields:** `dispel` (debuff types) and `affixes` on spell entries. `Knowledge::dispel_types` and `death_penalty_s` read them. `SpellEvidence.dispelled_by` records the dispel abilities that removed each debuff (`EVIDENCE_VERSION` 5).
 - **Soul Cleanse:** `classes check` flags exactly the probe's case. Insatiable Hunger was removed by Soul Cleanse (listed as magic) and by Remove Corruption (curse, poison). Soul Cleanse's only removal in the local logs is that debuff, and the spell API has no entry for it (new in Midnight), so its types are left as they are and the evidence is recorded in `data/classes.toml`. Open question for review.
+
+## PR 2 findings
+
+- **Pairing:** removal and dispel within 300 ms count as one dispel, in either order. A dispel of an open debuff closes it at once, because a test (and possibly WCL) had a dispel with no removal after it, which left the debuff open so the next application looked like a refresh.
+- **Ambiguous types:** Cryo Surge is only ever removed by Purify and Cleanse, so its type is magic or disease. The first pass named a Monk's Detox as ready, but a Brewmaster or Windwalker Detox (poison, disease) can't remove a magic debuff. A dispeller now has to cover *every* candidate type.
+- **Local keys** (M+ only): 73 priority debuffs dispelled (median 3.1 s) and 37 expired. Only 9 of the expiries have a known type: in keys where nobody dispelled Heartstop Poison, Cryo Surge or Corroding Spittle, the fight can't infer one. PR 4's pack `dispel` types close that gap.
+- **Checked by hand:** a +12 Den of Nalorakk Cryo Surge expired on Thortic after 10 s while the Discipline priest, 7 yd away, used no dispel at all from 12:40 to 13:15.
+- **Death penalty:** your keys get 15 s (Guile), 5 s (Bargain) and 0 s (Lindormi's Guidance).
+- **Golden snapshot:** new fields only. The synthetic log has no priority debuffs yet (PR 3 adds them).
 
 ## Verification
 - CI as always. The golden test covers the new dispel scenarios in the synthetic log.

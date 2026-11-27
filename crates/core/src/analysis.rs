@@ -10,8 +10,10 @@ pub use defensives::{
 
 mod casts;
 mod defensives;
+mod dispels;
 use crate::model::*;
 use crate::specs::{Role, spec_info};
+pub use dispels::{DebuffOutcome, DebuffRecord, ReadyDispeller};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 
@@ -84,6 +86,8 @@ pub struct DeathReport {
     pub defensives_ready: Vec<ReadyDefensive>,
     /// Defensive and mitigation buffs up on the player when they died.
     pub defensives_active: Vec<String>,
+    /// Priority debuffs (`dispel_priority`) up on the player when they died.
+    pub priority_debuffs: Vec<String>,
 }
 
 #[derive(Serialize, Clone, Debug, Default)]
@@ -113,6 +117,10 @@ pub struct PullReport {
     pub lust_ready_at_start: bool,
     pub lust_ready_s: f64,
     pub lust_used: bool,
+    /// Priority debuffs (`dispel_priority`) on group players, and how many
+    /// were dispelled.
+    pub priority_debuffs: u32,
+    pub priority_dispelled: u32,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -174,6 +182,9 @@ pub struct PlayerReport {
     pub priority_missed: u32,
     /// Kicks on filler while a priority cast was already casting and then went off.
     pub wasted_kicks: u32,
+    /// Priority debuffs this player dispelled, and their median latency.
+    pub priority_dispels: u32,
+    pub dispel_latency_s: Option<f64>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -246,6 +257,10 @@ pub struct FightReport {
     pub enemy_casts: Vec<EnemyCastReport>,
     pub enemy_damage: Vec<EnemySpellReport>,
     pub lust_at_s: Vec<f64>,
+    /// M+: seconds a death costs the timer in this key (from its affixes,
+    /// else `general.death_penalty_s`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub death_penalty_s: Option<f64>,
     pub suggestions: Vec<Suggestion>,
     /// Per hostile spell, for `season suggest`. Not part of the report output.
     #[serde(skip)]
@@ -265,6 +280,10 @@ pub struct FightReport {
     pub tank_hits: Vec<TankHit>,
     #[serde(skip)]
     pub enemy_summons: Vec<EnemySummon>,
+    /// Every hostile debuff on a group player and how it ended. Not part of
+    /// the report output (`analyze --dump-dispels` writes it).
+    #[serde(skip)]
+    pub debuffs: Vec<DebuffRecord>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -385,6 +404,7 @@ struct FightBuilder {
     enemy_extra: HashMap<u32, EX>,
     casts: casts::Tracker,
     defs: defensives::Tracker,
+    dispels: dispels::Tracker,
     deaths: Vec<DeathReport>,
     /// (ts, guid) of each entry in `deaths`.
     death_at: Vec<(i64, String)>,
@@ -496,6 +516,7 @@ impl FightBuilder {
             enemy_extra: HashMap::new(),
             casts: casts::Tracker::default(),
             defs: defensives::Tracker::default(),
+            dispels: dispels::Tracker::default(),
             deaths: vec![],
             death_at: vec![],
             enemy_pending: HashMap::new(),
@@ -590,6 +611,7 @@ impl FightBuilder {
                 stoppable: &stoppable,
             },
         );
+        self.dispels.feed(e, &dispels::Ctx { owners });
         let tank_buster = |id: u32| cfg.has_tag(id, crate::season::Tag::TankBuster);
         self.defs.feed(
             e,
@@ -872,6 +894,7 @@ impl FightBuilder {
                         damage_last_5s_frac: None,
                         defensives_ready: vec![],
                         defensives_active: vec![],
+                        priority_debuffs: vec![],
                     };
                     p.recent.clear();
                     self.deaths.push(report);
@@ -993,6 +1016,8 @@ impl FightBuilder {
                 kick_latency_s: None,
                 priority_missed: 0,
                 wasted_kicks: 0,
+                priority_dispels: 0,
+                dispel_latency_s: None,
             });
         }
         players.sort_by(|a, b| {
@@ -1126,6 +1151,31 @@ impl FightBuilder {
             p.priority_missed = missed_priority(&cast_records, &p.name).len() as u32;
             p.wasted_kicks = wasted_kicks(&cast_records, &p.name).len() as u32;
         }
+        let priority_dispel = |id: u32| cfg.has_tag(id, crate::season::Tag::DispelPriority);
+        let pack_types = |id: u32| cfg.knowledge.dispel_types(id).to_vec();
+        let debuffs = self.dispels.finish(&dispels::Fin {
+            fight_start: start,
+            end_ts,
+            specs,
+            priority: &priority_dispel,
+            pack_types: &pack_types,
+            pulls: self.pulls.iter().map(|p| (p.start, p.end)).collect(),
+        });
+        // Priority dispels per player, and their median latency.
+        for p in players.iter_mut() {
+            let mut lat: Vec<f64> = debuffs
+                .iter()
+                .filter(|d| d.priority)
+                .filter_map(|d| match &d.outcome {
+                    DebuffOutcome::Dispelled { by, latency_s, .. } if *by == p.name => {
+                        Some(*latency_s)
+                    }
+                    _ => None,
+                })
+                .collect();
+            p.priority_dispels = lat.len() as u32;
+            p.dispel_latency_s = (!lat.is_empty()).then(|| median(&mut lat));
+        }
         let def_out = self.defs.finish(
             &defensives::Fin {
                 fight_start: start,
@@ -1196,6 +1246,18 @@ impl FightBuilder {
                 lust_ready_at_start: lust[i].0,
                 lust_ready_s: secs(lust[i].1),
                 lust_used: lust[i].2,
+                priority_debuffs: debuffs
+                    .iter()
+                    .filter(|d| d.priority && d.pull == Some(i + 1))
+                    .count() as u32,
+                priority_dispelled: debuffs
+                    .iter()
+                    .filter(|d| {
+                        d.priority
+                            && d.pull == Some(i + 1)
+                            && matches!(d.outcome, DebuffOutcome::Dispelled { .. })
+                    })
+                    .count() as u32,
             })
             .collect();
         let mut deaths = std::mem::take(&mut self.deaths);
@@ -1208,6 +1270,20 @@ impl FightBuilder {
                 .defs
                 .max_hp(guid)
                 .map(|m| d.damage_last_5s as f64 / m as f64);
+            let at = secs(ts - start);
+            let mut up: Vec<String> = debuffs
+                .iter()
+                .filter(|x| {
+                    x.priority
+                        && x.player == d.player
+                        && x.outcome == DebuffOutcome::Died
+                        && (x.ended_s - at).abs() < 0.01
+                })
+                .map(|x| x.name.clone())
+                .collect();
+            up.sort();
+            up.dedup();
+            d.priority_debuffs = up;
         }
         // On a raid wipe, once ~a quarter of the raid is dead the pull is lost;
         // later deaths are cascade noise and shouldn't drive suggestions.
@@ -1271,6 +1347,14 @@ impl FightBuilder {
                     })
                     .collect(),
             },
+        };
+        let death_penalty_s = match &kind {
+            FightKind::MythicPlus { affixes, .. } => Some(
+                cfg.knowledge
+                    .death_penalty_s(affixes)
+                    .unwrap_or(cfg.general.death_penalty_s as f64),
+            ),
+            FightKind::Raid { .. } => None,
         };
         let title = match &kind {
             FightKind::Raid {
@@ -1377,6 +1461,8 @@ impl FightBuilder {
             suggestions: vec![],
             spell_evidence,
             casts: cast_records,
+            death_penalty_s,
+            debuffs,
             defensive_uses: def_out.uses,
             spikes: def_out.spikes,
             tank_hits: def_out.tank_hits,

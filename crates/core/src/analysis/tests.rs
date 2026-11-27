@@ -1221,3 +1221,189 @@ fn evidence_records_which_dispels_removed_a_debuff() {
         (3, &[475, 527][..])
     );
 }
+
+// ------------------------------------------------------------ dispels
+
+/// A pack with priority debuffs: 700 (magic), 701 (curse), 702 (magic or
+/// disease), and affixes 147 (deaths cost 15 s) and 165 (no cost).
+fn dispel_cfg() -> Config {
+    use crate::season::{Knowledge, SeasonPack};
+    let pack = SeasonPack::parse(
+        r#"
+        [season]
+        key = "t"
+        name = "T"
+        [[affix]]
+        id = 147
+        death_penalty_s = 15
+        [[affix]]
+        id = 165
+        death_penalty_s = 0
+        [[spell]]
+        ids = [700]
+        name = "Cryo"
+        tags = ["dispel_priority"]
+        dispel = ["magic"]
+        [[spell]]
+        ids = [701]
+        name = "Hex"
+        tags = ["dispel_priority"]
+        dispel = ["curse"]
+        [[spell]]
+        ids = [702]
+        name = "Spores"
+        tags = ["dispel_priority"]
+        dispel = ["magic", "disease"]
+        "#,
+    )
+    .unwrap();
+    Config {
+        knowledge: Knowledge::build(Some(pack), &[]),
+        ..Config::default()
+    }
+}
+
+fn purify(log: &mut Log, ts: i64, by: &Unit, on: &Unit, id: u32) {
+    log.dispel_with(ts, by, on, 527, "Purify", id, "debuff");
+}
+
+#[test]
+fn debuff_outcomes_pair_removals_with_dispels() {
+    let party = Party::new();
+    let (a, b, c) = (&party.dps[0], &party.dps[1], &party.dps[2]);
+    let mob = enemy("Caster", 1);
+    let mut log = Log::default();
+    party.log_specs(&mut log, 0);
+    log.key_start(0, "Spire", 2000, 10);
+    keep_pull(&mut log, a, &mob, 500, 25_000);
+    // Removal logged just before the dispel (as raw logs do)...
+    log.debuff(1000, &mob, a, 700, "Cryo")
+        .fade(3000, &mob, a, 700, false);
+    purify(&mut log, 3050, &party.healer, a, 700);
+    // ...or the dispel first.
+    log.debuff(4000, &mob, b, 700, "Cryo");
+    purify(&mut log, 6000, &party.healer, b, 700);
+    log.fade(6100, &mob, b, 700, false);
+    // Expires while the healer's Purify is back (last used at 6 s, 8 s cooldown).
+    log.debuff(10_000, &mob, c, 700, "Cryo")
+        .fade(18_000, &mob, c, 700, false);
+    // The tank dies with it up.
+    log.debuff(20_000, &mob, &party.tank, 700, "Cryo")
+        .death(22_000, &party.tank);
+    log.key_end(30_000, 2000, true, 30_000);
+    let f = &analyze(&log, dispel_cfg())[0];
+    let got: Vec<(&str, &DebuffOutcome)> = f
+        .debuffs
+        .iter()
+        .map(|d| (d.player.as_str(), &d.outcome))
+        .collect();
+    let healed = |s: f64| DebuffOutcome::Dispelled {
+        by: "Healer-Realm".into(),
+        ability: "Purify".into(),
+        latency_s: s,
+    };
+    assert_eq!(
+        got,
+        [
+            ("Alpha-Realm", &healed(2.0)),
+            ("Bravo-Realm", &healed(2.0)),
+            ("Charlie-Realm", &DebuffOutcome::Expired),
+            ("Tank-Realm", &DebuffOutcome::Died),
+        ]
+    );
+    let expired = &f.debuffs[2];
+    assert_eq!(expired.types, [crate::classes::DispelType::Magic]);
+    assert_eq!(
+        expired
+            .ready_dispellers
+            .iter()
+            .map(|r| (r.player.as_str(), r.ability.as_str()))
+            .collect::<Vec<_>>(),
+        [("Healer-Realm", "Purify")]
+    );
+    // While it was on cooldown, the healer wasn't ready for the tank's.
+    let died = f.deaths.iter().find(|d| d.player == "Tank-Realm").unwrap();
+    assert_eq!(died.priority_debuffs, ["Cryo"]);
+    let healer = find(f, &party.healer);
+    assert_eq!(
+        (healer.priority_dispels, healer.dispel_latency_s),
+        (2, Some(2.0))
+    );
+    assert_eq!(f.pulls[0].priority_debuffs, 4);
+    assert_eq!(f.pulls[0].priority_dispelled, 2);
+}
+
+#[test]
+fn ready_dispellers_need_the_type_cooldown_life_and_range() {
+    // Two mages (Remove Curse: curse) and the Discipline healer (Purify:
+    // magic, disease). A mage's dispel only counts once used this fight.
+    let party = Party::new();
+    let (used, never, target) = (&party.dps[0], &party.dps[1], &party.dps[2]);
+    let mob = enemy("Caster", 1);
+    let mut log = Log::default();
+    party.log_specs(&mut log, 0);
+    log.key_start(0, "Spire", 2000, 10);
+    keep_pull(&mut log, used, &mob, 500, 60_000);
+    log.debuff(1000, &mob, target, 701, "Hex");
+    log.dispel_with(1500, used, target, 475, "Remove Curse", 701, "Hex");
+    // Hex expires: only the mage who has Remove Curse in use was ready.
+    log.debuff(20_000, &mob, target, 701, "Hex")
+        .fade(26_000, &mob, target, 701, false);
+    // Spores (magic or disease) expires: Purify covers both. The healer is
+    // 60 yd away, so out of range.
+    log.at(29_900, &party.healer, 60.0, 0.0)
+        .at(29_900, target, 0.0, 0.0);
+    log.debuff(30_000, &mob, target, 702, "Spores")
+        .fade(36_000, &mob, target, 702, false);
+    // Busy: the healer dispels someone else during this one.
+    log.debuff(40_000, &mob, target, 700, "Cryo")
+        .fade(46_000, &mob, target, 700, false);
+    purify(&mut log, 41_000, &party.healer, never, 999);
+    // Dead: nobody's alive to help.
+    log.death(49_000, &party.healer).death(49_000, used);
+    log.debuff(50_000, &mob, target, 701, "Hex")
+        .fade(56_000, &mob, target, 701, false);
+    log.key_end(60_000, 2000, true, 60_000);
+    let f = &analyze(&log, dispel_cfg())[0];
+    let ready = |at: f64| -> Vec<(String, Option<bool>)> {
+        f.debuffs
+            .iter()
+            .find(|d| d.applied_s == at)
+            .unwrap()
+            .ready_dispellers
+            .iter()
+            .map(|r| (r.player.clone(), r.in_range))
+            .collect()
+    };
+    assert_eq!(ready(20.0), [("Alpha-Realm".to_string(), None)]);
+    assert_eq!(ready(30.0), [("Healer-Realm".to_string(), Some(false))]);
+    assert!(ready(40.0).is_empty(), "busy dispelling");
+    assert!(ready(50.0).is_empty(), "dead");
+}
+
+#[test]
+fn death_penalty_follows_the_key_affixes() {
+    let party = Party::new();
+    let mob = enemy("Mob", 1);
+    let key = |affixes: Vec<u32>| {
+        let mut log = Log::default();
+        party.log_specs(&mut log, 0);
+        log.push(
+            0,
+            None,
+            None,
+            Kind::ChallengeStart {
+                zone: "Spire".into(),
+                map_id: 2000,
+                level: 10,
+                affixes,
+            },
+        );
+        keep_pull(&mut log, &party.dps[0], &mob, 500, 8000);
+        log.key_end(10_000, 2000, true, 10_000);
+        analyze(&log, dispel_cfg())[0].death_penalty_s
+    };
+    assert_eq!(key(vec![9, 10, 147]), Some(15.0));
+    assert_eq!(key(vec![165]), Some(0.0));
+    assert_eq!(key(vec![9]), Some(15.0), "general.death_penalty_s");
+}

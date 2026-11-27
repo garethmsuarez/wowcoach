@@ -33,6 +33,8 @@ fn player(name: &str, role: Role) -> PlayerReport {
         kick_latency_s: None,
         priority_missed: 0,
         wasted_kicks: 0,
+        priority_dispels: 0,
+        dispel_latency_s: None,
     }
 }
 
@@ -67,6 +69,8 @@ fn fight(kind: FightKind, duration_s: f64) -> FightReport {
         spikes: vec![],
         tank_hits: vec![],
         enemy_summons: vec![],
+        death_penalty_s: None,
+        debuffs: vec![],
     }
 }
 
