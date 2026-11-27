@@ -63,6 +63,10 @@ fn fight(kind: FightKind, duration_s: f64) -> FightReport {
         suggestions: vec![],
         spell_evidence: vec![],
         casts: vec![],
+        defensive_uses: vec![],
+        spikes: vec![],
+        tank_hits: vec![],
+        enemy_summons: vec![],
     }
 }
 
@@ -106,7 +110,7 @@ fn death(player: &str, at_s: f64, spell: &str, spell_id: u32) -> DeathReport {
         healthstone_used_before: false,
         potion_used_before: false,
         pull: Some(1),
-        wipe_cascade: false,
+        ..Default::default()
     }
 }
 
@@ -120,8 +124,7 @@ fn pull(index: usize, start_s: f64, end_s: f64, deaths: u32) -> PullReport {
         boss: None,
         casts_kicked: 0,
         casts_stopped: 0,
-        casters_killed: 0,
-        priority_completed: 0,
+        ..Default::default()
     }
 }
 

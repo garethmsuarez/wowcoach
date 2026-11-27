@@ -41,6 +41,10 @@ struct OutOpts {
     /// Debugging: write every enemy cast bar and how it ended (JSON)
     #[arg(long, hide = true, value_name = "PATH")]
     dump_casts: Option<PathBuf>,
+    /// Debugging: write defensive uses, damage spikes, tank-buster hits and
+    /// enemy summons (JSON)
+    #[arg(long, hide = true, value_name = "PATH")]
+    dump_defensives: Option<PathBuf>,
 }
 
 impl OutOpts {
@@ -687,6 +691,22 @@ fn finish(
             .fights
             .iter()
             .map(|f| serde_json::json!({ "title": f.title, "casts": f.casts }))
+            .collect();
+        std::fs::write(p, serde_json::to_string_pretty(&all)?)?;
+    }
+    if let Some(p) = &o.dump_defensives {
+        let all: Vec<_> = rep
+            .fights
+            .iter()
+            .map(|f| {
+                serde_json::json!({
+                    "title": f.title,
+                    "defensive_uses": f.defensive_uses,
+                    "spikes": f.spikes,
+                    "tank_hits": f.tank_hits,
+                    "enemy_summons": f.enemy_summons,
+                })
+            })
             .collect();
         std::fs::write(p, serde_json::to_string_pretty(&all)?)?;
     }

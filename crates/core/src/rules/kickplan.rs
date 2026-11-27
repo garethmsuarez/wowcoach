@@ -341,8 +341,7 @@ mod tests {
             boss: None,
             casts_kicked: 0,
             casts_stopped: 0,
-            casters_killed: 0,
-            priority_completed: 0,
+            ..Default::default()
         }
     }
 

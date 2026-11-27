@@ -292,7 +292,10 @@
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 1,
-          "wipe_cascade": false
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 0.43333333333333335,
+          "defensives_ready": [],
+          "defensives_active": []
         },
         {
           "player": "Pyro-Realm",
@@ -333,7 +336,10 @@
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 2,
-          "wipe_cascade": false
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 0.43333333333333335,
+          "defensives_ready": [],
+          "defensives_active": []
         },
         {
           "player": "Pyro-Realm",
@@ -374,7 +380,10 @@
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 3,
-          "wipe_cascade": false
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 0.43333333333333335,
+          "defensives_ready": [],
+          "defensives_active": []
         },
         {
           "player": "Pyro-Realm",
@@ -408,7 +417,10 @@
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 4,
-          "wipe_cascade": false
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 0.23333333333333334,
+          "defensives_ready": [],
+          "defensives_active": []
         },
         {
           "player": "Pyro-Realm",
@@ -442,7 +454,10 @@
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 5,
-          "wipe_cascade": false
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 0.23333333333333334,
+          "defensives_ready": [],
+          "defensives_active": []
         },
         {
           "player": "Pyro-Realm",
@@ -476,7 +491,10 @@
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 6,
-          "wipe_cascade": false
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 0.23333333333333334,
+          "defensives_ready": [],
+          "defensives_active": []
         },
         {
           "player": "Leafy-Realm",
@@ -503,7 +521,10 @@
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 6,
-          "wipe_cascade": false
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 1.5,
+          "defensives_ready": [],
+          "defensives_active": []
         },
         {
           "player": "Glaive-Realm",
@@ -530,7 +551,10 @@
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 6,
-          "wipe_cascade": false
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 1.5,
+          "defensives_ready": [],
+          "defensives_active": []
         },
         {
           "player": "Slacky-Realm",
@@ -557,7 +581,10 @@
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 6,
-          "wipe_cascade": false
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 1.5,
+          "defensives_ready": [],
+          "defensives_active": []
         },
         {
           "player": "Pyro-Realm",
@@ -598,7 +625,10 @@
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 7,
-          "wipe_cascade": false
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 0.43333333333333335,
+          "defensives_ready": [],
+          "defensives_active": []
         },
         {
           "player": "Pyro-Realm",
@@ -632,7 +662,10 @@
           "healthstone_used_before": false,
           "potion_used_before": false,
           "pull": 8,
-          "wipe_cascade": false
+          "wipe_cascade": false,
+          "damage_last_5s_frac": 0.23333333333333334,
+          "defensives_ready": [],
+          "defensives_active": []
         }
       ],
       "pulls": [
@@ -646,7 +679,13 @@
           "casts_kicked": 2,
           "casts_stopped": 0,
           "casters_killed": 0,
-          "priority_completed": 3
+          "priority_completed": 3,
+          "spikes": 1,
+          "tank_hits": 0,
+          "tank_hits_unmitigated": 0,
+          "lust_ready_at_start": true,
+          "lust_ready_s": 0.0,
+          "lust_used": true
         },
         {
           "index": 2,
@@ -658,7 +697,13 @@
           "casts_kicked": 1,
           "casts_stopped": 0,
           "casters_killed": 0,
-          "priority_completed": 6
+          "priority_completed": 6,
+          "spikes": 1,
+          "tank_hits": 0,
+          "tank_hits_unmitigated": 0,
+          "lust_ready_at_start": false,
+          "lust_ready_s": 0.0,
+          "lust_used": false
         },
         {
           "index": 3,
@@ -670,7 +715,13 @@
           "casts_kicked": 2,
           "casts_stopped": 1,
           "casters_killed": 0,
-          "priority_completed": 3
+          "priority_completed": 3,
+          "spikes": 1,
+          "tank_hits": 0,
+          "tank_hits_unmitigated": 0,
+          "lust_ready_at_start": false,
+          "lust_ready_s": 0.0,
+          "lust_used": false
         },
         {
           "index": 4,
@@ -682,7 +733,13 @@
           "casts_kicked": 0,
           "casts_stopped": 0,
           "casters_killed": 0,
-          "priority_completed": 0
+          "priority_completed": 0,
+          "spikes": 0,
+          "tank_hits": 0,
+          "tank_hits_unmitigated": 0,
+          "lust_ready_at_start": false,
+          "lust_ready_s": 0.0,
+          "lust_used": false
         },
         {
           "index": 5,
@@ -694,7 +751,13 @@
           "casts_kicked": 2,
           "casts_stopped": 0,
           "casters_killed": 0,
-          "priority_completed": 3
+          "priority_completed": 3,
+          "spikes": 1,
+          "tank_hits": 0,
+          "tank_hits_unmitigated": 0,
+          "lust_ready_at_start": false,
+          "lust_ready_s": 0.0,
+          "lust_used": false
         },
         {
           "index": 6,
@@ -706,7 +769,13 @@
           "casts_kicked": 2,
           "casts_stopped": 0,
           "casters_killed": 0,
-          "priority_completed": 3
+          "priority_completed": 3,
+          "spikes": 1,
+          "tank_hits": 0,
+          "tank_hits_unmitigated": 0,
+          "lust_ready_at_start": false,
+          "lust_ready_s": 0.0,
+          "lust_used": false
         },
         {
           "index": 7,
@@ -718,7 +787,13 @@
           "casts_kicked": 3,
           "casts_stopped": 0,
           "casters_killed": 0,
-          "priority_completed": 2
+          "priority_completed": 2,
+          "spikes": 1,
+          "tank_hits": 0,
+          "tank_hits_unmitigated": 0,
+          "lust_ready_at_start": false,
+          "lust_ready_s": 0.0,
+          "lust_used": false
         },
         {
           "index": 8,
@@ -730,7 +805,13 @@
           "casts_kicked": 0,
           "casts_stopped": 0,
           "casters_killed": 0,
-          "priority_completed": 0
+          "priority_completed": 0,
+          "spikes": 0,
+          "tank_hits": 0,
+          "tank_hits_unmitigated": 0,
+          "lust_ready_at_start": false,
+          "lust_ready_s": 0.0,
+          "lust_used": false
         }
       ],
       "downtime_s": 157.2,

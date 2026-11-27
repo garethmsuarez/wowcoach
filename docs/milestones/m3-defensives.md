@@ -31,7 +31,7 @@ Decisions (2026-11-26):
 
 **Active mitigation:** a new class-table kind, `mitigation`, holding the per-spec buffs. Each has an optional `school = "physical"` (Shield Block). "Covered" means one of the spec's mitigation buffs (that applies to the hit's school) or any personal or external defensive was active when the hit landed.
 
-**Spike windows:** rolling `spike_window_ms` (5000) of damage taken by group players, at least `spike_pct` (50) of the group's summed max HP. Overlapping windows merge into one spike. Each spike records:
+**Spike windows:** rolling `spike_window_ms` (5000) of damage taken by group players (after absorbs), at least `spike_frac` (0.50) of the group's summed max HP. Overlapping windows merge into one spike. Each spike records:
 - start and end, and the pull
 - its top spells, each with its source NPC, flagged when that source was summoned by an enemy (with the summoner and how long the summon had been alive)
 - deaths during or within 5 s after
@@ -55,7 +55,7 @@ Decisions (2026-11-26):
      - new kind `mitigation`: Shield of the Righteous, Shield Block (`school = physical`), Ignore Pain, Ironfur, Demon Spikes, Shuffle / Celestial Brew, Bone Shield
    - `classes check` gains defensive aura discovery: buffs a player applies within 1 s of a listed defensive cast, under a different ID, at a consistent rate.
    - Config: `sated_aura_ids`, with defaults in both `DEFAULT_CONFIG` and `impl Default`.
-2. **Defensive timeline + spikes + lust state** (analysis only, no new advice).
+2. **Defensive timeline + spikes + lust state** (analysis only, no new advice). *(done; see "PR 2 findings")*
    - Records as above, `#[serde(skip)]` on the full lists. `--dump-defensives PATH` writes them for debugging.
    - Per-pull counts go into `PullReport`.
    - Synthetic tests cover:
@@ -99,6 +99,21 @@ Decisions (2026-11-26):
   - Demon Spikes, Shield Block and Celestial Infusion use charges, so they're `cdr = true`.
 - **School-limited defensives:** Anti-Magic Shell, Anti-Magic Zone, Cloak of Shadows, Diffuse Magic and Spell Reflection are `magic`; Evasion and Shield Block are `physical`.
 - **Sated:** 264689 Fatigued, 80354 Temporal Displacement, 57724 Sated and 57723 Exhaustion are seen right after lust casts. The evoker's 390435 is listed but not yet seen.
+
+## PR 2 findings
+
+- **Spikes count HP actually lost:** with absorbed damage counted as well, a +3 key showed four "spikes" that were mostly shield-soaked trash. Without it, the +2–+4 keys show 0–2 and the +12/+13 keys 9–28.
+  - Over the 11 probed keys: 108 spikes. A group defensive was used in 7; in 50 more, one was ready and unused; 19 were followed by a death.
+  - A sliding window finds more spikes than the probe's fixed 5 s bins did (60).
+- **Pull numbers by timestamp:** the tracker is fed before `ingest` opens a new pull, so the first hit of a pull carried the previous pull's number. Records now get their pull from the final pull windows.
+- **Lust:**
+  - Groups cast lust a moment before the first hit, so a pull's lust is judged from up to 10 s before it.
+  - A lust cast with no Sated logged counts as 10 minutes of Sated, so a log missing the debuffs doesn't show lust as permanently available.
+  - In one +13 Voidscar Arena key, lust went out on pull 1 and on Atroxus, Taz'Rah correctly shows Sated, and a trash pull before Atroxus had lust ready for 127 s and unused.
+  - Charonus' lust fell in a pull that started on trash before the boss engaged. PR 3's boss-pull rule has to look at boss markers inside a pull, not only the pull's opening boss.
+- **Deaths:** the probe's hunter "deaths" with ~0% damage in their last 5 s were Feign Death, which the parser already skips.
+  - Two claims were checked by hand against the raw events. Spell Reflection was last used 93 s before an Arms warrior's death (25 s cooldown), and Die by the Sword (120 s) is correctly not listed. Survival of the Fittest was last used 330 s before a hunter's death (90 s cooldown).
+- **Golden snapshot:** only the new `PullReport` and `DeathReport` fields were added. The synthetic log has no Sated debuffs, so its lust comes from the inferred Sated: lust is used on pull 1 and unavailable after.
 
 ## Verification
 - CI as always. The golden test covers the new spike, defensive and tank-buster scenarios in the synthetic log.
