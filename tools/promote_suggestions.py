@@ -28,7 +28,10 @@ prints a review table of what was promoted and what was left for a human:
   affix            seen in every key with the affix in its dungeon(s), and
                    its casters in none of >= 3 keys of those dungeons
                    without it (`season suggest` asks for >= 50% and >= 2)
-  avoidable        never: the uneven-hit heuristic alone is too weak
+  avoidable        never automatically. `season suggest` proposes it from top
+                   keys (rarely hit, few players per hit event, not aimed at
+                   the player hit); that shows it can be dodged, not that it
+                   should never hit, so every one is confirmed by a human
 
 EXCEPTIONS lists spells that pass the numbers but are judged otherwise.
 Usage: tools/promote_suggestions.py data/seasons/<pack>.toml > review.txt
@@ -101,7 +104,11 @@ def decide(name, tag, ev, tags=()):
             return False, "no affix evidence"
         seen, with_, control = int(m[2]), int(m[3]), int(m[4])
         return (seen == with_ and control >= 3), f"affix {m[1]}: in {seen} of {with_} keys with it, casters absent from {control} keys without it"
-    return False, "not promoted: " + ("uneven-hit heuristic only" if tag == "avoidable" else "no rule")
+    if tag == "avoidable":
+        m = re.search(r"top keys \(\d+ fights?\):[^;]*?(\d+) hit events \((\d+)% few-hit, (\d+)% untargeted\), ([\d.]+) hits/player/10 min", ev)
+        why = f"top keys: {m[1]} hit events, {m[2]}% few-hit, {m[3]}% untargeted, {m[4]} hits/player/10 min" if m else "no top-key hit evidence"
+        return False, "for a human: " + why
+    return False, "not promoted: no rule"
 
 text = open(PACK).read()
 pack = tomllib.loads(text)

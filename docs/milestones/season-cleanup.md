@@ -19,7 +19,7 @@ of them. Two gaps:
 | Do the two compete? | 32 of 182 Earth Bolt bars overlap a Healing Breeze bar. |
 | Would tagging Earth Bolt `priority_kick` be fair? | No. 87 Earth Bolts went off with a ready, in-range kicker; 80 had a Healing Breeze in the same pull within 15 s, so only 7 were truly free kicks. |
 | Does the group get the real priority? | Healing Breeze went off 7 of 43 times (yours), against 1 of 73 in top keys. |
-| Avoidable | To be probed at the start of PR 2 (needs per-hit-event evidence that `SpellEvidence` doesn't keep yet). |
+| Avoidable | Probed in PR 2: see PR 2 findings. |
 
 ## Design
 
@@ -39,14 +39,14 @@ of them. Two gaps:
   bars. `priority_kick` stays at ≥ 90%. `promote_suggestions.py` gets the same criterion.
 
 ### Avoidable evidence
-- `SpellEvidence` gains per-spell hit events (hits clustered within 1 s), the events hitting ≤ 40% of the
-  non-tank group, non-tank hits per player per fight, and hits landing while that spell's aura is already on the
-  player (DoT ticks). Bump `EVIDENCE_VERSION`.
-- Proposed `avoidable` when, in top keys: ≥ 10 hit events, ≥ 80% of them few-hit, < 30% DoT ticks, < 50% of
-  damage on tanks, and top non-tank hits per player per run ≤ ½ of yours (≤ 1 with no logs of your own).
-  This reads as "the mechanic happens, and good players don't get hit by it". The thresholds are confirmed by the
-  PR 2 probe before they're coded.
-- Tags still come from review only. The heuristic stays for spells the pack doesn't cover.
+- `SpellEvidence` gains hit events (hits clustered within 1 s), the events hitting at most half the non-tanks,
+  hits not aimed at the player hit (no cast of the same-named spell by that caster targeted them in the last 10 s),
+  non-tank hits, and non-tank player-minutes. `EVIDENCE_VERSION` 7.
+- `avoidable` is proposed from top keys only: ≥ 20 hit events, ≥ 90% of them few-hit, ≥ 70% untargeted hits,
+  ≤ 1.5 non-tank hits per player per 10 minutes, < 50% of damage on tanks, and dispelled on ≤ 10% of
+  applications. These replace the planned DoT exclusion and comparison with your group (see PR 2 findings).
+  `promote_suggestions.py` never promotes it: every proposal is confirmed by a human.
+- The uneven-hit heuristic no longer drives proposals; it stays in the report for spells the pack doesn't cover.
 
 ## PRs
 
@@ -80,6 +80,35 @@ of them. Two gaps:
   The pack's existing `suggested` lists still say `priority_kick` for the 75–87% spells; the PR 3 re-run rewrites them.
 - **Golden:** the only change is `tier: 1` on the kick plan's spell (the synthetic log uses the legacy
   `[[priority_interrupt]]` list).
+
+## PR 2 findings
+
+Probed with a scratch script over the 14 local logs (all M+ keys), then 64 public top runs (5 at +16 and the
+3 best per dungeon, 2,105 WCL points, cached as `v7-…` for PR 3).
+
+- **Spread separates group-wide damage.** Of the 34 `dangerous_cast` spells, all but two hit at most half the
+  non-tanks in under 65% of their hit events (those two: 73% and 82%). Candidates sit at 90–100%.
+- **Targeting must match by name.** Void Beam is cast as 1300138 and does its damage as 1300156, so a match by
+  ID calls every hit untargeted. With names and a 10 s window, every bolt shows 0% untargeted hits from both
+  sources (Earth Bolt, Lightning Bolt, Light Bolt, Frostbolt, …).
+- **DoT ticks are not excluded.** Ground puddles (Rotten Ground, Burning Steps, Fel-Scarred Earth) do their
+  damage as periodic ticks from an aura on the player; the planned DoT rule would have thrown them all out.
+  Puddles dropped under a targeted player still count as aimed at them and are missed (tag by hand).
+- **Comparison with your group doesn't work as a test.** Per player per 10 minutes, your group gets hit by the
+  candidates about as often as top keys (top ÷ yours 0.9–1.5). Only Whirling Axe (0.33) and Null Eruption (0.52)
+  pass "top ≤ ½ yours". It stays in the evidence line for review.
+- **How often top players get hit does work.** Random-target damage hits top players 2–25 times per player per
+  10 minutes: Laced Edge 25.1, Arrow Barrage 6.7, Rotten Supplies 5.8, Siphon Energy 3.9 (which the old heuristic
+  proposed). Dodgeable mechanics sit at 0.3–1.4. With ≤ 1.5 there are 17 proposals: Messy Eater, Toxic Breath,
+  Echoing Fury, Rimeshatter, Earthquake, Aerial Smash, Quaking Leap, Burn Corruption, Whirling Axe, Malefic Wave,
+  Flaming Embers, Fiery Demise, Tempest Winds, A Knot of Snakes, Lingering Storm, Slither Strike, Null Eruption.
+  The rule (rare in top keys, rather than also requiring that your group takes more) was chosen by the user.
+- **Raw-log spot checks.** Rejected: Laced Edge hits every player 40–64 times a key, mostly as a bleed; Rotten
+  Supplies hits all four non-tanks 6–15 times every key; Spit Gold is a debuff on random players. Proposed: Echoing
+  Fury and Whirling Axe hit unevenly (9, 4, 2, 2, 1 and 15, 12 hits), as dodged mechanics do. Earthquake is spread
+  evenly (1–4 each) and applies an aura: borderline, for review.
+- **Raids** get no proposals (no top-key data); the old heuristic's raid proposals (Hungering Pyre, Blood Venom, …)
+  disappear on the next `--write` and should be tagged by hand.
 
 ## Verification
 - All five CI commands; golden only re-blessed with a reviewed diff (it runs on `PackChoice::None`).

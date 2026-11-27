@@ -159,25 +159,53 @@ fn learns_ids_encounters_and_proposals() {
     assert!(review(&c, &a).contains("Bolt (trash) -> kick"));
 }
 
+/// A key whose Dark Swirl (901) evidence is set by hand: 10 hit events, all
+/// hitting one non-tank, `untargeted` of its hits not aimed at anyone, and
+/// `nt_hits` on non-tanks over 40 player-minutes.
+fn swirl_run(untargeted: u32, nt_hits: u32) -> FightReport {
+    let mut f = run(0, MAP);
+    let e = f
+        .spell_evidence
+        .iter_mut()
+        .find(|e| e.spell_id == 901)
+        .unwrap();
+    (e.hit_events, e.few_hit_events) = (10, 10);
+    (e.hits, e.untargeted_hits, e.non_tank_hits) = (nt_hits, untargeted.min(nt_hits), nt_hits);
+    e.non_tank_player_min = 40.0;
+    f
+}
+
 #[test]
-fn uneven_hits_across_fights_suggest_avoidable() {
-    let mut p = pack();
-    let mut c = Collected::default();
-    for _ in 0..2 {
-        c.add(&p, &run(0, MAP), Origin::Own);
-    }
-    apply(&mut p, &c);
-    assert_eq!(spell(&p, 901).suggested, [Tag::Avoidable]);
+fn rare_untargeted_hits_in_top_keys_suggest_avoidable() {
+    let judge = |runs: &[(FightReport, Origin)]| {
+        let mut p = pack();
+        let mut c = Collected::default();
+        for (f, o) in runs {
+            c.add(&p, f, *o);
+        }
+        apply(&mut p, &c);
+        spell(&p, 901).clone()
+    };
+    // Top keys: 20 events, 3 hits per 40 player-minutes = 0.75 per player per
+    // 10 minutes.
+    let top = || (swirl_run(3, 3), Origin::Top);
+    let s = judge(&[top(), top()]);
+    assert_eq!(s.suggested, [Tag::Avoidable]);
     assert!(
-        spell(&p, 500).suggested.is_empty(),
-        "never kicked: no priority_kick"
+        s.evidence
+            .contains("20 hit events (100% few-hit, 100% untargeted), 0.8 hits/player/10 min"),
+        "{}",
+        s.evidence
     );
-    // Once tagged, it's not suggested again.
-    let i = p.spells.iter().position(|s| s.ids.contains(&901)).unwrap();
-    p.spells[i].tags = vec![Tag::Avoidable];
-    p.spells[i].suggested.clear();
-    apply(&mut p, &c);
-    assert!(spell(&p, 901).suggested.is_empty());
+    // Our own keys alone never propose it: nothing to say it can be dodged.
+    let own = || (swirl_run(3, 3), Origin::Own);
+    assert!(judge(&[own(), own()]).suggested.is_empty());
+    // Top players hit 10 per player per 10 minutes: random damage, not dodged.
+    let busy = || (swirl_run(40, 40), Origin::Top);
+    assert!(judge(&[busy(), busy()]).suggested.is_empty());
+    // Aimed at the player it hits (a bolt): not avoidable.
+    let aimed = || (swirl_run(0, 3), Origin::Top);
+    assert!(judge(&[aimed(), aimed()]).suggested.is_empty());
 }
 
 #[test]
