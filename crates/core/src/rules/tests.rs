@@ -30,6 +30,7 @@ fn player(name: &str, role: Role) -> PlayerReport {
         potions: 0,
         top_damage_taken: vec![],
         wcl_rank_percent: None,
+        wcl_bracket_percent: None,
         kick_latency_s: None,
         priority_missed: 0,
         wasted_kicks: 0,
@@ -1630,4 +1631,21 @@ fn damage_top_runs_avoid_is_listed() {
 fn damage_vs_top_needs_enough_runs_with_damage_data() {
     let s = run(damage_vs_top_fight(2), &Config::default());
     assert!(get(&s, "group", "Damage vs top runs").is_none());
+}
+
+#[test]
+fn mplus_benchmark_uses_the_key_level_percentile() {
+    // Low keys rank near 0 against all keys: only the level percentile counts.
+    let mut f = mplus(true, 1200.0);
+    f.players[2].wcl_rank_percent = Some(3.0);
+    f.players[2].wcl_bracket_percent = Some(60.0);
+    assert!(get(&run(f, &Config::default()), "Alpha", "Benchmark").is_none());
+    let mut f = mplus(true, 1200.0);
+    f.players[2].wcl_rank_percent = Some(89.0);
+    f.players[2].wcl_bracket_percent = Some(9.0);
+    let s = run(f, &Config::default());
+    assert_eq!(
+        get(&s, "Alpha", "Benchmark").unwrap().message,
+        "Warcraft Logs ranks this parse at 9 for the spec at +10."
+    );
 }

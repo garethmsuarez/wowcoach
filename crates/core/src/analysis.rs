@@ -231,7 +231,12 @@ pub struct PlayerReport {
     pub healthstones: u32,
     pub potions: u32,
     pub top_damage_taken: Vec<(String, u64, u32)>,
+    /// Warcraft Logs percentile against all parses of the spec (DPS; HPS
+    /// for healers).
     pub wcl_rank_percent: Option<f64>,
+    /// The same against parses at this key level (M+) or item level bracket
+    /// (raid).
+    pub wcl_bracket_percent: Option<f64>,
     /// Median time from a cast bar starting to this player's kick.
     pub kick_latency_s: Option<f64>,
     /// Priority casts that went off while this player had a kick ready in range.
@@ -1155,6 +1160,7 @@ impl FightBuilder {
                 potions: p.potions.len() as u32,
                 top_damage_taken: top,
                 wcl_rank_percent: None,
+                wcl_bracket_percent: None,
                 kick_latency_s: None,
                 priority_missed: 0,
                 wasted_kicks: 0,

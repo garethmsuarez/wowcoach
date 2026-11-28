@@ -58,6 +58,12 @@ struct OutOpts {
     #[cfg(feature = "wcl")]
     #[arg(long, default_value_t = 1000.0, value_name = "POINTS")]
     compare_max_points: f64,
+    /// M+ from raw logs: find each key on Warcraft Logs (if someone uploaded
+    /// it) and show each player's percentile (DPS; HPS for healers). Sends
+    /// the group's names and realms to Warcraft Logs; ~5 points per key
+    #[cfg(feature = "wcl")]
+    #[arg(long)]
+    rankings: bool,
 }
 
 impl OutOpts {
@@ -486,9 +492,70 @@ fn cache_root() -> PathBuf {
         .join("wowcoach")
 }
 
+/// `--rankings`: for M+ keys with no percentiles yet (raw logs), find the run
+/// on Warcraft Logs through the players' dungeon rankings and copy each
+/// player's percentile from its report. Raw-log times are UTC, as WCL's.
+#[cfg(feature = "wcl")]
+fn attach_rankings(fights: &mut [analysis::FightReport], o: &OutOpts) -> anyhow::Result<()> {
+    if !o.rankings {
+        return Ok(());
+    }
+    let (Ok(id), Ok(secret)) = (
+        std::env::var("WCL_CLIENT_ID"),
+        std::env::var("WCL_CLIENT_SECRET"),
+    ) else {
+        anyhow::bail!("--rankings needs WCL_CLIENT_ID and WCL_CLIENT_SECRET (env or ./.env)");
+    };
+    eprintln!("Looking up Warcraft Logs percentiles...");
+    let client = wcl::net::Client::connect(&id, &secret)?;
+    let (spent0, _, _) = client.rate_limit()?;
+    let encounters = client.zone_encounters()?;
+    for f in fights.iter_mut() {
+        let FightKind::MythicPlus {
+            zone,
+            map_id,
+            level,
+            ..
+        } = &f.kind
+        else {
+            continue;
+        };
+        if f.players.iter().any(|p| p.wcl_rank_percent.is_some()) {
+            continue;
+        }
+        let Some((_, enc)) = encounters
+            .iter()
+            .find(|(n, id)| n.eq_ignore_ascii_case(zone) && *id % 10_000 == *map_id)
+        else {
+            eprintln!("  {}: dungeon not found on Warcraft Logs", f.title);
+            continue;
+        };
+        let names: Vec<String> = f.players.iter().map(|p| p.name.clone()).collect();
+        match client.find_run(*enc, &names, f.start_ts, *level)? {
+            Some(run) => {
+                let r = client.fight_rankings(&run.code, run.fight_id)?;
+                for p in f.players.iter_mut() {
+                    let bare = wcl::split_player(&p.name).map_or(p.name.as_str(), |s| s.0);
+                    let rank = r.get(bare);
+                    p.wcl_rank_percent = rank.map(|x| x.overall);
+                    p.wcl_bracket_percent = rank.and_then(|x| x.bracket);
+                }
+                eprintln!(
+                    "  {}: percentiles from {}:{}",
+                    f.title, run.code, run.fight_id
+                );
+            }
+            None => eprintln!("  {}: not ranked on Warcraft Logs (not uploaded?)", f.title),
+        }
+    }
+    let (spent, _, _) = client.rate_limit()?;
+    eprintln!("Warcraft Logs points used: {:.0}", spent - spent0);
+    Ok(())
+}
+
 /// `--compare-top N`: line each completed M+ key up with the top N public
 /// runs of its dungeon and level. Runs are cached as game data only
-/// (`compare/v1-{code}-{fight}.json`), so a re-run costs a couple of points.
+/// (`compare/v2-{code}-{fight}.json`), so a re-run costs a couple of points.
 #[cfg(feature = "wcl")]
 fn attach_top_runs(
     fights: &mut [analysis::FightReport],
@@ -904,6 +971,8 @@ fn finish(
 ) -> anyhow::Result<()> {
     #[cfg(feature = "wcl")]
     attach_top_runs(&mut fights, cfg, o)?;
+    #[cfg(feature = "wcl")]
+    attach_rankings(&mut fights, o)?;
     let rep = wowcoach_core::build_report(source, fights, cfg);
     if let Some(p) = &o.dump_casts {
         let all: Vec<_> = rep
@@ -1104,7 +1173,9 @@ fn main() -> anyhow::Result<()> {
             for f in reports.iter_mut() {
                 if let Some(r) = fetched.rankings.get(&f.start_ts) {
                     for p in f.players.iter_mut() {
-                        p.wcl_rank_percent = r.get(&p.name).copied();
+                        let rank = r.get(&p.name);
+                        p.wcl_rank_percent = rank.map(|x| x.overall);
+                        p.wcl_bracket_percent = rank.and_then(|x| x.bracket);
                     }
                 }
                 if let (

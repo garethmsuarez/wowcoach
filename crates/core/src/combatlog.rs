@@ -59,17 +59,25 @@ fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
     era * 146097 + doe - 719468
 }
 
-/// Parse "11/23/2026 21:14:05.1234-6" (or "4/22 20:41:42.123") into ms.
+/// Parse "11/23/2026 21:14:05.1234-6" (or "4/22 20:41:42.123") into ms. The
+/// suffix is the UTC offset in hours, so with it the result is Unix time in
+/// ms (UTC), which `analyze --rankings` matches against Warcraft Logs. Without
+/// one (older logs) it's local time.
 pub fn parse_timestamp(s: &str) -> Option<i64> {
     let (date, time) = s.split_once(' ')?;
     let mut dp = date.split('/');
     let m: i64 = dp.next()?.parse().ok()?;
     let d: i64 = dp.next()?.parse().ok()?;
     let y: i64 = dp.next().and_then(|y| y.parse().ok()).unwrap_or(2000);
-    // strip timezone suffix (+N / -N) after the fractional seconds
-    let time = match time.rfind(['-', '+']) {
-        Some(i) if i > 0 => &time[..i],
-        _ => time,
+    // the UTC offset (+N / -N hours) after the fractional seconds
+    let (time, offset_ms) = match time.rfind(['-', '+']) {
+        Some(i) if i > 0 => (
+            &time[..i],
+            time[i..]
+                .parse::<f64>()
+                .map_or(0, |h| (h * 3_600_000.0).round() as i64),
+        ),
+        _ => (time, 0),
     };
     let mut tp = time.split(':');
     let hh: i64 = tp.next()?.parse().ok()?;
@@ -82,7 +90,7 @@ pub fn parse_timestamp(s: &str) -> Option<i64> {
         ms_str.push('0');
     }
     let ms: i64 = ms_str.parse().ok()?;
-    Some((days_from_civil(y, m, d) * 86_400 + hh * 3600 + mm * 60 + ss) * 1000 + ms)
+    Some((days_from_civil(y, m, d) * 86_400 + hh * 3600 + mm * 60 + ss) * 1000 + ms - offset_ms)
 }
 
 fn unit(guid: &str, name: &str, flags: &str) -> Option<Unit> {
@@ -445,6 +453,13 @@ mod tests {
         let b = parse_timestamp("11/23/2026 21:14:06.000-6").unwrap();
         assert_eq!(b - a, 877);
         assert!(parse_timestamp("4/22 20:41:42.123").is_some());
+        // UTC: 21:14 at -6 is 03:14 the next day (2026-11-24T03:14:06Z).
+        assert_eq!(b, 1_795_490_046_000);
+        assert_eq!(
+            parse_timestamp("11/24/2026 3:14:06.000+0").unwrap(),
+            b,
+            "same instant"
+        );
     }
 
     #[test]
