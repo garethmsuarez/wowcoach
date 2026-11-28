@@ -645,23 +645,120 @@ pub fn with_boss_events(mut events: Vec<Event>, boss: Vec<Event>) -> Vec<Event> 
     events
 }
 
-/// name -> rankPercent from a `report.rankings` JSON blob.
-pub fn parse_rankings(v: &Value) -> HashMap<String, f64> {
+/// A player's Warcraft Logs percentiles for one fight.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Rank {
+    /// Against all parses of the spec.
+    pub overall: f64,
+    /// Against parses at the same key level (or item level bracket).
+    pub bracket: Option<f64>,
+}
+
+/// name -> percentiles from `report.rankings` fetched twice, with
+/// `playerMetric: dps` and `hps`: tanks and DPS by damage, healers by
+/// healing. (The default metric of an M+ fight is the key's score, the same
+/// for all five players.)
+pub fn parse_rankings(dps: &Value, hps: &Value) -> HashMap<String, Rank> {
+    let mut out = rankings_for(dps, &["tanks", "dps"]);
+    out.extend(rankings_for(hps, &["healers"]));
+    out
+}
+
+fn rankings_for(v: &Value, roles: &[&str]) -> HashMap<String, Rank> {
     let mut out = HashMap::new();
     for fight in v["data"].as_array().into_iter().flatten() {
-        for role in ["tanks", "healers", "dps"] {
-            for c in fight["roles"][role]["characters"]
+        for role in roles {
+            for c in fight["roles"][*role]["characters"]
                 .as_array()
                 .into_iter()
                 .flatten()
             {
                 if let (Some(n), Some(r)) = (c["name"].as_str(), c["rankPercent"].as_f64()) {
-                    out.insert(n.to_string(), r);
+                    let bracket = c["bracketPercent"].as_f64();
+                    out.insert(
+                        n.to_string(),
+                        Rank {
+                            overall: r,
+                            bracket,
+                        },
+                    );
                 }
             }
         }
     }
     out
+}
+
+/// "Name-Realm-US" (a raw log's player name) -> (name, realm, region).
+pub fn split_player(full: &str) -> Option<(&str, &str, &str)> {
+    let mut it = full.rsplitn(3, '-');
+    let region = it.next()?;
+    let realm = it.next()?;
+    let name = it.next()?;
+    Some((name, realm, region))
+}
+
+/// Server slugs to try for a realm as the log writes it ("SteamwheedleCartel",
+/// "Area52", "AzjolNerub"): words split ("steamwheedle-cartel", "area-52"),
+/// then joined ("azjolnerub"), which is how realms named with a hyphen end up.
+pub fn realm_slugs(realm: &str) -> Vec<String> {
+    let mut split = String::new();
+    let mut prev: Option<char> = None;
+    for ch in realm.chars().filter(|c| c.is_alphanumeric()) {
+        if let Some(p) = prev
+            && ((p.is_lowercase() && ch.is_uppercase())
+                || (p.is_alphabetic() && ch.is_ascii_digit())
+                || (p.is_ascii_digit() && ch.is_alphabetic()))
+        {
+            split.push('-');
+        }
+        split.extend(ch.to_lowercase());
+        prev = Some(ch);
+    }
+    let joined = split.replace('-', "");
+    if joined == split {
+        vec![split]
+    } else {
+        vec![split, joined]
+    }
+}
+
+/// A character's ranked run from `character.encounterRankings`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RankedRun {
+    pub code: String,
+    pub fight_id: i64,
+    /// Unix ms (UTC) of the run's start.
+    pub start: i64,
+    pub level: u32,
+}
+
+/// The runs in a `character.encounterRankings` blob.
+pub fn ranked_runs(v: &Value) -> Vec<RankedRun> {
+    v["ranks"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|r| {
+            Some(RankedRun {
+                code: r["report"]["code"].as_str()?.to_string(),
+                fight_id: i(&r["report"], "fightID")?,
+                start: i(r, "startTime")?,
+                level: i(r, "bracketData")? as u32,
+            })
+        })
+        .collect()
+}
+
+/// How far a ranked run's start may be from the log's `CHALLENGE_MODE_START`.
+pub const RUN_MATCH_MS: i64 = 5 * 60_000;
+
+/// The ranked run that is this key: same level, starting within
+/// `RUN_MATCH_MS` of `start` (Unix ms), the closest.
+pub fn match_run(runs: &[RankedRun], start: i64, level: u32) -> Option<&RankedRun> {
+    runs.iter()
+        .filter(|r| r.level == level && (r.start - start).abs() <= RUN_MATCH_MS)
+        .min_by_key(|r| (r.start - start).abs())
 }
 
 // ------------------------------------------------------------- network
@@ -743,7 +840,11 @@ pub mod net {
         events(fightIDs:$fid,startTime:$s,endTime:$e,limit:10000,includeResources:true){ data nextPageTimestamp }
     }}}"#;
 
-    const RANK_Q: &str = r#"query($code:String!,$fid:[Int]!){ reportData{ report(code:$code){ rankings(fightIDs:$fid) } } }"#;
+    const RANK_Q: &str = r#"query($code:String!,$fid:[Int]!){ reportData{ report(code:$code){
+        dps: rankings(fightIDs:$fid, playerMetric: dps) hps: rankings(fightIDs:$fid, playerMetric: hps) } } }"#;
+
+    const CHAR_RANKS_Q: &str = r#"query($n:String!,$s:String!,$r:String!,$e:Int!){ characterData{ character(name:$n, serverSlug:$s, serverRegion:$r){
+        encounterRankings(encounterID:$e, difficulty:10, metric:dps) } } }"#;
 
     const REF_Q: &str = r#"query($code:String!,$fid:[Int]!){ reportData{ report(code:$code){
         masterData{ actors(type:"NPC"){ id gameID } }
@@ -770,6 +871,59 @@ pub mod net {
         r#"{ worldData{ expansions{ id name zones{ id name frozen encounters{ id name } } } } }"#;
 
     impl Client {
+        /// name -> Warcraft Logs percentile for one fight: DPS for tanks and
+        /// DPS, HPS for healers.
+        pub fn fight_rankings(
+            &self,
+            code: &str,
+            fight: i64,
+        ) -> anyhow::Result<HashMap<String, super::Rank>> {
+            let r = self.query(RANK_Q, json!({ "code": code, "fid": [fight] }))?;
+            let rep = &r["reportData"]["report"];
+            Ok(super::parse_rankings(&rep["dps"], &rep["hps"]))
+        }
+
+        /// Find a key from a raw log on Warcraft Logs, through its players'
+        /// rankings for the dungeon (`encounter`, the whole-dungeon ID): the
+        /// run at `level` that started within `RUN_MATCH_MS` of `start` (Unix
+        /// ms). Players are tried in order (each realm slug in turn); after two
+        /// characters found without the run it gives up, since a run is
+        /// ranked for all five or for none. Sends names and realms to WCL.
+        pub fn find_run(
+            &self,
+            encounter: u32,
+            players: &[String],
+            start: i64,
+            level: u32,
+        ) -> anyhow::Result<Option<super::RankedRun>> {
+            let mut found = 0;
+            for p in players {
+                let Some((name, realm, region)) = super::split_player(p) else {
+                    continue;
+                };
+                for slug in super::realm_slugs(realm) {
+                    let d = self.query(
+                        CHAR_RANKS_Q,
+                        json!({ "n": name, "s": slug, "r": region, "e": encounter }),
+                    )?;
+                    let ch = &d["characterData"]["character"];
+                    if ch.is_null() {
+                        continue;
+                    }
+                    let runs = super::ranked_runs(&ch["encounterRankings"]);
+                    if let Some(r) = super::match_run(&runs, start, level) {
+                        return Ok(Some(r.clone()));
+                    }
+                    found += 1;
+                    break;
+                }
+                if found >= 2 {
+                    break;
+                }
+            }
+            Ok(None)
+        }
+
         /// Boss name -> logged encounter ID for current content.
         pub fn zone_encounters(&self) -> anyhow::Result<Vec<(String, u32)>> {
             Ok(super::zone_encounters(&self.query(ZONES_Q, json!({}))?))
@@ -823,7 +977,7 @@ pub mod net {
         pub title: String,
         pub events: Vec<Event>,
         /// keyed by fight start ts (matches FightReport.start_ts)
-        pub rankings: HashMap<i64, HashMap<String, f64>>,
+        pub rankings: HashMap<i64, HashMap<String, super::Rank>>,
         pub boss_pct: HashMap<i64, f64>,
     }
 
@@ -887,12 +1041,9 @@ pub mod net {
                 boss_pct.insert(f.start, if f.kill { 0.0 } else { p });
             }
             if with_rankings && f.encounter_id > 0 {
-                match c.query(RANK_Q, json!({ "code": code, "fid": [f.id] })) {
+                match c.fight_rankings(code, f.id) {
                     Ok(r) => {
-                        rankings.insert(
-                            f.start,
-                            parse_rankings(&r["reportData"]["report"]["rankings"]),
-                        );
+                        rankings.insert(f.start, r);
                     }
                     Err(e) => eprintln!("  (rankings unavailable for fight {}: {e})", f.id),
                 }
@@ -1205,9 +1356,47 @@ mod tests {
 
     #[test]
     fn rankings() {
-        let r = parse_rankings(
-            &json!({"data": [{"roles": {"dps": {"characters": [{"name": "A", "rankPercent": 42.5}]}}}]}),
+        let fight = |t: f64, h: f64, d: f64| {
+            json!({"data": [{"roles": {
+                "tanks": {"characters": [{"name": "T", "rankPercent": t}]},
+                "healers": {"characters": [{"name": "H", "rankPercent": h, "bracketPercent": h / 2.0}]},
+                "dps": {"characters": [{"name": "A", "rankPercent": d, "bracketPercent": 9.0}]}
+            }}]})
+        };
+        // DPS metric for tanks and DPS, HPS for healers.
+        let r = parse_rankings(&fight(80.0, 10.0, 42.5), &fight(5.0, 84.0, 3.0));
+        let o = |n: &str| (r[n].overall, r[n].bracket);
+        assert_eq!(o("T"), (80.0, None));
+        assert_eq!(o("H"), (84.0, Some(42.0)));
+        assert_eq!(o("A"), (42.5, Some(9.0)));
+    }
+
+    #[test]
+    fn players_realm_slugs_and_ranked_runs() {
+        assert_eq!(
+            split_player("Name-SteamwheedleCartel-US"),
+            Some(("Name", "SteamwheedleCartel", "US"))
         );
-        assert_eq!(r["A"], 42.5);
+        assert_eq!(split_player("Name"), None);
+        assert_eq!(
+            realm_slugs("SteamwheedleCartel"),
+            ["steamwheedle-cartel", "steamwheedlecartel"]
+        );
+        assert_eq!(realm_slugs("Area52"), ["area-52", "area52"]);
+        assert_eq!(realm_slugs("AzjolNerub"), ["azjol-nerub", "azjolnerub"]);
+        assert_eq!(realm_slugs("Uldum"), ["uldum"]);
+        assert_eq!(realm_slugs("Zul'jin"), ["zuljin"]);
+
+        let v = json!({"ranks": [
+            {"report": {"code": "old", "fightID": 1}, "startTime": 1_000_000, "bracketData": 15},
+            {"report": {"code": "near", "fightID": 3}, "startTime": 9_100_000, "bracketData": 15},
+            {"report": {"code": "lvl", "fightID": 2}, "startTime": 9_010_000, "bracketData": 14},
+            {"report": {"code": "far", "fightID": 4}, "startTime": 9_000_000 + 400_000, "bracketData": 15}
+        ]});
+        let runs = ranked_runs(&v);
+        assert_eq!(runs.len(), 4);
+        let m = match_run(&runs, 9_000_000, 15).unwrap();
+        assert_eq!((m.code.as_str(), m.fight_id), ("near", 3));
+        assert!(match_run(&runs, 9_000_000, 16).is_none());
     }
 }

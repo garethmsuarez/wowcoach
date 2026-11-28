@@ -604,7 +604,11 @@ fn players_html(f: &FightReport, o: &mut String) {
         } else {
             ""
         },
-        if has_rank { "<th>WCL %</th>" } else { "" }
+        if has_rank {
+            "<th title='Warcraft Logs percentile against all parses of the spec: DPS, or HPS for healers'>WCL %ile</th><th title='The same, against parses at this key level (raid: item level bracket)'>Level %ile</th>"
+        } else {
+            ""
+        }
     );
     for p in &f.players {
         let _ = write!(
@@ -660,8 +664,11 @@ fn players_html(f: &FightReport, o: &mut String) {
             p.activity_pct * 100.0,
             if has_rank {
                 format!(
-                    "<td class=n>{}</td>",
+                    "<td class=n>{}</td><td class=n>{}</td>",
                     p.wcl_rank_percent
+                        .map(|r| format!("{r:.0}"))
+                        .unwrap_or_default(),
+                    p.wcl_bracket_percent
                         .map(|r| format!("{r:.0}"))
                         .unwrap_or_default()
                 )

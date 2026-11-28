@@ -63,7 +63,7 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 | Avoidable damage (config) + uneven-hit heuristic | Estimated casting activity (GCD coverage while alive) |
 | Bloodlust missing / late | DPS vs group DPS median with likely causes |
 | M+ pacing: downtime %, longest gaps, near-wipe pulls | Healer overheal %, zero interrupts in M+ |
-| Progression: recurring first-death cause, repeat deaths | WCL rank percentile (API source) |
+| Progression: recurring first-death cause, repeat deaths | WCL percentile, DPS (HPS for healers), overall and at the key level (`wcl` source, or `--rankings` for raw logs); a Low note under 25 at the key level |
 
 ## Season data
 
@@ -149,6 +149,21 @@ uses more than `--max-points` (default 3000) of the hourly limit.
 
   It's proposed with the `affix` tag. A per-dungeon entry a reviewer has worked on
   (tags, note or dismissed) is never moved.
+
+### Warcraft Logs percentiles for raw logs
+
+`analyze --rankings` finds each M+ key from a raw log on Warcraft Logs, if
+someone in the group uploaded it, and fills the Players table's "WCL %ile"
+(against all parses of the spec: DPS, or HPS for healers) and "Level %ile"
+(against parses at the same key level). It looks the run up through the
+players' rankings for the dungeon, so it **sends the group's names and realms
+to Warcraft Logs**. About 5 points per key, not cached. Abandoned keys aren't
+ranked. Low keys rank near 0 against all keys, so the "Benchmark" note uses the
+level percentile.
+
+```bash
+wowcoach analyze ~/WoW/_retail_/Logs/WoWCombatLog-*.txt --rankings
+```
 
 ### Comparing with top runs
 

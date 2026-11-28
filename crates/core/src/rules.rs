@@ -813,14 +813,20 @@ fn player_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
                 "Spec, item level and assignments (soaks, add duty) all affect this, so read it as a pointer, not a verdict.".into(),
             ));
         }
-        if let Some(r) = p.wcl_rank_percent
+        // M+: against the same key level, since low keys rank near 0 against
+        // all keys of the dungeon.
+        let (rank, against) = match (&f.kind, p.wcl_bracket_percent) {
+            (FightKind::MythicPlus { level, .. }, Some(b)) => (Some(b), format!("at +{level}")),
+            _ => (p.wcl_rank_percent, "on this encounter".to_string()),
+        };
+        if let Some(r) = rank
             && r < 25.0
         {
             out.push(sugg(
                 me,
                 Severity::Low,
                 "Benchmark",
-                format!("Warcraft Logs ranks this parse at {r:.0} for the spec on this encounter."),
+                format!("Warcraft Logs ranks this parse at {r:.0} for the spec {against}."),
                 String::new(),
             ));
         }

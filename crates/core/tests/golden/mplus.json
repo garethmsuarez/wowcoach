@@ -86,6 +86,7 @@
             ]
           ],
           "wcl_rank_percent": null,
+          "wcl_bracket_percent": null,
           "kick_latency_s": 1.0,
           "priority_missed": 13,
           "wasted_kicks": 1,
@@ -138,6 +139,7 @@
             ]
           ],
           "wcl_rank_percent": null,
+          "wcl_bracket_percent": null,
           "kick_latency_s": null,
           "priority_missed": 0,
           "wasted_kicks": 0,
@@ -195,6 +197,7 @@
             ]
           ],
           "wcl_rank_percent": null,
+          "wcl_bracket_percent": null,
           "kick_latency_s": 1.0,
           "priority_missed": 17,
           "wasted_kicks": 0,
@@ -247,6 +250,7 @@
             ]
           ],
           "wcl_rank_percent": null,
+          "wcl_bracket_percent": null,
           "kick_latency_s": null,
           "priority_missed": 17,
           "wasted_kicks": 0,
@@ -294,6 +298,7 @@
             ]
           ],
           "wcl_rank_percent": null,
+          "wcl_bracket_percent": null,
           "kick_latency_s": null,
           "priority_missed": 12,
           "wasted_kicks": 0,
