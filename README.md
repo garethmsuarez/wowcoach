@@ -49,7 +49,7 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 | Deaths and most common killing blows (+ M+ timer cost from the key's affixes) | Death recap (last hits, HP%), avoidable vs not, healthstone/potion used |
 | Raid wipe: early first death that snowballed | Avoidable damage vs group median (config-listed) |
 | Missed interrupts: a cast counts as interruptible if it was kicked at least once, or is listed in config | "Possibly avoidable": took far more of a spell than peers (heuristic) |
-| M+ priority kicks: each priority cast that went off, and who had a kick ready and in range | Priority casts you could have kicked; kicks wasted on filler while a priority cast went off; "free kicks" (a `kick` spell went off while your kick was free and no priority cast was near) |
+| M+ priority kicks: each priority cast that went off, and who had a kick ready and in range. "Free kicks": `kick` spells that went off while someone's kick was free and no priority cast was near, and who was most often ready | Priority casts you could have kicked; kicks wasted on filler while a priority cast went off |
 | M+ kick plan per dungeon: who should cover which priority casters, from all keys of that dungeon. Must-kicks are covered first, kick-when-free spells get the spare kicks | |
 | M+ stops: priority casts that crowd control also stops (`stoppable`), that went off while someone had a stun, knock or incapacitate ready and in range | |
 | M+ spikes: the group losing half its HP within 5 s while a group defensive was ready and unused, naming who held it | M+: died with a personal defensive ready (used earlier in the key, off cooldown) |
