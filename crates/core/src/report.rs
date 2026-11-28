@@ -95,7 +95,7 @@ fn kick_plan_html(k: &crate::rules::kickplan::KickPlan, o: &mut String) {
     }
     let _ = write!(
         o,
-        "<div class=card><details open><summary><h2>Kick plan: {}</h2><span class=chip>{} key{}</span><span class=chip>{} packs</span></summary><div class=body><div class=sub>For {}. Each pack is the set of enemies casting priority spells in a pull. Must-kicks are assigned first; spells marked “with spare kicks” only get kicks left over; rates are casts per minute while that pack was in combat. Kickers can do 60 ÷ cooldown kicks a minute, with a 25% margin, preferring whoever already kicked that spell, then whoever was usually in range. A starting point, not a rule.</div><table><tr><th>Pack</th><th>Priority casts</th><th>Suggested kickers</th></tr>",
+        "<h3>Kick plan: {}</h3><div class=sub>From {} key{} of this dungeon in this report, {} packs, for {}. Each pack is the set of enemies casting priority spells in a pull. Must-kicks are assigned first; spells marked “with spare kicks” only get kicks left over; rates are casts per minute while that pack was in combat. Kickers can do 60 ÷ cooldown kicks a minute, with a 25% margin, preferring whoever already kicked that spell, then whoever was usually in range. A starting point, not a rule.</div><table><tr><th>Pack</th><th>Priority casts</th><th>Suggested kickers</th></tr>",
         esc(&k.dungeon),
         k.keys,
         if k.keys == 1 { "" } else { "s" },
@@ -157,7 +157,7 @@ fn kick_plan_html(k: &crate::rules::kickplan::KickPlan, o: &mut String) {
             who
         );
     }
-    o.push_str("</table></div></details></div>");
+    o.push_str("</table>");
 }
 
 /// Every priority cast of a key and how it ended, grouped by pull.
@@ -591,6 +591,173 @@ fn route_html(f: &FightReport, o: &mut String) {
     o.push_str("</table>");
 }
 
+/// The players table: output, damage taken, kicks, dispels, deaths.
+fn players_html(f: &FightReport, o: &mut String) {
+    let max_dps = f.players.iter().map(|p| p.dps).fold(0.0, f64::max).max(1.0);
+    let is_mplus = matches!(f.kind, FightKind::MythicPlus { .. });
+    let has_rank = f.players.iter().any(|p| p.wcl_rank_percent.is_some());
+    let _ = write!(
+        o,
+        "<h3>Players</h3><table><tr><th>Player</th><th>Spec</th><th>DPS</th><th></th><th>HPS</th><th>Shields</th><th>Taken</th><th>Avoidable</th><th>Kicks</th>{}<th>Dispels</th><th>Deaths</th><th>Activity</th>{}</tr>",
+        if is_mplus {
+            "<th title='median time into the cast bar'>Kick time</th><th title='priority casts that went off with your kick ready in range'>Missed ★</th><th title='filler kicked while a priority cast was casting'>Wasted</th><th title='median time to dispel a priority debuff'>Dispel time</th>"
+        } else {
+            ""
+        },
+        if has_rank { "<th>WCL %</th>" } else { "" }
+    );
+    for p in &f.players {
+        let _ = write!(
+            o,
+            "<tr><td>{}</td><td>{} {}{}</td><td class=n>{}</td><td><div class=bar><i style='width:{:.0}%'></i></div></td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td>{}<td class=n>{}</td><td class=n>{}</td><td class=n>{:.0}%</td>{}</tr>",
+            esc(&p.name),
+            esc(&p.spec),
+            esc(&p.class),
+            if p.role_inferred {
+                format!(" <span class=sub>({:?}?)</span>", p.role)
+            } else {
+                String::new()
+            },
+            human(p.dps as u64),
+            100.0 * p.dps / max_dps,
+            human(p.hps as u64),
+            if p.absorbs_done > 0 {
+                human(p.absorbs_done)
+            } else {
+                String::new()
+            },
+            human(p.damage_taken),
+            human(p.avoidable_taken + p.likely_avoidable_taken),
+            p.interrupts,
+            if is_mplus {
+                format!(
+                    "<td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td>",
+                    p.kick_latency_s
+                        .map(|l| format!("{l:.1}s"))
+                        .unwrap_or_default(),
+                    if p.priority_missed > 0 {
+                        p.priority_missed.to_string()
+                    } else {
+                        String::new()
+                    },
+                    if p.wasted_kicks > 0 {
+                        p.wasted_kicks.to_string()
+                    } else {
+                        String::new()
+                    },
+                    p.dispel_latency_s
+                        .map(|l| format!(
+                            "<span title='{} priority dispel(s)'>{l:.1}s</span>",
+                            p.priority_dispels
+                        ))
+                        .unwrap_or_default()
+                )
+            } else {
+                String::new()
+            },
+            p.dispels,
+            p.deaths,
+            p.activity_pct * 100.0,
+            if has_rank {
+                format!(
+                    "<td class=n>{}</td>",
+                    p.wcl_rank_percent
+                        .map(|r| format!("{r:.0}"))
+                        .unwrap_or_default()
+                )
+            } else {
+                String::new()
+            }
+        );
+    }
+    o.push_str("</table>");
+}
+
+/// Each death with its killing blow and last hits.
+fn deaths_html(f: &FightReport, o: &mut String) {
+    if !f.deaths.is_empty() {
+        o.push_str("<h3>Deaths</h3><table><tr><th>Time</th><th>Player</th><th>Killing blow</th><th>Last hits</th></tr>");
+        for d in &f.deaths {
+            let recap = d
+                .recap
+                .iter()
+                .map(|r| {
+                    format!(
+                        "{} {} {}{}",
+                        mmss(r.at_s),
+                        esc(&r.spell),
+                        human(r.amount),
+                        r.hp_pct_after
+                            .map(|h| format!(" ({h:.0}%)"))
+                            .unwrap_or_default()
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("<br>");
+            let _ = write!(
+                o,
+                "<tr><td>{}</td><td>{}</td><td>{}</td><td class=sub>{}</td></tr>",
+                mmss(d.at_s),
+                esc(&d.player),
+                if d.priority_debuffs.is_empty() {
+                    esc(&d.killing_blow)
+                } else {
+                    format!(
+                        "{} <span class=bad>· {} up</span>",
+                        esc(&d.killing_blow),
+                        esc(&d.priority_debuffs.join(", "))
+                    )
+                },
+                recap
+            );
+        }
+        o.push_str("</table>");
+    }
+}
+
+/// Interruptible casts and damage taken by enemy spell, side by side.
+fn tables_html(f: &FightReport, o: &mut String) {
+    o.push_str("<div class=grid>");
+    if !f.enemy_casts.is_empty() {
+        o.push_str("<div><h3>Interruptible casts</h3><table><tr><th>Spell</th><th>Went off</th><th>Kicked</th></tr>");
+        for c in &f.enemy_casts {
+            let _ = write!(
+                o,
+                "<tr><td>{}{}</td><td class=n>{}</td><td class=n>{}</td></tr>",
+                esc(&c.name),
+                if c.priority {
+                    " ★"
+                } else if c.kick {
+                    " ☆"
+                } else {
+                    ""
+                },
+                c.succeeded,
+                c.interrupted
+            );
+        }
+        o.push_str("</table></div>");
+    }
+    o.push_str("<div><h3>Damage taken by enemy spell</h3><table><tr><th>Spell</th><th>Total</th><th>Players hit</th><th></th></tr>");
+    for s in f.enemy_damage.iter().take(12) {
+        let _ = write!(
+            o,
+            "<tr><td>{}</td><td class=n>{}</td><td class=n>{}</td><td>{}</td></tr>",
+            esc(&s.name),
+            human(s.total),
+            s.players_hit,
+            if s.configured_avoidable {
+                "<span class='chip bad'>avoidable</span>"
+            } else if s.likely_avoidable {
+                "<span class=chip>check</span>"
+            } else {
+                ""
+            }
+        );
+    }
+    o.push_str("</table></div></div>");
+}
+
 pub fn html(r: &Report) -> String {
     let mut o = String::new();
     let _ = write!(
@@ -635,10 +802,6 @@ pub fn html(r: &Report) -> String {
             o.push_str("</table></div>");
         }
         o.push_str("</div></div></details></div>");
-    }
-
-    for k in &r.kick_plans {
-        kick_plan_html(k, &mut o);
     }
 
     for f in &r.fights {
@@ -715,173 +878,21 @@ pub fn html(r: &Report) -> String {
             );
         }
 
+        players_html(f, &mut o);
         suggestions_html(&f.suggestions, &mut o);
-        if matches!(f.kind, FightKind::MythicPlus { .. }) {
-            priority_casts_html(f, &mut o);
-            defensives_html(f, &mut o);
-            dispels_html(f, &mut o);
+        if let FightKind::MythicPlus { zone, .. } = &f.kind {
             route_html(f, &mut o);
+            priority_casts_html(f, &mut o);
+            if let Some(k) = r.kick_plans.iter().find(|k| &k.dungeon == zone) {
+                kick_plan_html(k, &mut o);
+            }
+            dispels_html(f, &mut o);
+            defensives_html(f, &mut o);
             damage_html(f, &mut o);
         }
-
-        // players
-        let max_dps = f.players.iter().map(|p| p.dps).fold(0.0, f64::max).max(1.0);
-        let is_mplus = matches!(f.kind, FightKind::MythicPlus { .. });
-        let has_rank = f.players.iter().any(|p| p.wcl_rank_percent.is_some());
-        let _ = write!(
-            o,
-            "<h3>Players</h3><table><tr><th>Player</th><th>Spec</th><th>DPS</th><th></th><th>HPS</th><th>Shields</th><th>Taken</th><th>Avoidable</th><th>Kicks</th>{}<th>Dispels</th><th>Deaths</th><th>Activity</th>{}</tr>",
-            if is_mplus {
-                "<th title='median time into the cast bar'>Kick time</th><th title='priority casts that went off with your kick ready in range'>Missed ★</th><th title='filler kicked while a priority cast was casting'>Wasted</th><th title='median time to dispel a priority debuff'>Dispel time</th>"
-            } else {
-                ""
-            },
-            if has_rank { "<th>WCL %</th>" } else { "" }
-        );
-        for p in &f.players {
-            let _ = write!(
-                o,
-                "<tr><td>{}</td><td>{} {}{}</td><td class=n>{}</td><td><div class=bar><i style='width:{:.0}%'></i></div></td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td>{}<td class=n>{}</td><td class=n>{}</td><td class=n>{:.0}%</td>{}</tr>",
-                esc(&p.name),
-                esc(&p.spec),
-                esc(&p.class),
-                if p.role_inferred {
-                    format!(" <span class=sub>({:?}?)</span>", p.role)
-                } else {
-                    String::new()
-                },
-                human(p.dps as u64),
-                100.0 * p.dps / max_dps,
-                human(p.hps as u64),
-                if p.absorbs_done > 0 {
-                    human(p.absorbs_done)
-                } else {
-                    String::new()
-                },
-                human(p.damage_taken),
-                human(p.avoidable_taken + p.likely_avoidable_taken),
-                p.interrupts,
-                if is_mplus {
-                    format!(
-                        "<td class=n>{}</td><td class=n>{}</td><td class=n>{}</td><td class=n>{}</td>",
-                        p.kick_latency_s
-                            .map(|l| format!("{l:.1}s"))
-                            .unwrap_or_default(),
-                        if p.priority_missed > 0 {
-                            p.priority_missed.to_string()
-                        } else {
-                            String::new()
-                        },
-                        if p.wasted_kicks > 0 {
-                            p.wasted_kicks.to_string()
-                        } else {
-                            String::new()
-                        },
-                        p.dispel_latency_s
-                            .map(|l| format!(
-                                "<span title='{} priority dispel(s)'>{l:.1}s</span>",
-                                p.priority_dispels
-                            ))
-                            .unwrap_or_default()
-                    )
-                } else {
-                    String::new()
-                },
-                p.dispels,
-                p.deaths,
-                p.activity_pct * 100.0,
-                if has_rank {
-                    format!(
-                        "<td class=n>{}</td>",
-                        p.wcl_rank_percent
-                            .map(|r| format!("{r:.0}"))
-                            .unwrap_or_default()
-                    )
-                } else {
-                    String::new()
-                }
-            );
-        }
-        o.push_str("</table>");
-
-        if !f.deaths.is_empty() {
-            o.push_str("<h3>Deaths</h3><table><tr><th>Time</th><th>Player</th><th>Killing blow</th><th>Last hits</th></tr>");
-            for d in &f.deaths {
-                let recap = d
-                    .recap
-                    .iter()
-                    .map(|r| {
-                        format!(
-                            "{} {} {}{}",
-                            mmss(r.at_s),
-                            esc(&r.spell),
-                            human(r.amount),
-                            r.hp_pct_after
-                                .map(|h| format!(" ({h:.0}%)"))
-                                .unwrap_or_default()
-                        )
-                    })
-                    .collect::<Vec<_>>()
-                    .join("<br>");
-                let _ = write!(
-                    o,
-                    "<tr><td>{}</td><td>{}</td><td>{}</td><td class=sub>{}</td></tr>",
-                    mmss(d.at_s),
-                    esc(&d.player),
-                    if d.priority_debuffs.is_empty() {
-                        esc(&d.killing_blow)
-                    } else {
-                        format!(
-                            "{} <span class=bad>· {} up</span>",
-                            esc(&d.killing_blow),
-                            esc(&d.priority_debuffs.join(", "))
-                        )
-                    },
-                    recap
-                );
-            }
-            o.push_str("</table>");
-        }
-
-        o.push_str("<div class=grid>");
-        if !f.enemy_casts.is_empty() {
-            o.push_str("<div><h3>Interruptible casts</h3><table><tr><th>Spell</th><th>Went off</th><th>Kicked</th></tr>");
-            for c in &f.enemy_casts {
-                let _ = write!(
-                    o,
-                    "<tr><td>{}{}</td><td class=n>{}</td><td class=n>{}</td></tr>",
-                    esc(&c.name),
-                    if c.priority {
-                        " ★"
-                    } else if c.kick {
-                        " ☆"
-                    } else {
-                        ""
-                    },
-                    c.succeeded,
-                    c.interrupted
-                );
-            }
-            o.push_str("</table></div>");
-        }
-        o.push_str("<div><h3>Damage taken by enemy spell</h3><table><tr><th>Spell</th><th>Total</th><th>Players hit</th><th></th></tr>");
-        for s in f.enemy_damage.iter().take(12) {
-            let _ = write!(
-                o,
-                "<tr><td>{}</td><td class=n>{}</td><td class=n>{}</td><td>{}</td></tr>",
-                esc(&s.name),
-                human(s.total),
-                s.players_hit,
-                if s.configured_avoidable {
-                    "<span class='chip bad'>avoidable</span>"
-                } else if s.likely_avoidable {
-                    "<span class=chip>check</span>"
-                } else {
-                    ""
-                }
-            );
-        }
-        o.push_str("</table></div></div></div></details></div>");
+        deaths_html(f, &mut o);
+        tables_html(f, &mut o);
+        o.push_str("</div></details></div>");
     }
     o.push_str("<p class=sub>wowcoach · Activity and the \"possibly avoidable\" flags are heuristics. Confirm them against the fight before you act on them.</p></main></body></html>");
     o
