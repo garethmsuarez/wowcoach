@@ -81,10 +81,12 @@ Detailed plan: [`docs/milestones/m5-route-and-pacing.md`](milestones/m5-route-an
 - Compare against your own earlier runs once M6 lands.
 
 ## Season cleanup (before M6)
+**Status: done.**
 Detailed plan: [`docs/milestones/season-cleanup.md`](milestones/season-cleanup.md). In short:
 - Kick tiers: `priority_kick` (must kick) and a new `kick` (kick when free), so a filler bolt is never advised over a heal from the same pack.
 - Avoidable damage: proposals from hit evidence in top public keys against your own, then human review.
 - A review pass over the pending proposals in the pack, with notes.
+- With `--compare-top`: enemy spells your non-tanks take far more of than the top runs, with no tags needed.
 
 ## M6: Persistent history
 - `crates/store` using rusqlite (bundled).

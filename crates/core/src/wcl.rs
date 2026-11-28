@@ -569,7 +569,64 @@ pub fn ref_run(
             })
             .collect(),
         kills,
+        non_tanks: 0,
+        damage: vec![],
     })
+}
+
+/// A run's non-tank damage taken for `RefRun`: (non-tank players, damage per
+/// spell). `details` is `report.playerDetails` for the fight, `npcs` the
+/// report's NPC actor IDs and `events` its `DamageTaken` events for friendlies.
+/// Only hits from an NPC or the environment (actor -1) count, as in the
+/// analyzer's `enemy_damage`. None when the roles are missing.
+pub fn ref_damage(
+    details: &Value,
+    npcs: &std::collections::HashSet<i64>,
+    events: &[Value],
+) -> Option<(u32, Vec<crate::reference::RefDamage>)> {
+    let d = &details["data"]["playerDetails"];
+    let ids = |role: &str| -> Vec<i64> {
+        d[role]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|p| i(p, "id"))
+            .collect()
+    };
+    let tanks = ids("tanks");
+    let mut non_tanks = ids("healers");
+    non_tanks.extend(ids("dps"));
+    non_tanks.retain(|p| !tanks.contains(p));
+    non_tanks.sort();
+    non_tanks.dedup();
+    if non_tanks.is_empty() {
+        return None;
+    }
+    let mut by: HashMap<u32, (u32, u64)> = HashMap::new();
+    for e in events.iter().filter(|e| e["type"] == "damage") {
+        let (Some(t), Some(src), Some(id)) =
+            (i(e, "targetID"), i(e, "sourceID"), i(e, "abilityGameID"))
+        else {
+            continue;
+        };
+        if !non_tanks.contains(&t) || !(src == -1 || npcs.contains(&src)) {
+            continue;
+        }
+        let n = i(e, "amount").unwrap_or(0).max(0) + i(e, "absorbed").unwrap_or(0).max(0);
+        let x = by.entry(id as u32).or_default();
+        x.0 += 1;
+        x.1 += n as u64;
+    }
+    let mut damage: Vec<crate::reference::RefDamage> = by
+        .into_iter()
+        .map(|(spell_id, (hits, amount))| crate::reference::RefDamage {
+            spell_id,
+            hits,
+            amount,
+        })
+        .collect();
+    damage.sort_by_key(|d| d.spell_id);
+    Some((non_tanks.len() as u32, damage))
 }
 
 /// Order for events sharing a timestamp: boss start first, boss end last.
@@ -690,12 +747,17 @@ pub mod net {
 
     const REF_Q: &str = r#"query($code:String!,$fid:[Int]!){ reportData{ report(code:$code){
         masterData{ actors(type:"NPC"){ id gameID } }
+        playerDetails(fightIDs:$fid)
         fights(fightIDs:$fid){ id encounterID name startTime endTime kill keystoneLevel keystoneTime keystoneBonus keystoneAffixes
                 gameZone{ id } dungeonPulls{ encounterID startTime endTime kill } }
     }}}"#;
 
     const DEATHS_Q: &str = r#"query($code:String!,$fid:[Int]!,$s:Float!,$e:Float!){ reportData{ report(code:$code){
         events(fightIDs:$fid,startTime:$s,endTime:$e,dataType:Deaths,hostilityType:Enemies,limit:10000){ data nextPageTimestamp }
+    }}}"#;
+
+    const DAMAGE_Q: &str = r#"query($code:String!,$fid:[Int]!,$s:Float!,$e:Float!){ reportData{ report(code:$code){
+        events(fightIDs:$fid,startTime:$s,endTime:$e,dataType:DamageTaken,hostilityType:Friendlies,limit:10000){ data nextPageTimestamp }
     }}}"#;
 
     const RATE_Q: &str = r#"{ rateLimitData{ limitPerHour pointsSpentThisHour pointsResetIn } }"#;
@@ -714,8 +776,9 @@ pub mod net {
         }
     }
 
-    /// One public keystone run for `analyze --compare-top`: its pulls and its
-    /// enemy deaths only (a few points; no player events).
+    /// One public keystone run for `analyze --compare-top`: its pulls, its
+    /// enemy deaths and its non-tank damage taken per spell (a few points
+    /// each; no other player events).
     pub fn ref_run(c: &Client, code: &str, fight: i64) -> anyhow::Result<crate::reference::RefRun> {
         let d = c.query(REF_Q, json!({ "code": code, "fid": [fight] }))?;
         let report = &d["reportData"]["report"];
@@ -723,22 +786,37 @@ pub mod net {
         let (Some(start), Some(end)) = (f["startTime"].as_f64(), f["endTime"].as_f64()) else {
             bail!("fight {fight} not found in {code}");
         };
-        let mut deaths: Vec<Value> = vec![];
-        let mut s = start;
-        loop {
-            let p = c.query(
-                DEATHS_Q,
-                json!({ "code": code, "fid": [fight], "s": s, "e": end }),
-            )?;
-            let page = &p["reportData"]["report"]["events"];
-            deaths.extend(page["data"].as_array().into_iter().flatten().cloned());
-            match page["nextPageTimestamp"].as_f64() {
-                Some(n) if n > s => s = n,
-                _ => break,
+        let pages = |q: &str| -> anyhow::Result<Vec<Value>> {
+            let mut out: Vec<Value> = vec![];
+            let mut s = start;
+            loop {
+                let p = c.query(q, json!({ "code": code, "fid": [fight], "s": s, "e": end }))?;
+                let page = &p["reportData"]["report"]["events"];
+                out.extend(page["data"].as_array().into_iter().flatten().cloned());
+                match page["nextPageTimestamp"].as_f64() {
+                    Some(n) if n > s => s = n,
+                    _ => break,
+                }
             }
+            Ok(out)
+        };
+        let deaths = pages(DEATHS_Q)?;
+        let actors = &report["masterData"]["actors"];
+        let mut run = super::ref_run(code, f, actors, &deaths)
+            .ok_or_else(|| anyhow::anyhow!("{code}:{fight} is not a keystone run"))?;
+        let npcs = actors
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|a| a["id"].as_i64())
+            .collect();
+        if let Some((n, damage)) =
+            super::ref_damage(&report["playerDetails"], &npcs, &pages(DAMAGE_Q)?)
+        {
+            run.non_tanks = n;
+            run.damage = damage;
         }
-        super::ref_run(code, f, &report["masterData"]["actors"], &deaths)
-            .ok_or_else(|| anyhow::anyhow!("{code}:{fight} is not a keystone run"))
+        Ok(run)
     }
 
     pub struct Fetched {
@@ -955,6 +1033,31 @@ mod tests {
         let mut raid = v["report"]["fights"][0].clone();
         raid["keystoneLevel"] = Value::Null;
         assert!(ref_run("abc", &raid, &Value::Null, &[]).is_none());
+    }
+
+    #[test]
+    fn ref_damage_counts_non_tank_hits_from_enemies() {
+        let details = json!({ "data": { "playerDetails": {
+            "tanks": [{ "id": 1 }], "healers": [{ "id": 2 }], "dps": [{ "id": 3 }, { "id": 4 }]
+        }}});
+        let npcs: std::collections::HashSet<i64> = [50].into();
+        let hit = |src: i64, dst: i64, spell: i64, amount: i64, absorbed: i64| {
+            json!({ "type": "damage", "sourceID": src, "targetID": dst,
+                    "abilityGameID": spell, "amount": amount, "absorbed": absorbed })
+        };
+        let events = [
+            hit(50, 3, 900, 100, 20),
+            hit(50, 4, 900, 50, 0),
+            hit(50, 1, 900, 999, 0), // the tank
+            hit(3, 3, 32379, 10, 0), // a player's own Shadow Word: Death
+            hit(-1, 2, 3, 30, 0),    // falling
+            json!({ "type": "absorbed", "sourceID": 50, "targetID": 2, "abilityGameID": 900 }),
+        ];
+        let (n, d) = ref_damage(&details, &npcs, &events).unwrap();
+        assert_eq!(n, 3);
+        let got: Vec<(u32, u32, u64)> = d.iter().map(|d| (d.spell_id, d.hits, d.amount)).collect();
+        assert_eq!(got, [(3, 1, 30), (900, 2, 170)]);
+        assert!(ref_damage(&Value::Null, &npcs, &events).is_none());
     }
 
     #[test]

@@ -415,6 +415,46 @@ fn dispels_html(f: &FightReport, o: &mut String) {
     o.push_str("</table>");
 }
 
+/// M+ damage your non-tanks took against the top runs (with `--compare-top`):
+/// the spells you took most, with the ones the advice lists marked.
+fn damage_html(f: &FightReport, o: &mut String) {
+    let Some(r) = &f.reference else { return };
+    let rows = crate::rules::damage::compare(f, r);
+    if rows.is_empty() {
+        return;
+    }
+    let _ = write!(
+        o,
+        "<h3>Damage taken vs top runs</h3><div class=sub>Non-tank damage per player per 10 minutes of combat. Top = median (range) of {} top +{} run(s); red = far more than they take.</div><table><tr><th>Spell</th><th>Yours</th><th>Top</th><th>×</th><th>Non-tank hits</th></tr>",
+        r.damage_runs, r.level
+    );
+    // The 12 you took most, plus any the advice lists.
+    for s in rows
+        .iter()
+        .enumerate()
+        .filter(|(i, s)| *i < 12 || s.listed)
+        .map(|(_, s)| s)
+    {
+        let ratio = if s.top.median > 0.0 {
+            format!("{:.1}", s.mine / s.top.median)
+        } else {
+            "–".into()
+        };
+        let _ = write!(
+            o,
+            "<tr><td>{}</td><td class=n><span{}>{}</span></td><td class=n>{} <span class=sub>({}–{})</span></td><td class=n>{ratio}</td><td class=n>{}</td></tr>",
+            esc(s.name),
+            if s.listed { " class=bad" } else { "" },
+            human(s.mine as u64),
+            human(s.top.median as u64),
+            human(s.top.min as u64),
+            human(s.top.max as u64),
+            s.hits
+        );
+    }
+    o.push_str("</table>");
+}
+
 /// M+ route: one row per segment (boss to boss), against the top runs when
 /// `--compare-top` was used, then the pulls with their kills and forces pace.
 fn route_html(f: &FightReport, o: &mut String) {
@@ -681,6 +721,7 @@ pub fn html(r: &Report) -> String {
             defensives_html(f, &mut o);
             dispels_html(f, &mut o);
             route_html(f, &mut o);
+            damage_html(f, &mut o);
         }
 
         // players

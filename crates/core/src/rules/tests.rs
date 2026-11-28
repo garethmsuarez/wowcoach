@@ -1327,7 +1327,7 @@ fn timer_advice_follows_upgrades_not_the_completion_flag() {
 
 // ------------------------------------------------------------ pacing (M5)
 
-use crate::reference::{RefBoss, RefSegment, Stat, TopRuns};
+use crate::reference::{RefBoss, RefSegment, RefSpell, Stat, TopRuns};
 
 fn st(median: f64) -> Stat {
     Stat {
@@ -1452,6 +1452,7 @@ fn top_runs() -> TopRuns {
                 forces_pct: Some(st(34.0)),
             },
         ],
+        ..Default::default()
     }
 }
 
@@ -1551,4 +1552,82 @@ fn timed_keys_get_their_margin() {
         "+1 with 5:00 to spare; 1:00 short of +2."
     );
     assert_eq!(with(1000.0, 3).unwrap(), "+3 with 1:20 to spare.");
+}
+
+/// 600 s of combat, 4 non-tanks. Quake (two IDs) hits Alpha and Bravo 4×
+/// as hard as top runs; Storm hits everyone about as hard as in top runs;
+/// Bolt hit Charlie only 3 times. `damage_runs` top runs have damage data.
+fn damage_vs_top_fight(damage_runs: usize) -> FightReport {
+    let mut f = mplus(true, 700.0);
+    f.segments = vec![Segment {
+        combat_s: 600.0,
+        ..segment(1, None, 0.0, 700.0, vec![1])
+    }];
+    let spell = |id: u32, name: &str, pp: Vec<(&str, u64, u32)>| EnemySpellReport {
+        spell_id: id,
+        name: name.into(),
+        total: pp.iter().map(|p| p.1).sum(),
+        hits: pp.iter().map(|p| p.2).sum(),
+        players_hit: pp.len() as u32,
+        non_tank_hit_frac: 0.5,
+        max_hits_per_player: 0,
+        median_hits_per_player: 0.0,
+        configured_avoidable: false,
+        likely_avoidable: false,
+        per_player: pp.into_iter().map(|(n, d, h)| (n.into(), d, h)).collect(),
+    };
+    f.enemy_damage = vec![
+        spell(
+            20,
+            "Storm",
+            ["Healer", "Alpha", "Bravo", "Charlie"]
+                .iter()
+                .map(|p| (*p, 1_000_000, 10))
+                .collect(),
+        ),
+        spell(
+            10,
+            "Quake",
+            vec![("Alpha", 1_200_000, 6), ("Tank", 5_000_000, 10)],
+        ),
+        spell(11, "Quake", vec![("Bravo", 400_000, 2)]),
+        spell(30, "Bolt", vec![("Charlie", 100_000, 3)]),
+    ];
+    let rs = |name: &str, median: f64| RefSpell {
+        name: name.into(),
+        damage: st(median),
+        hits: st(1.0),
+    };
+    f.reference = Some(TopRuns {
+        level: 10,
+        damage_runs,
+        damage: vec![
+            rs("Bolt", 0.0),
+            rs("Quake", 100_000.0),
+            rs("Storm", 900_000.0),
+        ],
+        ..top_runs()
+    });
+    f
+}
+
+#[test]
+fn damage_top_runs_avoid_is_listed() {
+    let s = run(damage_vs_top_fight(5), &Config::default());
+    let d = get(&s, "group", "Damage vs top runs").unwrap();
+    assert_eq!(d.severity, Severity::Medium);
+    assert_eq!(
+        d.message,
+        "Your group took far more of these than the top +10 runs, per non-tank player per 10 minutes of combat: Quake 400.0K vs 100.0K (4.0×; most hits: Alpha ×6, Bravo ×2)."
+    );
+    let f = damage_vs_top_fight(5);
+    let rows = crate::rules::damage::compare(&f, f.reference.as_ref().unwrap());
+    let names: Vec<(&str, bool)> = rows.iter().map(|r| (r.name, r.listed)).collect();
+    assert_eq!(names, [("Storm", false), ("Quake", true), ("Bolt", false)]);
+}
+
+#[test]
+fn damage_vs_top_needs_enough_runs_with_damage_data() {
+    let s = run(damage_vs_top_fight(2), &Config::default());
+    assert!(get(&s, "group", "Damage vs top runs").is_none());
 }

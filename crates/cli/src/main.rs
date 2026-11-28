@@ -554,7 +554,7 @@ fn attach_top_runs(
             keys.truncate(o.compare_top);
             let mut runs = vec![];
             for k in &keys {
-                let path = cache.join(format!("v1-{}-{}.json", k.code, k.fight_id));
+                let path = cache.join(format!("v2-{}-{}.json", k.code, k.fight_id));
                 if let Some(r) = std::fs::read_to_string(&path)
                     .ok()
                     .and_then(|t| serde_json::from_str::<RefRun>(&t).ok())
@@ -585,7 +585,12 @@ fn attach_top_runs(
         let runs = memo.get(&(*enc, level)).map(Vec::as_slice).unwrap_or(&[]);
         let table = pack.forces(map_id);
         let forces = (d.forces_total > 0).then_some((d.forces_total, &table));
-        f.reference = reference::summarize(runs, level, bosses, &f.segments, forces);
+        let spells: std::collections::HashMap<u32, String> = f
+            .enemy_damage
+            .iter()
+            .map(|s| (s.spell_id, s.name.clone()))
+            .collect();
+        f.reference = reference::summarize(runs, level, bosses, &f.segments, forces, &spells);
         eprintln!(
             "  {}: compared with {} top +{level} run(s)",
             f.title,

@@ -59,6 +59,7 @@ Repeated pulls of the same boss are grouped into a **progression** summary.
 | M+ timer: depleted by how much or +N with the margin to the next upgrade, with the biggest levers (death penalty, downtime, slowest segment) | |
 | M+ route: forces at each boss behind the top runs (`--compare-top`), overshoot past 100% costed in time, slow-paced pulls | |
 | M+ segments (`--compare-top`): boss-to-boss stretches much slower than the top runs, split into combat, downtime and deaths, with the longest pulls | |
+| M+ damage vs top runs (`--compare-top`): enemy spells your non-tanks take at least 2× as much of as the top runs, with who was hit most | |
 | Avoidable damage (config) + uneven-hit heuristic | Estimated casting activity (GCD coverage while alive) |
 | Bloodlust missing / late | DPS vs group DPS median with likely causes |
 | M+ pacing: downtime %, longest gaps, near-wipe pulls | Healer overheal %, zero interrupts in M+ |
@@ -154,8 +155,14 @@ uses more than `--max-points` (default 3000) of the hourly limit.
 With Warcraft Logs credentials, `--compare-top N` lines each completed key up
 with the top N public runs of the same dungeon and level. It compares boss kill
 times, % forces at each boss, and each boss-to-boss segment's time, combat and
-downtime (median and range). A run costs about 4 points the first time; runs
-are cached in `~/.cache/wowcoach/compare`, so later reports are nearly free.
+downtime (median and range). It also compares the damage your non-tank players
+took from each enemy spell, per player and per 10 minutes of combat: "Damage vs
+top runs" lists the spells you take at least twice as much of (dodgeable
+mechanics, missed kicks, enemies loose on non-tanks), with no tags needed, and
+the HTML has a "Damage taken vs top runs" table. A spell that hits everyone
+costs top runs the same and isn't listed. A run costs about 7 points the first
+time; runs are cached in `~/.cache/wowcoach/compare` (`v2-…`), so later
+reports are nearly free.
 `--compare-max-points` (default 1000) caps a run's spend.
 
 ```bash
