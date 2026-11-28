@@ -110,6 +110,38 @@ Probed with a scratch script over the 14 local logs (all M+ keys), then 64 publi
 - **Raids** get no proposals (no top-key data); the old heuristic's raid proposals (Hungering Pyre, Blood Venom, …)
   disappear on the next `--write` and should be tagged by hand.
 
+## PR 3 findings
+
+Re-ran `season suggest --write` over the 14 local logs and the cached top keys (21 points; no reviewed tag
+changed), then `tools/promote_suggestions.py`, then a hand review.
+
+- **Drafted by the script (19):** `kick` on 11 caster spells kicked 72–87% by top keys (Mass Envenom, Earth Bolt,
+  Lightning Bolt ×2, Shadow Bolt, Fel Rage, Cinderbolt, Frostbolt, Thunder Blast, Venom Bolt, Light Bolt), and
+  `stoppable` on 8 of them (CC stopped each 14–41 times).
+- **`avoidable`, promoted by hand (4):** the 17 proposals were checked against Wowhead's spell data (no tooltip
+  text exists yet for Midnight, only effects and flags). Promoted where the spell data shows a ground zone (an area
+  trigger or radius damage) as well as the top-key evidence: Burn Corruption, Earthquake, Toxic Breath, Malefic Wave.
+- **`avoidable`, dismissed (3):** the spell data says they're aimed at one player ("max targets 1" / "can only
+  target the player", or a stun channel): Tempest Winds, Slither Strike, A Knot of Snakes.
+- **`avoidable`, left (10):** Messy Eater, Rimeshatter, Echoing Fury, Aerial Smash, Quaking Leap, Whirling Axe,
+  Flaming Embers, Fiery Demise, Lingering Storm, Null Eruption. Their spell data is a script or a debuff DoT, which
+  could be a puddle's aura or a random debuff. Null Eruption is also `dangerous_cast`, and the two pieces of
+  advice ("move" and "use a group defensive") contradict each other.
+- **Dismissed by hand (5):** `tank_buster` on Shoot (a filler at 84 casts per run) and its `stoppable`,
+  Poison Spear Volley (3 hits from 58 casts), Frigid Shard (a priority kick; 10 hits from 135 casts) and
+  Heartstop Poison (the script's exception: the answer is a dispel).
+- **Left for later:** multi-hit tank busters that fail the ≤ 5 hits per cast bar (Savage Maul, Hulking Claw,
+  Venomous Slash, Thornspike, Fire Maw), dispels under 70%, and raid proposals (own logs only, M7).
+- **No notes added.** With no tooltip text to go on, a note would be guesswork shown as advice. Notes are best
+  written by someone who has run the dungeon.
+- **Smoke (3 logs, 9 keys):**
+  - Earthquake avoidable advice appears in all three Den keys, including a death now marked as an avoidable
+    mechanic. Burn Corruption appears in two Kings' Rest keys, one naming a player at 1.03M against a 146K median.
+  - "Free kicks" now appear for Earth Bolt, Lightning Bolt and Fel Rage, mostly 3–5 casts per player. Fel Rage
+    can name several players with up to 11 each in a key without a must-kick nearby.
+- **Follow-up:** the group "Avoidable damage" line lists a spell once per logged ID ("Earthquake (1.89M over
+  8 hits); Earthquake (727.3K over 2 hits)"); it should merge by name.
+
 ## Verification
 - All five CI commands; golden only re-blessed with a reviewed diff (it runs on `PackChoice::None`).
 - `wowcoach season check`; `tools/promote_suggestions.py --check` → 0.

@@ -168,7 +168,7 @@ Lookups are global by spell ID across the whole pack, not scoped to the current 
 
 - **Kick advice ordering (M2):** the group "Interrupts" suggestion lists casts by how many went off, so priority kicks sit behind filler (Earth Bolt, Lightning Bolt). Priority casts should come first, or get their own suggestion.
 - **Void Blast** (Taz'Rah) is a known tank buster per the journal, but its logged damage is mostly under another ID (8 hits from 38 casts), so the criteria left it in `suggested`.
-- **Avoidable:** no tags yet. The uneven-hit heuristic needs support (e.g. no damage to a player standing still, or journal "avoid" text) before it's trusted. Until then, tag by hand.
+- **Avoidable:** no tags yet. The uneven-hit heuristic needs support (e.g. no damage to a player standing still, or journal "avoid" text) before it's trusted. Until then, tag by hand. *(Season cleanup: proposals now come from top-key evidence; 4 tags reviewed in its PR 3.)*
 - **Raid tags** come from your own logs only (WCL top raid reports weren't fetched); revisit in M7.
 
 ## Out of scope for M1
