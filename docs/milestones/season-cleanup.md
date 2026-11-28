@@ -142,6 +142,15 @@ changed), then `tools/promote_suggestions.py`, then a hand review.
 - **Follow-up:** the group "Avoidable damage" line lists a spell once per logged ID ("Earthquake (1.89M over
   8 hits); Earthquake (727.3K over 2 hits)"); it should merge by name.
 
+## Follow-ups PR (after PR 3)
+- **Avoidable damage, merged by name:** the group line sums a spell's IDs ("Earthquake (2.62M over 10 hits)").
+- **"Free kicks" is now one group line per key, not one per player.** The same cast usually had several players
+  ready, so the per-player notes repeated it: the +13 Den of Nalorakk named 5 players for 6 casts, and the +14
+  Murder Row named 3 players for the same 11 Fel Rages. The line now counts each cast once, per spell, and says
+  who was most often ready; the kick plan says who should take them. `missed_free` became `free_casts`.
+- **Smoke (14 logs):** 10 keys get a "Free kicks" line (3–11 casts), and 9 an "Avoidable damage" line, each
+  spell listed once.
+
 ## Verification
 - All five CI commands; golden only re-blessed with a reviewed diff (it runs on `PackChoice::None`).
 - `wowcoach season check`; `tools/promote_suggestions.py --check` → 0.

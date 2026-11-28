@@ -2,7 +2,7 @@
 //! then aggregates group- and player-level metrics for each.
 
 use crate::config::Config;
-pub use casts::{CastOutcome, CastRecord, ReadyKicker, missed_free, missed_priority, wasted_kicks};
+pub use casts::{CastOutcome, CastRecord, ReadyKicker, free_casts, missed_priority, wasted_kicks};
 pub use defensives::{
     DEATH_REACTION_MS, DefensiveUse, EnemySummon, GroupDefensive, ReadyDefensive, Spike,
     SpikeSpell, TankHit,

@@ -445,15 +445,13 @@ pub fn missed_priority<'a>(
         .collect()
 }
 
-/// Tier-2 (`kick`) casts that went off while `player` had an interrupt ready
-/// and was in range, with no must-kick to save it for: no tier-1 cast in the
-/// same pull started within one of `player`'s kick cooldowns of this one
-/// ending, whoever dealt with it. Holding a kick as backup for a must-kick is
-/// right, so in a pull where one is around these misses aren't counted.
-pub fn missed_free<'a>(
-    casts: &'a [CastRecord],
-    player: &str,
-) -> Vec<(&'a CastRecord, &'a ReadyKicker)> {
+/// Tier-2 (`kick`) casts that went off with someone's interrupt ready and in
+/// range and no must-kick to save it for, with those players: a kicker counts
+/// when no tier-1 cast in the same pull started within one of their kick
+/// cooldowns of this one ending, whoever dealt with it. Holding a kick as
+/// backup for a must-kick is right, so in a pull where one is around these
+/// misses aren't counted. Casts with no such kicker are left out.
+pub fn free_casts(casts: &[CastRecord]) -> Vec<(&CastRecord, Vec<&ReadyKicker>)> {
     let needed = |c: &CastRecord, cd_s: f64| {
         casts
             .iter()
@@ -462,13 +460,15 @@ pub fn missed_free<'a>(
     casts
         .iter()
         .filter(|c| c.tier == Some(2) && c.outcome == CastOutcome::Completed)
-        .filter_map(|c| {
-            c.ready_kickers
+        .map(|c| {
+            let free = c
+                .ready_kickers
                 .iter()
-                .find(|k| k.player == player && k.in_range == Some(true))
-                .filter(|k| !needed(c, k.cd_s))
-                .map(|k| (c, k))
+                .filter(|k| k.in_range == Some(true) && !needed(c, k.cd_s))
+                .collect::<Vec<_>>();
+            (c, free)
         })
+        .filter(|(_, free)| !free.is_empty())
         .collect()
 }
 

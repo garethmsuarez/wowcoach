@@ -282,6 +282,34 @@ fn avoidable_damage_group_and_player() {
 }
 
 #[test]
+fn avoidable_damage_merges_ids_by_name() {
+    let mut f = mplus(true, 1200.0);
+    let spell = |id: u32, name: &str, total: u64, hits: u32| EnemySpellReport {
+        spell_id: id,
+        name: name.into(),
+        total,
+        hits,
+        players_hit: 1,
+        non_tank_hit_frac: 0.25,
+        max_hits_per_player: hits,
+        median_hits_per_player: hits as f64,
+        configured_avoidable: true,
+        likely_avoidable: false,
+        per_player: vec![],
+    };
+    f.enemy_damage = vec![
+        spell(1, "Earthquake", 900_000, 3),
+        spell(2, "Burn Corruption", 1_000_000, 2),
+        spell(3, "Earthquake", 400_000, 1),
+    ];
+    let s = run(f, &Config::default());
+    assert_eq!(
+        get(&s, "group", "Avoidable damage").unwrap().message,
+        "The group took avoidable damage from: Earthquake (1.30M over 4 hits); Burn Corruption (1.00M over 2 hits)."
+    );
+}
+
+#[test]
 fn bloodlust_missing_or_late_on_raid_kills() {
     let mut f = raid(true, 120.0, Some(0.0));
     f.lust_at_s = vec![];
@@ -568,13 +596,19 @@ fn free_kick_fight(breeze: Option<(f64, CastOutcome)>) -> FightReport {
 
 #[test]
 fn free_kicks_are_named_when_no_priority_cast_needs_the_kick() {
-    let s = run(free_kick_fight(None), &Config::default());
-    let a = get(&s, "Alpha", "Free kicks").unwrap();
-    assert_eq!(a.severity, Severity::Low);
+    let mut f = free_kick_fight(None);
+    // Bravo was ready for the last one too: one group line, not one per player.
+    f.casts[2]
+        .ready_kickers
+        .push(ready("Bravo", "Kick", 8.0, true));
+    let s = run(f, &Config::default());
+    let g = get(&s, "group", "Free kicks").unwrap();
+    assert_eq!(g.severity, Severity::Low);
     assert_eq!(
-        a.message,
-        "Pummel ready and in range, with no priority cast to save it for, as 3 kick-when-free cast(s) went off: Earth Bolt ×3."
+        g.message,
+        "3 kick-when-free cast(s) went off with a kick ready and in range, and no priority cast to save it for: Earth Bolt ×3. Most often ready: Alpha ×3, Bravo ×1."
     );
+    assert!(get(&s, "Alpha", "Free kicks").is_none());
     assert!(
         get(&s, "Alpha", "Priority kicks").is_none(),
         "tier 2 is not a must-kick"
@@ -587,7 +621,7 @@ fn free_kicks_are_named_when_no_priority_cast_needs_the_kick() {
         latency_s: 1.0,
     };
     let s = run(free_kick_fight(Some((400.0, kicked))), &Config::default());
-    assert!(get(&s, "Alpha", "Free kicks").is_some());
+    assert!(get(&s, "group", "Free kicks").is_some());
 }
 
 #[test]
@@ -600,14 +634,14 @@ fn free_kicks_are_not_named_when_a_priority_cast_needed_the_kick() {
         latency_s: 1.0,
     };
     let f = free_kick_fight(Some((105.0, kicked)));
-    assert_eq!(missed_free(&f.casts, "Alpha").len(), 2);
-    assert!(get(&run(f, &Config::default()), "Alpha", "Free kicks").is_none());
+    assert_eq!(free_casts(&f.casts).len(), 2);
+    assert!(get(&run(f, &Config::default()), "group", "Free kicks").is_none());
     // Same when the Healing Breeze went off with Alpha ready: Alpha should
     // have saved it, and that's Priority kicks advice instead.
     let f = free_kick_fight(Some((143.0, CastOutcome::Completed)));
-    assert_eq!(missed_free(&f.casts, "Alpha").len(), 2);
+    assert_eq!(free_casts(&f.casts).len(), 2);
     let s = run(f, &Config::default());
-    assert!(get(&s, "Alpha", "Free kicks").is_none());
+    assert!(get(&s, "group", "Free kicks").is_none());
     assert!(get(&s, "Alpha", "Priority kicks").is_some());
     // Someone else kicking the Breeze still counts: Alpha was right to hold
     // their kick as backup.
@@ -617,7 +651,7 @@ fn free_kicks_are_not_named_when_a_priority_cast_needed_the_kick() {
         latency_s: 1.0,
     };
     assert_eq!(
-        missed_free(&free_kick_fight(Some((105.0, other))).casts, "Alpha").len(),
+        free_casts(&free_kick_fight(Some((105.0, other))).casts).len(),
         2
     );
 }
