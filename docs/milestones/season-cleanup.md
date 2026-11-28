@@ -59,7 +59,7 @@ of them. Two gaps:
    keys, run `promote_suggestions.py`, and review every remaining proposal by hand, with one line per spell in the
    PR (promote / `dismissed` / leave). Add a `note` to each avoidable and tier-1 kick.
 4. **Later, optional:** with `analyze --compare-top`, list spells where your group takes far more hits per player
-   than the top median (per-spell hits in `RefRun`, cache `v2-…`). No tag needed.
+   than the top median (per-spell hits in `RefRun`, cache `v2-…`). No tag needed. Done; see "PR 4 findings".
 
 ## PR 1 findings
 
@@ -150,6 +150,24 @@ changed), then `tools/promote_suggestions.py`, then a hand review.
   who was most often ready; the kick plan says who should take them. `missed_free` became `free_casts`.
 - **Smoke (14 logs):** 10 keys get a "Free kicks" line (3–11 casts), and 9 an "Avoidable damage" line, each
   spell listed once.
+
+## PR 4 findings
+- **Cheap source:** `DamageTaken` events for friendlies are one page (~5k events, ~1.5 MB) per top key at about
+  2 points, and `playerDetails` gives the roles in the existing `REF_Q`. A run costs ~7 points in all (was ~4).
+  The aggregated `table` has hit counts per spell but not per target, so it can't split tank hits off.
+- **Measure:** damage (not hits) per non-tank player per 10 minutes of combat, against the median of the runs,
+  merged by spell name. Damage ranks what matters; hits made multi-tick spells look worse than they are.
+- **Bar:** ≥ 2× the top median, ≥ 5 non-tank hits, and an extra of ≥ 2% of your non-tank damage taken. Spells
+  that hit everyone (Fel Lightning, Killing Spree, Frozen Tempest, Sudden Rupture) come out at 0.9–1.1× and are
+  never listed.
+- **Smoke (22 keys, 356 points to fill the v2 cache):** 18 completed keys get a line. It finds:
+  - must-kicks top runs never take: Hex Volley, Wretched Discharge (Kings' Rest), Shadowbolt Volley (Voidscar);
+  - kick-when-free bolts: Earth Bolt and Lightning Bolt in Den at 2.3–7.3×;
+  - dodgeables: Volatile Flames, Corroding Spittle, Spore Spines, Lightmaw Beams;
+  - untagged spells that may belong in the pack: Drain Life (a channel, 5.9× in the +14 Murder Row), Spore Spines;
+  - melee on non-tanks at 2–4× in 6 keys, worded as enemies loose on non-tanks.
+- **Hand check:** the cached Earth Bolt damage for a top +15 Den run (2,110,588 on 4 non-tanks, 6 hits) equals
+  WCL's own damage-taken table for that fight minus the Blood DK tank's 482,840.
 
 ## Verification
 - All five CI commands; golden only re-blessed with a reviewed diff (it runs on `PackChoice::None`).

@@ -7,6 +7,10 @@
 //! kill time, % forces at each boss, and each segment's time, combat and
 //! downtime, lined up with your key's bosses.
 //!
+//! Each run also carries the damage its non-tank players took from each enemy
+//! spell (`RefDamage`), so `summarize` can say how much of a spell your group
+//! takes against the top runs, per player and per 10 minutes of combat.
+//!
 //! Forces are computed here, not cached, so a cached run stays valid when the
 //! forces table changes. Public runs only log deaths, so units scripted away
 //! at 1 HP (Kings' Rest's Shadow of Zul) are missing from their forces.
@@ -31,6 +35,21 @@ pub struct RefRun {
     pub pulls: Vec<RefPull>,
     /// (ms from start, NPC ID) for each enemy death.
     pub kills: Vec<(i64, u32)>,
+    /// Players who weren't tanks; 0 when the run has no damage data.
+    #[serde(default)]
+    pub non_tanks: u32,
+    /// Damage the non-tank players took from enemies (and the environment),
+    /// per spell, by spell ID.
+    #[serde(default)]
+    pub damage: Vec<RefDamage>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct RefDamage {
+    pub spell_id: u32,
+    pub hits: u32,
+    /// Damage after mitigation, absorbs included (as `EnemySpellReport.total`).
+    pub amount: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -84,7 +103,24 @@ pub struct TopRuns {
     pub bosses: Vec<RefBoss>,
     /// Your segments, as the runs played them.
     pub segments: Vec<RefSegment>,
+    /// How many of the runs have damage data.
+    pub damage_runs: usize,
+    /// For each spell you took damage from (merged by name), what the runs'
+    /// non-tank players took, per player and per 10 minutes of combat. A run
+    /// that never took it counts as 0.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub damage: Vec<RefSpell>,
 }
+
+#[derive(Serialize, Clone, Debug, Default, PartialEq)]
+pub struct RefSpell {
+    pub name: String,
+    pub damage: Stat,
+    pub hits: Stat,
+}
+
+/// Rates are per this much combat: 10 minutes.
+pub const RATE_MS: f64 = 600_000.0;
 
 #[derive(Serialize, Clone, Debug, Default, PartialEq)]
 pub struct RefBoss {
@@ -148,14 +184,16 @@ fn combat_ms(r: &RefRun, a: i64, b: i64) -> i64 {
 }
 
 /// Line the runs up with your key. `forces` is (total, forces per NPC ID).
-/// Runs missing one of your killed bosses are left out of that boss and its
-/// segment. None without runs.
+/// `spells` names the spells you took damage from (spell ID → name); the
+/// runs' damage is compared for those only. Runs missing one of your killed
+/// bosses are left out of that boss and its segment. None without runs.
 pub fn summarize(
     runs: &[RefRun],
     level: u32,
     bosses: &[BossMarker],
     segments: &[Segment],
     forces: Option<(u32, &HashMap<u32, u32>)>,
+    spells: &HashMap<u32, String>,
 ) -> Option<TopRuns> {
     if runs.is_empty() {
         return None;
@@ -264,7 +302,39 @@ pub fn summarize(
         forces_pct: opt_stat(runs.iter().map(|r| pct(r, i64::MAX)).collect()),
         bosses: ref_bosses,
         segments: ref_segments,
+        damage_runs: runs.iter().filter(|r| r.non_tanks > 0).count(),
+        damage: damage(runs, spells),
     })
+}
+
+/// Per spell name, each damage run's non-tank damage and hits per player per
+/// 10 minutes of combat, as a `Stat` over the runs. Names in order.
+fn damage(runs: &[RefRun], spells: &HashMap<u32, String>) -> Vec<RefSpell> {
+    let runs: Vec<&RefRun> = runs.iter().filter(|r| r.non_tanks > 0).collect();
+    let mut names: Vec<&String> = spells.values().collect();
+    names.sort();
+    names.dedup();
+    names
+        .into_iter()
+        .filter_map(|name| {
+            let (mut dmg, mut hits) = (vec![], vec![]);
+            for r in &runs {
+                let per = r.non_tanks as f64 * combat_ms(r, 0, i64::MAX).max(1) as f64 / RATE_MS;
+                let (a, h) = r
+                    .damage
+                    .iter()
+                    .filter(|d| spells.get(&d.spell_id) == Some(name))
+                    .fold((0u64, 0u32), |(a, h), d| (a + d.amount, h + d.hits));
+                dmg.push(a as f64 / per);
+                hits.push(h as f64 / per);
+            }
+            Some(RefSpell {
+                name: name.clone(),
+                damage: Stat::of(dmg)?,
+                hits: Stat::of(hits)?,
+            })
+        })
+        .collect()
 }
 
 #[cfg(test)]

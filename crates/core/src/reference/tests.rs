@@ -27,6 +27,8 @@ fn run(code: &str, b_end: i64) -> RefRun {
             pull(300, b_end, 2),
         ],
         kills: vec![(50_000, 7), (90_000, 7), (280_000, 7), (290_000, 99)],
+        non_tanks: 0,
+        damage: vec![],
     }
 }
 
@@ -77,7 +79,15 @@ fn runs_line_up_with_your_bosses_and_segments() {
         boss("B", 2, 450.0, true),
     ];
     let segments = [seg(1, Some("A")), seg(2, Some("B")), seg(3, None)];
-    let t = summarize(&runs, 10, &bosses, &segments, Some((40, &table))).unwrap();
+    let t = summarize(
+        &runs,
+        10,
+        &bosses,
+        &segments,
+        Some((40, &table)),
+        &HashMap::new(),
+    )
+    .unwrap();
 
     assert_eq!(t.runs, ["a:1", "b:1", "c:1"]);
     assert_eq!(
@@ -134,13 +144,79 @@ fn runs_line_up_with_your_bosses_and_segments() {
 fn without_forces_or_runs() {
     let bosses = [boss("A", 1, 210.0, true)];
     let segments = [seg(1, Some("A"))];
-    let t = summarize(&[run("a", 400)], 10, &bosses, &segments, None).unwrap();
+    let t = summarize(
+        &[run("a", 400)],
+        10,
+        &bosses,
+        &segments,
+        None,
+        &HashMap::new(),
+    )
+    .unwrap();
     assert_eq!(t.forces_pct, None);
     assert_eq!(t.bosses[0].forces_pct, None);
     assert_eq!(t.segments[0].forces_pct, None);
-    assert!(summarize(&[], 10, &bosses, &segments, None).is_none());
+    assert!(summarize(&[], 10, &bosses, &segments, None, &HashMap::new()).is_none());
     // A boss the runs never killed is left out.
     let other = [boss("Z", 5, 100.0, true)];
-    let t = summarize(&[run("a", 400)], 10, &other, &[seg(1, Some("Z"))], None).unwrap();
+    let t = summarize(
+        &[run("a", 400)],
+        10,
+        &other,
+        &[seg(1, Some("Z"))],
+        None,
+        &HashMap::new(),
+    )
+    .unwrap();
     assert!(t.bosses.is_empty() && t.segments.is_empty());
+}
+
+#[test]
+fn damage_per_player_per_ten_minutes_merged_by_name() {
+    // Run a: 400 s of which 300 s in combat (pull windows), 4 non-tanks.
+    // Run b: 500 s, 400 s in combat, 4 non-tanks, never hit by the spell.
+    // Run c has no damage data and is left out.
+    let mut a = run("a", 400);
+    a.non_tanks = 4;
+    a.damage = vec![
+        RefDamage {
+            spell_id: 10,
+            hits: 8,
+            amount: 800_000,
+        },
+        RefDamage {
+            spell_id: 11,
+            hits: 4,
+            amount: 400_000,
+        },
+        RefDamage {
+            spell_id: 99,
+            hits: 50,
+            amount: 9_000_000,
+        },
+    ];
+    let mut b = run("b", 500);
+    b.non_tanks = 4;
+    let spells: HashMap<u32, String> =
+        [(10, "Quake".to_string()), (11, "Quake".to_string())].into();
+    let bosses = [boss("A", 1, 210.0, true)];
+    let t = summarize(
+        &[a, b, run("c", 600)],
+        10,
+        &bosses,
+        &[seg(1, Some("A"))],
+        None,
+        &spells,
+    )
+    .unwrap();
+    assert_eq!(t.damage_runs, 2);
+    assert_eq!(t.damage.len(), 1, "only spells you took");
+    let q = &t.damage[0];
+    assert_eq!(q.name, "Quake");
+    // 1.2M over 4 players and half of 10 minutes = 600K; run b 0.
+    assert_eq!(
+        (q.damage.max, q.damage.min, q.damage.median),
+        (600_000.0, 0.0, 300_000.0)
+    );
+    assert_eq!(q.hits.max, 6.0);
 }

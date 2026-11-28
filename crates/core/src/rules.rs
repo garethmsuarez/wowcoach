@@ -406,6 +406,9 @@ fn group_rules(f: &FightReport, cfg: &Config, out: &mut Vec<Suggestion>) {
             ));
         }
         pacing::apply(f, cfg, out);
+        if let Some(r) = &f.reference {
+            damage::vs_top(f, r, cfg, out);
+        }
     }
 }
 
@@ -972,6 +975,7 @@ pub fn apply_progression(p: &mut ProgressionReport) {
     p.suggestions = out;
 }
 
+pub mod damage;
 mod defensives;
 mod dispels;
 pub mod kickplan;
